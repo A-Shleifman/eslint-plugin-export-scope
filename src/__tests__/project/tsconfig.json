@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "eslint-plugin-import-access"
+      }
+    ],
+    "target": "ES2017",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "noEmit": true
+  },
+  "include": ["./src/**/*"]
+}

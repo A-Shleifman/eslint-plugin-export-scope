@@ -1,5 +1,5 @@
 /**
- * @description vegetables
+ * @description ChildComponent
  * @package ..
  */
 export default "";

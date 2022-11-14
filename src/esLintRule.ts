@@ -1,4 +1,3 @@
-import path from "path";
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
 import { checkIsAccessible } from "./common";
 
@@ -28,22 +27,22 @@ export const rule = createRule({
       return {};
     }
 
-    const validateNode = (
-      node: TSESTree.ImportSpecifier | TSESTree.ImportDefaultSpecifier,
-      exportNameOverride?: string,
-    ) => {
+    const validateNode = (node: TSESTree.ImportSpecifier | TSESTree.ImportDefaultSpecifier) => {
       if (node.parent?.type !== "ImportDeclaration") return;
 
-      const relativeExportPath = node.parent.source.value;
+      const tsNode = ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(node);
 
-      // TODO: find the extension programmatically
-      const absoluteExportPath = path.resolve(path.dirname(context.getFilename()), relativeExportPath) + ".ts";
+      if (!tsNode?.name) return;
+
+      const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode.name);
+      const exportSymbol = importSymbol && tsProgram.getTypeChecker().getImmediateAliasedSymbol(importSymbol);
+      const exportPath = exportSymbol?.declarations?.[0].getSourceFile().fileName;
 
       const isAccessible = checkIsAccessible({
         tsProgram,
         importPath: context.getFilename(),
-        exportPath: absoluteExportPath,
-        exportName: exportNameOverride ?? node.local.name,
+        exportPath,
+        exportName: exportSymbol?.name,
       });
 
       if (!isAccessible) {
@@ -57,7 +56,7 @@ export const rule = createRule({
 
     return {
       ImportSpecifier: validateNode,
-      ImportDefaultSpecifier: (node) => validateNode(node, "default"),
+      ImportDefaultSpecifier: validateNode,
     };
   },
 });

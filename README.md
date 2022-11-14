@@ -14,9 +14,15 @@ npm i -D eslint eslint-plugin-import-access
 
 Add `import-access` to the plugins section of your `.eslintrc` or `.eslintrc.js` configuration file.
 
+⚠ `parserOptions.project` is required for this plugin. If linting doesn't work, try adding `"include": ["**/*"]` to `tscofig.json` and `.eslintrc*` to `.eslintignore`
+
 ```json
 {
-  "extends": ["<other configs>", "plugin:import-access/recommended"]
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "extends": ["plugin:import-access/recommended"]
 }
 ```
 

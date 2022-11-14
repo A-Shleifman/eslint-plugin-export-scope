@@ -1,4 +1,4 @@
-import fruits, { apple, banana } from "./sub/fruits";
-import vegetables from "./sub/sub/vegetables";
+import context, { helper2, helper1 } from "./Component/context";
+import ChildComponent from "./Component/ChildComponent";
 
-console.log(fruits, apple, banana, vegetables);
+console.log(context, helper2, helper1, ChildComponent);

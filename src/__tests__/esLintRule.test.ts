@@ -15,14 +15,14 @@ test("cannot import private exports outside their package", async () => {
   const errors = result.flatMap((x) => x.messages.map((x) => x.message));
 
   expect(errors).toEqual([
-    "Cannot import a private export 'fruits' outside its package",
-    "Cannot import a private export 'apple' outside its package",
-    "Cannot import a private export 'vegetables' outside its package",
+    "Cannot import a private export 'context' outside its package",
+    "Cannot import a private export 'helper2' outside its package",
+    "Cannot import a private export 'ChildComponent' outside its package",
   ]);
 });
 
 test("can import private exports within their package", async () => {
-  const result = await eslint.lintFiles("src/__tests__/project/src/sub/index.ts");
+  const result = await eslint.lintFiles("src/__tests__/project/src/Component/index.ts");
 
   const errors = result.flatMap((x) => x.messages.map((x) => x.message));
 

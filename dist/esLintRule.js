@@ -1,10 +1,6 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.rule = exports.ruleName = void 0;
-const path_1 = __importDefault(require("path"));
 const utils_1 = require("@typescript-eslint/utils");
 const common_1 = require("./common");
 exports.ruleName = "no-imports-outside-package";
@@ -29,18 +25,21 @@ exports.rule = createRule({
             console.error("Could not get parser services");
             return {};
         }
-        const validateNode = (node, exportNameOverride) => {
-            var _a;
+        const validateNode = (node) => {
+            var _a, _b;
             if (((_a = node.parent) === null || _a === void 0 ? void 0 : _a.type) !== "ImportDeclaration")
                 return;
-            const relativeExportPath = node.parent.source.value;
-            // TODO: find the extension programmatically
-            const absoluteExportPath = path_1.default.resolve(path_1.default.dirname(context.getFilename()), relativeExportPath) + ".ts";
+            const tsNode = utils_1.ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(node);
+            if (!(tsNode === null || tsNode === void 0 ? void 0 : tsNode.name))
+                return;
+            const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode.name);
+            const exportSymbol = importSymbol && tsProgram.getTypeChecker().getImmediateAliasedSymbol(importSymbol);
+            const exportPath = (_b = exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.declarations) === null || _b === void 0 ? void 0 : _b[0].getSourceFile().fileName;
             const isAccessible = (0, common_1.checkIsAccessible)({
                 tsProgram,
                 importPath: context.getFilename(),
-                exportPath: absoluteExportPath,
-                exportName: exportNameOverride !== null && exportNameOverride !== void 0 ? exportNameOverride : node.local.name,
+                exportPath,
+                exportName: exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.name,
             });
             if (!isAccessible) {
                 context.report({
@@ -52,7 +51,7 @@ exports.rule = createRule({
         };
         return {
             ImportSpecifier: validateNode,
-            ImportDefaultSpecifier: (node) => validateNode(node, "default"),
+            ImportDefaultSpecifier: validateNode,
         };
     },
 });

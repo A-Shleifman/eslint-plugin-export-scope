@@ -13,7 +13,7 @@ const getExportJsDoc = (tsProgram, exportFile, exportName) => {
     const exportSymbol = (_a = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _a === void 0 ? void 0 : _a.get((0, typescript_1.escapeLeadingUnderscores)(exportName));
     return exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.getJsDocTags().find((tag) => tag.name === PROPERTY_NAME);
 };
-const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName }) => {
+const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, defaultPackage, }) => {
     var _a, _b, _c;
     if (!importPath || !exportPath || !exportName)
         return true;
@@ -23,14 +23,19 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName }) =>
     if (!exportFile)
         return true;
     const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
+    // 1) get local package path
     let packageRelativePath = (_a = localTag === null || localTag === void 0 ? void 0 : localTag.text) === null || _a === void 0 ? void 0 : _a[0].text;
-    if (!localTag || (packageRelativePath === null || packageRelativePath === void 0 ? void 0 : packageRelativePath.startsWith("default"))) {
+    // 2) get file package path
+    if (!packageRelativePath) {
         const fileJsDoc = (_b = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)) === null || _b === void 0 ? void 0 : _b[0];
-        const [defaultPackageTag, defaultPackageRelativePath] = (_c = fileJsDoc === null || fileJsDoc === void 0 ? void 0 : fileJsDoc.match(new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`))) !== null && _c !== void 0 ? _c : [];
-        if (!defaultPackageTag)
-            return true;
-        packageRelativePath = defaultPackageRelativePath;
+        const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
+        const [filePackageTag, defaultFilePackageRelativePath] = (_c = fileJsDoc === null || fileJsDoc === void 0 ? void 0 : fileJsDoc.match(fileRegExp)) !== null && _c !== void 0 ? _c : [];
+        packageRelativePath = filePackageTag && defaultFilePackageRelativePath;
     }
+    // 3) get project package path
+    packageRelativePath !== null && packageRelativePath !== void 0 ? packageRelativePath : (packageRelativePath = defaultPackage);
+    if (!packageRelativePath)
+        return true;
     const packageDir = packageRelativePath ? path_1.default.resolve(exportDir, packageRelativePath.trim()) : exportDir;
     return !path_1.default.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };

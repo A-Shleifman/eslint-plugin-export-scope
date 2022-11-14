@@ -1,6 +1,10 @@
 import path from "path";
 import { escapeLeadingUnderscores, Program, SourceFile } from "typescript";
 
+export type Config = {
+  defaultProjectPackage?: string;
+};
+
 const PROPERTY_NAME = "package";
 
 const getExportJsDoc = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
@@ -9,13 +13,19 @@ const getExportJsDoc = (tsProgram: Program, exportFile: SourceFile, exportName: 
   return exportSymbol?.getJsDocTags().find((tag) => tag.name === PROPERTY_NAME);
 };
 
-type checkIsAccessibleProps = {
+export const checkIsAccessible = ({
+  tsProgram,
+  importPath,
+  exportPath,
+  exportName,
+  defaultPackage,
+}: {
   tsProgram: Program;
   importPath: string | undefined;
   exportPath: string | undefined;
   exportName: string | undefined;
-};
-export const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName }: checkIsAccessibleProps) => {
+  defaultPackage: string | undefined;
+}) => {
   if (!importPath || !exportPath || !exportName) return true;
 
   const exportFile = tsProgram.getSourceFile(exportPath);
@@ -26,20 +36,24 @@ export const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportNam
 
   const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
 
+  // 1) get local package path
   let packageRelativePath = localTag?.text?.[0].text;
 
-  if (!localTag || packageRelativePath?.startsWith("default")) {
+  // 2) get file package path
+  if (!packageRelativePath) {
     const fileJsDoc = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)?.[0];
 
-    const [defaultPackageTag, defaultPackageRelativePath] =
-      fileJsDoc?.match(new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`)) ?? [];
+    const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
+    const [filePackageTag, defaultFilePackageRelativePath] = fileJsDoc?.match(fileRegExp) ?? [];
 
-    if (!defaultPackageTag) return true;
-
-    packageRelativePath = defaultPackageRelativePath;
+    packageRelativePath = filePackageTag && defaultFilePackageRelativePath;
   }
 
-  const packageDir = packageRelativePath ? path.resolve(exportDir, packageRelativePath.trim()) : exportDir;
+  // 3) get project package path
+  packageRelativePath ??= defaultPackage;
 
+  if (!packageRelativePath) return true;
+
+  const packageDir = packageRelativePath ? path.resolve(exportDir, packageRelativePath.trim()) : exportDir;
   return !path.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };

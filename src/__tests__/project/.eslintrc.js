@@ -9,4 +9,12 @@ module.exports = {
   plugins: ["@typescript-eslint"],
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:import-access/recommended"],
   ignorePatterns: [".eslintrc.js", "node_modules"],
+  rules: {
+    "import-access/no-imports-outside-package": [
+      "error",
+      {
+        defaultProjectPackage: ".",
+      },
+    ],
+  },
 };

@@ -16,15 +16,21 @@ exports.rule = createRule({
         messages: {
             packagePrivate: "Cannot import a private export '{{ identifier }}' outside its package",
         },
-        schema: [],
+        schema: [
+            {
+                type: "object",
+                properties: {
+                    defaultProjectPackage: {
+                        type: "string",
+                    },
+                },
+                additionalProperties: false,
+            },
+        ],
     },
-    defaultOptions: [],
+    defaultOptions: [{}],
     create(context) {
         const tsProgram = utils_1.ESLintUtils.getParserServices(context).program;
-        if (!tsProgram) {
-            console.error("Could not get parser services");
-            return {};
-        }
         const validateNode = (node) => {
             var _a, _b;
             if (((_a = node.parent) === null || _a === void 0 ? void 0 : _a.type) !== "ImportDeclaration")
@@ -40,6 +46,7 @@ exports.rule = createRule({
                 importPath: context.getFilename(),
                 exportPath,
                 exportName: exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.name,
+                defaultPackage: context.options[0].defaultProjectPackage,
             });
             if (!isAccessible) {
                 context.report({

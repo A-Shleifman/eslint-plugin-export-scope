@@ -1,8 +1,9 @@
 import("typescript/lib/tsserverlibrary");
-import { checkIsAccessible } from "./common";
+import { checkIsAccessible, Config } from "./common";
 
 export function tsLanguageServicePlugin() {
   function create(info: ts.server.PluginCreateInfo) {
+    const defaultPackage = (info.config as Config).defaultProjectPackage;
     const proxy = { ...info.languageService };
 
     proxy.getCompletionsAtPosition = (importPath, ...args) => {
@@ -19,7 +20,7 @@ export function tsLanguageServicePlugin() {
 
         const { exportName, fileName: exportPath } = entry.data;
 
-        return checkIsAccessible({ tsProgram, importPath, exportPath, exportName });
+        return checkIsAccessible({ tsProgram, importPath, exportPath, exportName, defaultPackage });
       });
 
       return { ...original, entries: filtered ?? [] };
@@ -42,7 +43,7 @@ export function tsLanguageServicePlugin() {
 
         const exportPath = info.project.resolveModuleNames([relativeExportPath], importPath)[0]?.resolvedFileName;
 
-        return checkIsAccessible({ tsProgram, importPath, exportPath, exportName });
+        return checkIsAccessible({ tsProgram, importPath, exportPath, exportName, defaultPackage });
       });
     };
 

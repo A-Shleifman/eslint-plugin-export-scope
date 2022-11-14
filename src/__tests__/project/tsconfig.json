@@ -2,7 +2,8 @@
   "compilerOptions": {
     "plugins": [
       {
-        "name": "eslint-plugin-import-access"
+        "name": "eslint-plugin-import-access",
+        "defaultProjectPackage": "."
       }
     ],
     "target": "ES2017",

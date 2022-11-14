@@ -1,5 +1,5 @@
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
-import { checkIsAccessible } from "./common";
+import { checkIsAccessible, Config } from "./common";
 
 export const ruleName = "no-imports-outside-package";
 
@@ -16,16 +16,22 @@ export const rule = createRule({
     messages: {
       packagePrivate: "Cannot import a private export '{{ identifier }}' outside its package",
     },
-    schema: [],
+    schema: [
+      {
+        type: "object",
+        properties: {
+          defaultProjectPackage: {
+            type: "string",
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
   },
-  defaultOptions: [],
+  defaultOptions: [{} as Config],
 
   create(context) {
     const tsProgram = ESLintUtils.getParserServices(context).program;
-    if (!tsProgram) {
-      console.error("Could not get parser services");
-      return {};
-    }
 
     const validateNode = (node: TSESTree.ImportSpecifier | TSESTree.ImportDefaultSpecifier) => {
       if (node.parent?.type !== "ImportDeclaration") return;
@@ -43,6 +49,7 @@ export const rule = createRule({
         importPath: context.getFilename(),
         exportPath,
         exportName: exportSymbol?.name,
+        defaultPackage: context.options[0].defaultProjectPackage,
       });
 
       if (!isAccessible) {

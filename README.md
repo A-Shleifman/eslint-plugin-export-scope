@@ -7,14 +7,16 @@ Disallows importing private exports outside their package.
 ## Usage Example
 
 ```ts
-// 👇 all exports in this file will only be availabe within this dir and subdirs by default
+// 👇 default file delaration.
+// All exports in this file without a local declaration
+// 👇 will only be availabe within this dir and subdirs by default
 /** @package default . */
 
-// 👇 this export will be available starting from 2 dirs up and all subdirs
+// 👇 this export will be available starting from 2 dirs up and in all subdirs
 /** @package ../.. */
 export const helper1 = "";
 
-// 👇 In standard mode - anywhere. In Strict Mode - only in this dir and subdirs
+// 👇 infers availability from the file declaration above
 export const helper2 = "";
 
 // 👇 same as "@package ."

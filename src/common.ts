@@ -2,7 +2,7 @@ import path from "path";
 import { escapeLeadingUnderscores, Program, SourceFile } from "typescript";
 
 export type Config = {
-  defaultProjectPackage?: string;
+  strictMode?: boolean;
 };
 
 const PROPERTY_NAME = "package";
@@ -18,13 +18,13 @@ export const checkIsAccessible = ({
   importPath,
   exportPath,
   exportName,
-  defaultPackage,
+  strictMode,
 }: {
   tsProgram: Program;
   importPath: string | undefined;
   exportPath: string | undefined;
   exportName: string | undefined;
-  defaultPackage: string | undefined;
+  strictMode: Config["strictMode"] | undefined;
 }) => {
   if (!importPath || !exportPath || !exportName) return true;
 
@@ -49,11 +49,15 @@ export const checkIsAccessible = ({
     packageRelativePath = filePackageTag && defaultFilePackageRelativePath;
   }
 
-  // 3) get project package path
-  packageRelativePath ??= defaultPackage;
+  // 3) defer to project settings
+  if (!packageRelativePath && strictMode) {
+    packageRelativePath = path.parse(exportFile.fileName).name === "index" ? ".." : ".";
+  }
 
   if (!packageRelativePath) return true;
 
   const packageDir = packageRelativePath ? path.resolve(exportDir, packageRelativePath.trim()) : exportDir;
   return !path.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
+
+export const cast = <T>(param: T) => param;

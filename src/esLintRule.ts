@@ -1,5 +1,6 @@
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
-import { checkIsAccessible, Config } from "./common";
+import { JSONSchema4 } from "@typescript-eslint/utils/dist/json-schema";
+import { cast, checkIsAccessible, Config } from "./common";
 
 export const ruleName = "no-imports-outside-package";
 
@@ -19,11 +20,11 @@ export const rule = createRule({
     schema: [
       {
         type: "object",
-        properties: {
-          defaultProjectPackage: {
-            type: "string",
+        properties: cast<Record<keyof Config, JSONSchema4>>({
+          strictMode: {
+            type: "boolean",
           },
-        },
+        }),
         additionalProperties: false,
       },
     ],
@@ -49,7 +50,7 @@ export const rule = createRule({
         importPath: context.getFilename(),
         exportPath,
         exportName: exportSymbol?.name,
-        defaultPackage: context.options[0].defaultProjectPackage,
+        strictMode: context.options[0].strictMode,
       });
 
       if (!isAccessible) {

@@ -2,7 +2,7 @@ import state from "./state";
 
 /**
  * @description ChildComponent
- * @package ..
+ * @package
  */
 export default "";
 

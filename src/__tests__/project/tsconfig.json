@@ -3,7 +3,7 @@
     "plugins": [
       {
         "name": "eslint-plugin-import-access",
-        "defaultProjectPackage": "."
+        "strictMode": true
       }
     ],
     "target": "ES2017",

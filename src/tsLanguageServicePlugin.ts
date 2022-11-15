@@ -3,7 +3,7 @@ import { checkIsAccessible, Config } from "./common";
 
 export function tsLanguageServicePlugin() {
   function create(info: ts.server.PluginCreateInfo) {
-    const defaultPackage = (info.config as Config).defaultProjectPackage;
+    const { strictMode } = info.config as Config;
     const proxy = { ...info.languageService };
 
     proxy.getCompletionsAtPosition = (importPath, ...args) => {
@@ -20,7 +20,7 @@ export function tsLanguageServicePlugin() {
 
         const { exportName, fileName: exportPath } = entry.data;
 
-        return checkIsAccessible({ tsProgram, importPath, exportPath, exportName, defaultPackage });
+        return checkIsAccessible({ tsProgram, importPath, exportPath, exportName, strictMode });
       });
 
       return { ...original, entries: filtered ?? [] };
@@ -43,7 +43,7 @@ export function tsLanguageServicePlugin() {
 
         const exportPath = info.project.resolveModuleNames([relativeExportPath], importPath)[0]?.resolvedFileName;
 
-        return checkIsAccessible({ tsProgram, importPath, exportPath, exportName, defaultPackage });
+        return checkIsAccessible({ tsProgram, importPath, exportPath, exportName, strictMode });
       });
     };
 

@@ -13,7 +13,7 @@ module.exports = {
     "import-access/no-imports-outside-package": [
       "error",
       {
-        defaultProjectPackage: ".",
+        strictMode: true,
       },
     ],
   },

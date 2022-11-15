@@ -28,7 +28,7 @@ Promise.resolve().then(() => __importStar(require("typescript/lib/tsserverlibrar
 const common_1 = require("./common");
 function tsLanguageServicePlugin() {
     function create(info) {
-        const defaultPackage = info.config.defaultProjectPackage;
+        const { strictMode } = info.config;
         const proxy = Object.assign({}, info.languageService);
         proxy.getCompletionsAtPosition = (importPath, ...args) => {
             const original = info.languageService.getCompletionsAtPosition(importPath, ...args);
@@ -42,7 +42,7 @@ function tsLanguageServicePlugin() {
                 if (!entry.data)
                     return true;
                 const { exportName, fileName: exportPath } = entry.data;
-                return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName, defaultPackage });
+                return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName, strictMode });
             });
             return Object.assign(Object.assign({}, original), { entries: filtered !== null && filtered !== void 0 ? filtered : [] });
         };
@@ -61,7 +61,7 @@ function tsLanguageServicePlugin() {
                 if (!relativeExportPath)
                     return true;
                 const exportPath = (_b = info.project.resolveModuleNames([relativeExportPath], importPath)[0]) === null || _b === void 0 ? void 0 : _b.resolvedFileName;
-                return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName, defaultPackage });
+                return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName, strictMode });
             });
         };
         return proxy;

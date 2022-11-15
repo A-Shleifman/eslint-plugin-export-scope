@@ -19,11 +19,11 @@ exports.rule = createRule({
         schema: [
             {
                 type: "object",
-                properties: {
-                    defaultProjectPackage: {
-                        type: "string",
+                properties: (0, common_1.cast)({
+                    strictMode: {
+                        type: "boolean",
                     },
-                },
+                }),
                 additionalProperties: false,
             },
         ],
@@ -46,7 +46,7 @@ exports.rule = createRule({
                 importPath: context.getFilename(),
                 exportPath,
                 exportName: exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.name,
-                defaultPackage: context.options[0].defaultProjectPackage,
+                strictMode: context.options[0].strictMode,
             });
             if (!isAccessible) {
                 context.report({

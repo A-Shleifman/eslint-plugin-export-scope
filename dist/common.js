@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIsAccessible = void 0;
+exports.cast = exports.checkIsAccessible = void 0;
 const path_1 = __importDefault(require("path"));
 const typescript_1 = require("typescript");
 const PROPERTY_NAME = "package";
@@ -13,7 +13,7 @@ const getExportJsDoc = (tsProgram, exportFile, exportName) => {
     const exportSymbol = (_a = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _a === void 0 ? void 0 : _a.get((0, typescript_1.escapeLeadingUnderscores)(exportName));
     return exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.getJsDocTags().find((tag) => tag.name === PROPERTY_NAME);
 };
-const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, defaultPackage, }) => {
+const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, strictMode, }) => {
     var _a, _b, _c;
     if (!importPath || !exportPath || !exportName)
         return true;
@@ -32,11 +32,15 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, defa
         const [filePackageTag, defaultFilePackageRelativePath] = (_c = fileJsDoc === null || fileJsDoc === void 0 ? void 0 : fileJsDoc.match(fileRegExp)) !== null && _c !== void 0 ? _c : [];
         packageRelativePath = filePackageTag && defaultFilePackageRelativePath;
     }
-    // 3) get project package path
-    packageRelativePath !== null && packageRelativePath !== void 0 ? packageRelativePath : (packageRelativePath = defaultPackage);
+    // 3) defer to project settings
+    if (!packageRelativePath && strictMode) {
+        packageRelativePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".";
+    }
     if (!packageRelativePath)
         return true;
     const packageDir = packageRelativePath ? path_1.default.resolve(exportDir, packageRelativePath.trim()) : exportDir;
     return !path_1.default.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 exports.checkIsAccessible = checkIsAccessible;
+const cast = (param) => param;
+exports.cast = cast;

@@ -64,3 +64,11 @@ Add TypeScript plugin to your `tsconfig.json`. This will hide private exports fr
 You can set `strictMode` to `true` in both `tsconfig.json` and `.eslintrc` to activate the Strict Mode.
 
 Strict Mode restricts all exports to the export directory (and subdirectories) by default. `index` files are accessible one level above the export directory. Default behaviour can be overriden with `@package` properties.
+
+```ts
+// 👇 This will make all exports in the file accessible globally in Scrict Mode
+/** @package default / */
+
+export const globallyAccessibleVariable1 = "";
+export const globallyAccessibleVariable2 = "";
+```

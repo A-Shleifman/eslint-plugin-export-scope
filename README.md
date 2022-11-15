@@ -42,7 +42,7 @@ Strict mode restricts all exports to the export directory (and subdirectories) b
 
 Activate Strict Mode:
 
-```json
+```js
 // tsconfig.json
 // ...
 "plugins": [
@@ -50,10 +50,10 @@ Activate Strict Mode:
 ]
 ```
 
-```json
+```js
 // .eslintrc.js
 // ...
-rules: {
+"rules": {
   "import-access/no-imports-outside-package": ["error", { "strictMode": true }]
 }
 ```

@@ -6,8 +6,8 @@ module.exports = {
   parserOptions: {
     project: "./tsconfig.json",
   },
-  plugins: ["@typescript-eslint"],
-  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:import-access/recommended"],
+  plugins: ["@typescript-eslint", "import-access"],
+  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   ignorePatterns: [".eslintrc.js", "node_modules"],
   rules: {
     "import-access/no-imports-outside-package": [

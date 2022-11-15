@@ -20,7 +20,10 @@ Add `import-access` to the plugins section of your `.eslintrc` or `.eslintrc.js`
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": { "project": "./tsconfig.json" },
-  "extends": ["plugin:import-access/recommended"]
+  "plugins": ["import-access"],
+  "rules": {
+    "import-access/no-imports-outside-package": ["error", { "strictMode": false }]
+  }
 }
 ```
 
@@ -31,29 +34,13 @@ Add TypeScript plugin to your `tsconfig.json`. This will hide private exports fr
 ```json
 "compilerOptions": {
   "plugins": [
-    { "name": "eslint-plugin-import-access" }
+    { "name": "eslint-plugin-import-access", "strictMode": false }
   ],
 }
 ```
 
 ## Strict Mode
 
-Strict mode restricts all exports to the export directory (and subdirectories) by default. `index` files are accessible one level above the export directory. Default behaviour can be overriden with `@package` properties.
+You can set `strictMode` to `true` in both `tsconfig.json` and `.eslintrc` to activate the Strict Mode.
 
-Activate Strict Mode:
-
-```js
-// tsconfig.json
-// ...
-"plugins": [
-  { "name": "eslint-plugin-import-access", "strictMode": true }
-]
-```
-
-```js
-// .eslintrc.js
-// ...
-"rules": {
-  "import-access/no-imports-outside-package": ["error", { "strictMode": true }]
-}
-```
+Strict Mode restricts all exports to the export directory (and subdirectories) by default. `index` files are accessible one level above the export directory. Default behaviour can be overriden with `@package` properties.

@@ -40,7 +40,7 @@ export const checkIsAccessible = ({
   let packageRelativePath = localTag?.text?.[0].text;
 
   // 2) get file package path
-  if (!packageRelativePath) {
+  if (!packageRelativePath || packageRelativePath.includes("default")) {
     const fileJsDoc = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)?.[0];
 
     const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
@@ -54,7 +54,7 @@ export const checkIsAccessible = ({
     packageRelativePath = path.parse(exportFile.fileName).name === "index" ? ".." : ".";
   }
 
-  if (!packageRelativePath) return true;
+  if (!packageRelativePath || packageRelativePath === "*") return true;
 
   const packageDir = packageRelativePath ? path.resolve(exportDir, packageRelativePath.trim()) : exportDir;
   return !path.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");

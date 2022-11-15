@@ -67,7 +67,7 @@ Strict Mode restricts all exports to the export directory (and subdirectories) b
 
 ```ts
 // 👇 This will make all exports in the file accessible globally in Scrict Mode
-/** @package default / */
+/** @package default * */
 
 export const globallyAccessibleVariable1 = "";
 export const globallyAccessibleVariable2 = "";

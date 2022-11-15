@@ -26,7 +26,7 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
     // 1) get local package path
     let packageRelativePath = (_a = localTag === null || localTag === void 0 ? void 0 : localTag.text) === null || _a === void 0 ? void 0 : _a[0].text;
     // 2) get file package path
-    if (!packageRelativePath) {
+    if (!packageRelativePath || packageRelativePath.includes("default")) {
         const fileJsDoc = (_b = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)) === null || _b === void 0 ? void 0 : _b[0];
         const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
         const [filePackageTag, defaultFilePackageRelativePath] = (_c = fileJsDoc === null || fileJsDoc === void 0 ? void 0 : fileJsDoc.match(fileRegExp)) !== null && _c !== void 0 ? _c : [];
@@ -36,7 +36,7 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
     if (!packageRelativePath && strictMode) {
         packageRelativePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".";
     }
-    if (!packageRelativePath)
+    if (!packageRelativePath || packageRelativePath === "*")
         return true;
     const packageDir = packageRelativePath ? path_1.default.resolve(exportDir, packageRelativePath.trim()) : exportDir;
     return !path_1.default.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");

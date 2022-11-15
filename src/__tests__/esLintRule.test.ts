@@ -29,7 +29,7 @@ test("cannot import exports outside their folder if `defaultProjectPackage` opti
   expect(errors).toEqual(["Cannot import a private export 'state' outside its package"]);
 });
 
-test("can import private exports within their package", async () => {
+test("can import private exports within their package and can import node_modules", async () => {
   const result = await eslint.lintFiles("src/__tests__/project/src/Component/ChildComponent/index.ts");
 
   const errors = result.flatMap((x) => x.messages.map((x) => x.message));

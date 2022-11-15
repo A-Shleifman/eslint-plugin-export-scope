@@ -26,7 +26,7 @@ export const checkIsAccessible = ({
   exportName: string | undefined;
   strictMode: Config["strictMode"] | undefined;
 }) => {
-  if (!importPath || !exportPath || !exportName) return true;
+  if (!importPath || !exportPath || !exportName || exportPath.includes("node_modules")) return true;
 
   const exportFile = tsProgram.getSourceFile(exportPath);
   const exportDir = path.dirname(exportPath);

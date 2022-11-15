@@ -1,4 +1,5 @@
 import state from "./state";
+import { ESLint } from "eslint";
 
 /**
  * @description ChildComponent
@@ -6,4 +7,4 @@ import state from "./state";
  */
 export default "";
 
-console.log(state);
+console.log(state, ESLint.version);

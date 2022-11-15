@@ -15,7 +15,7 @@ const getExportJsDoc = (tsProgram, exportFile, exportName) => {
 };
 const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, strictMode, }) => {
     var _a, _b, _c;
-    if (!importPath || !exportPath || !exportName)
+    if (!importPath || !exportPath || !exportName || exportPath.includes("node_modules"))
         return true;
     const exportFile = tsProgram.getSourceFile(exportPath);
     const exportDir = path_1.default.dirname(exportPath);

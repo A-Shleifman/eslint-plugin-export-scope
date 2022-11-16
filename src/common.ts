@@ -31,32 +31,38 @@ export const checkIsAccessible = ({
   const exportFile = tsProgram.getSourceFile(exportPath);
   const exportDir = path.dirname(exportPath);
   const importDir = path.dirname(importPath);
+  let packagePath: string | undefined;
 
   if (!exportFile) return true;
 
-  const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
-
-  // 1) get local package path
-  let packageRelativePath = localTag?.text?.[0].text;
+  // 1) get package path from `@` path tags
+  const [, pathTag] = exportPath.match(/.*\/(@\.*)/) ?? [];
+  if (pathTag) {
+    // `...` => `../..`
+    const slashfulPath = [...(pathTag.slice(2) ?? [])].fill("..").join(path.sep) || ".";
+    packagePath = pathTag === "@" ? "*" : slashfulPath;
+  }
 
   // 2) get file package path
-  if (!packageRelativePath || packageRelativePath.includes("default")) {
-    const fileJsDoc = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)?.[0];
+  const fileJsDoc = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)?.[0];
+  const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
+  const [filePackageTag, relativePath] = fileJsDoc?.match(fileRegExp) ?? [];
+  packagePath = filePackageTag ? relativePath : packagePath;
 
-    const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
-    const [filePackageTag, defaultFilePackageRelativePath] = fileJsDoc?.match(fileRegExp) ?? [];
+  // 3) get local package path
+  const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
+  packagePath = localTag?.text?.[0].text ?? packagePath;
 
-    packageRelativePath = filePackageTag && defaultFilePackageRelativePath;
+  // 4) defer to project settings
+  if (strictMode) {
+    packagePath ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
   }
 
-  // 3) defer to project settings
-  if (!packageRelativePath && strictMode) {
-    packageRelativePath = path.parse(exportFile.fileName).name === "index" ? ".." : ".";
-  }
+  if (!packagePath || packagePath === "*") return true;
 
-  if (!packageRelativePath || packageRelativePath === "*") return true;
+  packagePath = packagePath.replaceAll("/", path.sep);
 
-  const packageDir = packageRelativePath ? path.resolve(exportDir, packageRelativePath.trim()) : exportDir;
+  const packageDir = packagePath ? path.resolve(exportDir, packagePath.trim()) : exportDir;
   return !path.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 

@@ -1,5 +1,6 @@
 import state from "./state";
 import { ESLint } from "eslint";
+import { utility } from "../../@common/utils";
 
 /** @package * */
 export const globalExport = "";
@@ -10,4 +11,4 @@ export const globalExport = "";
  */
 export default "";
 
-console.log(state, ESLint.version);
+console.log(state, ESLint.version, utility);

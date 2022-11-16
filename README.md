@@ -72,3 +72,14 @@ Strict Mode restricts all exports to the export directory (and subdirectories) b
 export const globallyAccessibleVariable1 = "";
 export const globallyAccessibleVariable2 = "";
 ```
+
+## Path Tags
+
+Default export scope can also be declared by adding `@` to folder/file names:
+
+| path                             | accessibility                                                   |
+| -------------------------------- | --------------------------------------------------------------- |
+| `src/@common/utils.ts`           | exports within `@common` will be global unless overriden        |
+| `src/@utils.ts`                  | exports within `@utils.ts` file will be global unless overriden |
+| `src/sub1/sub2/@..sub3/file.ts`  | exports within `@..sub3` will be available from `sub2`          |
+| `src/sub1/sub2/@...sub3/file.ts` | exports within `@...sub3` will be available from `sub1`         |

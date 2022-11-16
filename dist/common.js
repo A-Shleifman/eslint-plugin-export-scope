@@ -14,31 +14,38 @@ const getExportJsDoc = (tsProgram, exportFile, exportName) => {
     return exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.getJsDocTags().find((tag) => tag.name === PROPERTY_NAME);
 };
 const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, strictMode, }) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e, _f;
     if (!importPath || !exportPath || !exportName || exportPath.includes("node_modules"))
         return true;
     const exportFile = tsProgram.getSourceFile(exportPath);
     const exportDir = path_1.default.dirname(exportPath);
     const importDir = path_1.default.dirname(importPath);
+    let packagePath;
     if (!exportFile)
         return true;
-    const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
-    // 1) get local package path
-    let packageRelativePath = (_a = localTag === null || localTag === void 0 ? void 0 : localTag.text) === null || _a === void 0 ? void 0 : _a[0].text;
+    // 1) get package path from `@` path tags
+    const [, pathTag] = (_a = exportPath.match(/.*\/(@\.*)/)) !== null && _a !== void 0 ? _a : [];
+    if (pathTag) {
+        // `...` => `../..`
+        const slashfulPath = [...((_b = pathTag.slice(2)) !== null && _b !== void 0 ? _b : [])].fill("..").join(path_1.default.sep) || ".";
+        packagePath = pathTag === "@" ? "*" : slashfulPath;
+    }
     // 2) get file package path
-    if (!packageRelativePath || packageRelativePath.includes("default")) {
-        const fileJsDoc = (_b = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)) === null || _b === void 0 ? void 0 : _b[0];
-        const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
-        const [filePackageTag, defaultFilePackageRelativePath] = (_c = fileJsDoc === null || fileJsDoc === void 0 ? void 0 : fileJsDoc.match(fileRegExp)) !== null && _c !== void 0 ? _c : [];
-        packageRelativePath = filePackageTag && defaultFilePackageRelativePath;
+    const fileJsDoc = (_c = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)) === null || _c === void 0 ? void 0 : _c[0];
+    const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
+    const [filePackageTag, relativePath] = (_d = fileJsDoc === null || fileJsDoc === void 0 ? void 0 : fileJsDoc.match(fileRegExp)) !== null && _d !== void 0 ? _d : [];
+    packagePath = filePackageTag ? relativePath : packagePath;
+    // 3) get local package path
+    const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
+    packagePath = (_f = (_e = localTag === null || localTag === void 0 ? void 0 : localTag.text) === null || _e === void 0 ? void 0 : _e[0].text) !== null && _f !== void 0 ? _f : packagePath;
+    // 4) defer to project settings
+    if (strictMode) {
+        packagePath !== null && packagePath !== void 0 ? packagePath : (packagePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");
     }
-    // 3) defer to project settings
-    if (!packageRelativePath && strictMode) {
-        packageRelativePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".";
-    }
-    if (!packageRelativePath || packageRelativePath === "*")
+    if (!packagePath || packagePath === "*")
         return true;
-    const packageDir = packageRelativePath ? path_1.default.resolve(exportDir, packageRelativePath.trim()) : exportDir;
+    packagePath = packagePath.replaceAll("/", path_1.default.sep);
+    const packageDir = packagePath ? path_1.default.resolve(exportDir, packagePath.trim()) : exportDir;
     return !path_1.default.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 exports.checkIsAccessible = checkIsAccessible;

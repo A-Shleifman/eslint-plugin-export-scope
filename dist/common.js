@@ -32,13 +32,15 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
     }
     // 2) get file package path
     const fileJsDoc = (_c = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)) === null || _c === void 0 ? void 0 : _c[0];
-    const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default(\\s+[^\\s*]+)?`);
+    const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default\\s+(\\S+)?`);
     const [filePackageTag, relativePath] = (_d = fileJsDoc === null || fileJsDoc === void 0 ? void 0 : fileJsDoc.match(fileRegExp)) !== null && _d !== void 0 ? _d : [];
     packagePath = filePackageTag ? relativePath : packagePath;
     // 3) get local package path
     const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
     const localPathTag = (_e = localTag === null || localTag === void 0 ? void 0 : localTag.text) === null || _e === void 0 ? void 0 : _e[0].text;
-    packagePath = localPathTag && !localPathTag.includes("default") ? localPathTag : packagePath;
+    if (localPathTag && !localPathTag.includes("default")) {
+        packagePath = localPathTag;
+    }
     // 4) defer to project settings
     if (strictMode) {
         packagePath !== null && packagePath !== void 0 ? packagePath : (packagePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");

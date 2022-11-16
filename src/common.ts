@@ -51,7 +51,8 @@ export const checkIsAccessible = ({
 
   // 3) get local package path
   const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
-  packagePath = localTag?.text?.[0].text ?? packagePath;
+  const localPathTag = localTag?.text?.[0].text;
+  packagePath = localPathTag && !localPathTag.includes("default") ? localPathTag : packagePath;
 
   // 4) defer to project settings
   if (strictMode) {

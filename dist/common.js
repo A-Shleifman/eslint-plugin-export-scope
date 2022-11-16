@@ -14,7 +14,7 @@ const getExportJsDoc = (tsProgram, exportFile, exportName) => {
     return exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.getJsDocTags().find((tag) => tag.name === PROPERTY_NAME);
 };
 const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, strictMode, }) => {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e;
     if (!importPath || !exportPath || !exportName || exportPath.includes("node_modules"))
         return true;
     const exportFile = tsProgram.getSourceFile(exportPath);
@@ -37,7 +37,8 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
     packagePath = filePackageTag ? relativePath : packagePath;
     // 3) get local package path
     const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
-    packagePath = (_f = (_e = localTag === null || localTag === void 0 ? void 0 : localTag.text) === null || _e === void 0 ? void 0 : _e[0].text) !== null && _f !== void 0 ? _f : packagePath;
+    const localPathTag = (_e = localTag === null || localTag === void 0 ? void 0 : localTag.text) === null || _e === void 0 ? void 0 : _e[0].text;
+    packagePath = localPathTag && !localPathTag.includes("default") ? localPathTag : packagePath;
     // 4) defer to project settings
     if (strictMode) {
         packagePath !== null && packagePath !== void 0 ? packagePath : (packagePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");

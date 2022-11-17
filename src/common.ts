@@ -5,12 +5,17 @@ export type Config = {
   strictMode?: boolean;
 };
 
-const PROPERTY_NAME = "package";
-
-const getExportJsDoc = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
-  const symbols = exportFile && tsProgram?.getTypeChecker().getSymbolAtLocation(exportFile);
+const getExportComments = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
+  const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
   const exportSymbol = symbols?.exports?.get(escapeLeadingUnderscores(exportName));
-  return exportSymbol?.getJsDocTags().find((tag) => tag.name === PROPERTY_NAME);
+  const exportSymbolStartIndex = exportSymbol?.valueDeclaration?.getStart() ?? 0;
+
+  let exportStatementIndex = -1;
+  while (exportFile.statements[++exportStatementIndex].getEnd() < exportSymbolStartIndex);
+
+  const prevStatementEndIndex = exportFile.statements?.[exportStatementIndex - 1]?.getEnd() ?? 0;
+  const exportStatementStartIndex = exportFile.statements[exportStatementIndex].getStart();
+  return exportFile.getFullText().slice(prevStatementEndIndex, exportStatementStartIndex);
 };
 
 export const checkIsAccessible = ({
@@ -31,41 +36,42 @@ export const checkIsAccessible = ({
   const exportFile = tsProgram.getSourceFile(exportPath);
   const exportDir = path.dirname(exportPath);
   const importDir = path.dirname(importPath);
-  let packagePath: string | undefined;
+  let privatePath: string | undefined;
+
+  console.log({ packagePath: privatePath });
 
   if (!exportFile) return true;
 
-  // 1) get package path from `@` path tags
+  // 1) parse path tag
   const [, pathTag] = exportPath.match(/.*\/(@\.*)/) ?? [];
   if (pathTag) {
     // `...` => `../..`
     const slashfulPath = [...(pathTag.slice(2) ?? [])].fill("..").join(path.sep) || ".";
-    packagePath = pathTag === "@" ? "*" : slashfulPath;
+    privatePath = pathTag === "@" ? "*" : slashfulPath;
   }
 
-  // 2) get file package path
-  const fileJsDoc = exportFile.getFullText().match(/\/\*\*[\s\S]*?\*\//)?.[0];
-  const fileRegExp = new RegExp(`@${PROPERTY_NAME}[\\s]+default\\s+(\\S+)?`);
-  const [filePackageTag, relativePath] = fileJsDoc?.match(fileRegExp) ?? [];
-  packagePath = filePackageTag ? relativePath : packagePath;
+  // 2) parse file tag
+  const firstStatementEndIndex = exportFile.statements[0].getEnd();
+  const fileComments = exportFile.getFullText().slice(0, firstStatementEndIndex);
+  const [fileTagMatch, , fileTagPath] = fileComments.match(/@private[\s]+default[\s]+((\.\S*|\*)[\s])?/) ?? [];
+  privatePath = !fileTagMatch ? privatePath : fileTagPath ?? ".";
 
-  // 3) get local package path
-  const localTag = getExportJsDoc(tsProgram, exportFile, exportName);
-  const localPathTag = localTag?.text?.[0].text;
-  if (localPathTag && !localPathTag.includes("default")) {
-    packagePath = localPathTag;
-  }
+  // 3) parse local tag
+  const comments = getExportComments(tsProgram, exportFile, exportName);
+  // [^d] - ignores `@private default`
+  const [localTagMatch, , , localTagPath] = comments.match(/@private(([\s]+(\.\S*|\*)[\s])|\s+[^d])/) ?? [];
+  privatePath = !localTagMatch ? privatePath : localTagPath ?? ".";
 
   // 4) defer to project settings
   if (strictMode) {
-    packagePath ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
+    privatePath ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
   }
 
-  if (!packagePath || packagePath === "*") return true;
+  if (!privatePath || privatePath === "*") return true;
 
-  packagePath = packagePath.replaceAll("/", path.sep);
+  privatePath = privatePath.replaceAll("/", path.sep);
 
-  const packageDir = packagePath ? path.resolve(exportDir, packagePath.trim()) : exportDir;
+  const packageDir = privatePath ? path.resolve(exportDir, privatePath) : exportDir;
   return !path.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 

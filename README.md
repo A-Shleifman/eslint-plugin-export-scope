@@ -1,6 +1,6 @@
 # eslint-plugin-import-access
 
-Disallows importing private exports outside their package.
+Disallows importing private exports outside their export scope.
 
 ⚠️ VSCode ESLint Server may need to be restarted when `@package` rules are updated.
 

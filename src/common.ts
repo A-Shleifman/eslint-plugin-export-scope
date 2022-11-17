@@ -38,8 +38,6 @@ export const checkIsAccessible = ({
   const importDir = path.dirname(importPath);
   let privatePath: string | undefined;
 
-  console.log({ packagePath: privatePath });
-
   if (!exportFile) return true;
 
   // 1) parse path tag
@@ -53,14 +51,19 @@ export const checkIsAccessible = ({
   // 2) parse file tag
   const firstStatementEndIndex = exportFile.statements[0].getEnd();
   const fileComments = exportFile.getFullText().slice(0, firstStatementEndIndex);
-  const [fileTagMatch, , fileTagPath] = fileComments.match(/@private[\s]+default[\s]+((\.\S*|\*)[\s])?/) ?? [];
-  privatePath = !fileTagMatch ? privatePath : fileTagPath ?? ".";
+  const [fileTagMatch, fileTagModifier, fileTagPath] =
+    fileComments.match(/@(private|public)\s+default\s*([./]*)/) ?? [];
+  if (fileTagMatch) {
+    privatePath = fileTagModifier === "public" ? "*" : fileTagPath || ".";
+  }
 
   // 3) parse local tag
   const comments = getExportComments(tsProgram, exportFile, exportName);
-  // [^d] - ignores `@private default`
-  const [localTagMatch, , , localTagPath] = comments.match(/@private(([\s]+(\.\S*|\*)[\s])|\s+[^d])/) ?? [];
-  privatePath = !localTagMatch ? privatePath : localTagPath ?? ".";
+  const [localTagMatch, localTagModifier, localTagPath] =
+    comments.match(/(?!.+default)@(private|public)\s*([./]*)/) ?? [];
+  if (localTagMatch) {
+    privatePath = localTagModifier === "public" ? "*" : localTagPath || ".";
+  }
 
   // 4) defer to project settings
   if (strictMode) {

@@ -1,4 +1,4 @@
-# Disallows importing private exports outside their package (no-imports-outside-package)
+# Disallows importing private exports outside their export scope (no-imports-outside-package)
 
 ### Supported params
 

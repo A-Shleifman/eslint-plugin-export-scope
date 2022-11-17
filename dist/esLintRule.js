@@ -10,7 +10,7 @@ exports.rule = createRule({
     meta: {
         type: "problem",
         docs: {
-            description: "Disallows importing private exports outside their package",
+            description: "Disallows importing private exports outside their export scope",
             recommended: false,
         },
         messages: {

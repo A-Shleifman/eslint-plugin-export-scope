@@ -1,3 +1,3 @@
-/** @package default * */
+// @public default
 
 export const CONSTANT = "";

@@ -55,8 +55,8 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
     if (!privatePath || privatePath === "*")
         return true;
     privatePath = privatePath.replaceAll("/", path_1.default.sep);
-    const packageDir = privatePath ? path_1.default.resolve(exportDir, privatePath) : exportDir;
-    return !path_1.default.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
+    const scopeDir = privatePath ? path_1.default.resolve(exportDir, privatePath) : exportDir;
+    return !path_1.default.relative(scopeDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 exports.checkIsAccessible = checkIsAccessible;
 const cast = (param) => param;

@@ -74,8 +74,8 @@ export const checkIsAccessible = ({
 
   privatePath = privatePath.replaceAll("/", path.sep);
 
-  const packageDir = privatePath ? path.resolve(exportDir, privatePath) : exportDir;
-  return !path.relative(packageDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
+  const scopeDir = privatePath ? path.resolve(exportDir, privatePath) : exportDir;
+  return !path.relative(scopeDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 
 export const cast = <T>(param: T) => param;

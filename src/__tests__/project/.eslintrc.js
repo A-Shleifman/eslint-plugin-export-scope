@@ -10,7 +10,7 @@ module.exports = {
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   ignorePatterns: [".eslintrc.js", "node_modules"],
   rules: {
-    "import-access/no-imports-outside-package": [
+    "import-access/private-export": [
       "error",
       {
         strictMode: true,

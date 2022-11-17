@@ -1,16 +1,17 @@
 {
   "name": "eslint-plugin-import-access",
-  "version": "2.0.0",
+  "version": "0.0.5",
   "description": "Disallows importing private exports outside their export scope",
   "keywords": [
     "private",
+    "@private",
     "export",
-    "package",
+    "public",
     "eslint",
     "eslintplugin",
     "eslint-plugin"
   ],
-  "author": "",
+  "author": "Alex Shleifman",
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint .",

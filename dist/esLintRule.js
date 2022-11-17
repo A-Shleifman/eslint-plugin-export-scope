@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.rule = exports.ruleName = void 0;
 const utils_1 = require("@typescript-eslint/utils");
 const common_1 = require("./common");
-exports.ruleName = "no-imports-outside-package";
+exports.ruleName = "private-export";
 const createRule = utils_1.ESLintUtils.RuleCreator(() => "");
 exports.rule = createRule({
     name: exports.ruleName,
@@ -14,7 +14,7 @@ exports.rule = createRule({
             recommended: false,
         },
         messages: {
-            packagePrivate: "Cannot import a private export '{{ identifier }}' outside its package",
+            privateExport: "Cannot import a private export '{{ identifier }}' outside its export scope",
         },
         schema: [
             {
@@ -51,7 +51,7 @@ exports.rule = createRule({
             if (!isAccessible) {
                 context.report({
                     node,
-                    messageId: "packagePrivate",
+                    messageId: "privateExport",
                     data: { identifier: node.local.name },
                 });
             }

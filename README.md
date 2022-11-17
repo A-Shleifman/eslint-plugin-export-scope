@@ -42,7 +42,7 @@ Add `import-access` to the plugins section of your `.eslintrc` or `.eslintrc.js`
   "parserOptions": { "project": "./tsconfig.json" },
   "plugins": ["import-access"],
   "rules": {
-    "import-access/no-imports-outside-package": ["error", { "strictMode": false }]
+    "import-access/private-export": ["error", { "strictMode": false }]
   }
 }
 ```

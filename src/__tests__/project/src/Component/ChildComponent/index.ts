@@ -3,7 +3,8 @@ import { ESLint } from "eslint";
 import { utility } from "../../@common/utils";
 import { CONSTANT } from "../../constants";
 
-/* @public */ export const globalExport = "";
+/* @scope * */
+export const globalExport = "";
 
 export default "";
 

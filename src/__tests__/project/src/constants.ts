@@ -1,3 +1,3 @@
-// @public default
+// @scope default *
 
 export const CONSTANT = "";

@@ -1,7 +1,7 @@
 import { rule, ruleName } from "./esLintRule";
 import { tsLanguageServicePlugin } from "./tsLanguageServicePlugin";
 
-const esLintPluginName = "import-access";
+const esLintPluginName = "export-scope";
 
 const configs = {
   recommended: {

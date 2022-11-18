@@ -2,7 +2,7 @@ import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
 import { JSONSchema4 } from "@typescript-eslint/utils/dist/json-schema";
 import { cast, checkIsAccessible, Config } from "./common";
 
-export const ruleName = "private-export";
+export const ruleName = "no-imports-outside-export-scope";
 
 const createRule = ESLintUtils.RuleCreator(() => "");
 
@@ -11,11 +11,11 @@ export const rule = createRule({
   meta: {
     type: "problem",
     docs: {
-      description: "Disallows importing private exports outside their export scope",
+      description: "Disallows importing scoped exports outside their scope",
       recommended: false,
     },
     messages: {
-      privateExport: "Cannot import a private export '{{ identifier }}' outside its export scope",
+      exportScope: "Cannot import '{{ identifier }}' outside its export scope",
     },
     schema: [
       {
@@ -56,7 +56,7 @@ export const rule = createRule({
       if (!isAccessible) {
         context.report({
           node,
-          messageId: "privateExport",
+          messageId: "exportScope",
           data: { identifier: node.local.name },
         });
       }

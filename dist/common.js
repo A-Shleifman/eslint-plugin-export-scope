@@ -25,7 +25,7 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
     const exportFile = tsProgram.getSourceFile(exportPath);
     const exportDir = path_1.default.dirname(exportPath);
     const importDir = path_1.default.dirname(importPath);
-    let privatePath;
+    let scopePath;
     if (!exportFile)
         return true;
     // 1) parse path tag
@@ -33,29 +33,25 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
     if (pathTag) {
         // `...` => `../..`
         const slashfulPath = [...((_b = pathTag.slice(2)) !== null && _b !== void 0 ? _b : [])].fill("..").join(path_1.default.sep) || ".";
-        privatePath = pathTag === "@" ? "*" : slashfulPath;
+        scopePath = pathTag === "@" ? "*" : slashfulPath;
     }
     // 2) parse file tag
     const firstStatementEndIndex = exportFile.statements[0].getEnd();
     const fileComments = exportFile.getFullText().slice(0, firstStatementEndIndex);
-    const [fileTagMatch, fileTagModifier, fileTagPath] = (_c = fileComments.match(/@(private|public)\s+default\s*([./]*)/)) !== null && _c !== void 0 ? _c : [];
-    if (fileTagMatch) {
-        privatePath = fileTagModifier === "public" ? "*" : fileTagPath || ".";
-    }
+    const [, fileTagPath] = (_c = fileComments.match(/@scope\s+default\s+([./*]+)/)) !== null && _c !== void 0 ? _c : [];
+    scopePath = fileTagPath ? fileTagPath : scopePath;
     // 3) parse local tag
     const comments = getExportComments(tsProgram, exportFile, exportName);
-    const [localTagMatch, localTagModifier, localTagPath] = (_d = comments.match(/(?!.+default)@(private|public)\s*([./]*)/)) !== null && _d !== void 0 ? _d : [];
-    if (localTagMatch) {
-        privatePath = localTagModifier === "public" ? "*" : localTagPath || ".";
-    }
+    const [, localTagPath] = (_d = comments.match(/@scope\s+([./*]+)/)) !== null && _d !== void 0 ? _d : [];
+    scopePath = localTagPath ? localTagPath : scopePath;
     // 4) defer to project settings
     if (strictMode) {
-        privatePath !== null && privatePath !== void 0 ? privatePath : (privatePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");
+        scopePath !== null && scopePath !== void 0 ? scopePath : (scopePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");
     }
-    if (!privatePath || privatePath === "*")
+    if (!scopePath || scopePath === "*")
         return true;
-    privatePath = privatePath.replaceAll("/", path_1.default.sep);
-    const scopeDir = privatePath ? path_1.default.resolve(exportDir, privatePath) : exportDir;
+    scopePath = scopePath.replaceAll("/", path_1.default.sep);
+    const scopeDir = scopePath ? path_1.default.resolve(exportDir, scopePath) : exportDir;
     return !path_1.default.relative(scopeDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 exports.checkIsAccessible = checkIsAccessible;

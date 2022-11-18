@@ -1,7 +1,7 @@
 "use strict";
 const esLintRule_1 = require("./esLintRule");
 const tsLanguageServicePlugin_1 = require("./tsLanguageServicePlugin");
-const esLintPluginName = "import-access";
+const esLintPluginName = "export-scope";
 const configs = {
     recommended: {
         plugins: [esLintPluginName],

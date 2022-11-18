@@ -1,8 +1,8 @@
-# eslint-plugin-import-access
+# eslint-plugin-export-scope
 
-Disallows importing private exports outside their export scope.
+Disallows importing scoped exports outside their scope.
 
-⚠️ VSCode ESLint Server may need to be restarted when `@package` rules are updated.
+⚠️ VSCode ESLint Server may need to be restarted when accessibility declarations are updated.
 
 ## Usage Example
 
@@ -10,17 +10,26 @@ Disallows importing private exports outside their export scope.
 // 👇 default file delaration.
 // All exports in this file without a local declaration
 // 👇 will only be availabe within this dir and subdirs by default
-/** @package default . */
+/** @scope default . */
 
-// 👇 this export will be available starting from 2 dirs up and in all subdirs
-/** @package ../.. */
+// 👇 Available everywhere. Only useful in Strict Mode
+/** @scope * */
 export const helper1 = "";
 
-// 👇 infers availability from the file declaration above
+// 👇 infers availability from the default scope above
 export const helper2 = "";
 
-// 👇 same as "@package ."
-/** @package */
+// 👇 this export will be available starting from 2 dirs up and in all subdirs
+/** @scope ../.. */
+export default "";
+```
+
+Any type of comment / JSDoc can be used. Only JSDoc offers syntax highlighting in VSCode.
+
+```ts
+// @scope .
+/* @scope . */
+/** @scope . */
 export default "";
 ```
 
@@ -29,10 +38,10 @@ export default "";
 Install [ESLint](https://eslint.org/) and the ESLint plugin:
 
 ```sh
-npm i -D eslint eslint-plugin-import-access
+npm i -D eslint eslint-plugin-export-scope
 ```
 
-Add `import-access` to the plugins section of your `.eslintrc` or `.eslintrc.js` configuration file.
+Add `export-scope` to the plugins section of your `.eslintrc` or `.eslintrc.js` configuration file.
 
 ⚠ `parserOptions.project` is required for this plugin. If linting doesn't work, try adding `"include": ["**/*"]` to `tscofig.json` and `.eslintrc*` to `.eslintignore`
 
@@ -40,21 +49,21 @@ Add `import-access` to the plugins section of your `.eslintrc` or `.eslintrc.js`
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": { "project": "./tsconfig.json" },
-  "plugins": ["import-access"],
+  "plugins": ["export-scope"],
   "rules": {
-    "import-access/private-export": ["error", { "strictMode": false }]
+    "export-scope/no-imports-outside-export-scope": ["error", { "strictMode": false }]
   }
 }
 ```
 
-Add TypeScript plugin to your `tsconfig.json`. This will hide private exports from VSCode autocomplete suggestions.
+Add TypeScript plugin to your `tsconfig.json`. This will hide inaccessible exports from VSCode autocomplete suggestions.
 
 ⚠ You need to tell VSCode to `Use Workspace Version` of TypeScript. Otherwise this plugin won't work.
 
 ```json
 "compilerOptions": {
   "plugins": [
-    { "name": "eslint-plugin-import-access", "strictMode": false }
+    { "name": "eslint-plugin-export-scope", "strictMode": false }
   ],
 }
 ```
@@ -63,15 +72,7 @@ Add TypeScript plugin to your `tsconfig.json`. This will hide private exports fr
 
 You can set `strictMode` to `true` in both `tsconfig.json` and `.eslintrc` to activate the Strict Mode.
 
-Strict Mode restricts all exports to the export directory (and subdirectories) by default. `index` files are accessible one level above the export directory. Default behaviour can be overriden with `@package` properties.
-
-```ts
-// 👇 This will make all exports in the file accessible globally in Scrict Mode
-/** @package default * */
-
-export const globallyAccessibleVariable1 = "";
-export const globallyAccessibleVariable2 = "";
-```
+Strict Mode restricts all exports to the export directory (and subdirectories) by default. `index` files are accessible one level above the export directory. Default behaviour can be overriden with `@scope` properties.
 
 ## Path Tags
 

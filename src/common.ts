@@ -36,7 +36,7 @@ export const checkIsAccessible = ({
   const exportFile = tsProgram.getSourceFile(exportPath);
   const exportDir = path.dirname(exportPath);
   const importDir = path.dirname(importPath);
-  let privatePath: string | undefined;
+  let scopePath: string | undefined;
 
   if (!exportFile) return true;
 
@@ -45,36 +45,30 @@ export const checkIsAccessible = ({
   if (pathTag) {
     // `...` => `../..`
     const slashfulPath = [...(pathTag.slice(2) ?? [])].fill("..").join(path.sep) || ".";
-    privatePath = pathTag === "@" ? "*" : slashfulPath;
+    scopePath = pathTag === "@" ? "*" : slashfulPath;
   }
 
   // 2) parse file tag
   const firstStatementEndIndex = exportFile.statements[0].getEnd();
   const fileComments = exportFile.getFullText().slice(0, firstStatementEndIndex);
-  const [fileTagMatch, fileTagModifier, fileTagPath] =
-    fileComments.match(/@(private|public)\s+default\s*([./]*)/) ?? [];
-  if (fileTagMatch) {
-    privatePath = fileTagModifier === "public" ? "*" : fileTagPath || ".";
-  }
+  const [, fileTagPath] = fileComments.match(/@scope\s+default\s+([./*]+)/) ?? [];
+  scopePath = fileTagPath ? fileTagPath : scopePath;
 
   // 3) parse local tag
   const comments = getExportComments(tsProgram, exportFile, exportName);
-  const [localTagMatch, localTagModifier, localTagPath] =
-    comments.match(/(?!.+default)@(private|public)\s*([./]*)/) ?? [];
-  if (localTagMatch) {
-    privatePath = localTagModifier === "public" ? "*" : localTagPath || ".";
-  }
+  const [, localTagPath] = comments.match(/@scope\s+([./*]+)/) ?? [];
+  scopePath = localTagPath ? localTagPath : scopePath;
 
   // 4) defer to project settings
   if (strictMode) {
-    privatePath ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
+    scopePath ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
   }
 
-  if (!privatePath || privatePath === "*") return true;
+  if (!scopePath || scopePath === "*") return true;
 
-  privatePath = privatePath.replaceAll("/", path.sep);
+  scopePath = scopePath.replaceAll("/", path.sep);
 
-  const scopeDir = privatePath ? path.resolve(exportDir, privatePath) : exportDir;
+  const scopeDir = scopePath ? path.resolve(exportDir, scopePath) : exportDir;
   return !path.relative(scopeDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 

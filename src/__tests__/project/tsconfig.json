@@ -2,7 +2,7 @@
   "compilerOptions": {
     "plugins": [
       {
-        "name": "eslint-plugin-import-access",
+        "name": "eslint-plugin-export-scope",
         "strictMode": true
       }
     ],

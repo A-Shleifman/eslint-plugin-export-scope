@@ -4,7 +4,9 @@ import { cast, checkIsAccessible, Config } from "./common";
 
 export const ruleName = "no-imports-outside-export-scope";
 
-const createRule = ESLintUtils.RuleCreator(() => "");
+const createRule = ESLintUtils.RuleCreator(
+  () => "https://github.com/A-Shleifman/eslint-plugin-export-scope/blob/main/no-imports-outside-export-scope.md",
+);
 
 export const rule = createRule({
   name: ruleName,

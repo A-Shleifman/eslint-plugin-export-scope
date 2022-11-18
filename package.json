@@ -12,6 +12,10 @@
     "eslint-plugin"
   ],
   "author": "Alex Shleifman",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/A-Shleifman/eslint-plugin-export-scope"
+  },
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint .",

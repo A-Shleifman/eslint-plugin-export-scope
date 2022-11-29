@@ -58,8 +58,6 @@ Add `export-scope` to the plugins section of your `.eslintrc` or `.eslintrc.js` 
 }
 ```
 
-_If linting doesn't work, try adding `"include": ["**/*"]` to `tscofig.json` and `.eslintrc*` to `.eslintignore`_
-
 #### TS plugin:
 
 Add TypeScript plugin to your `tsconfig.json`. This will hide inaccessible exports from VSCode autocomplete suggestions.
@@ -69,7 +67,8 @@ Add TypeScript plugin to your `tsconfig.json`. This will hide inaccessible expor
   "plugins": [
     { "name": "eslint-plugin-export-scope", "strictMode": false }
   ],
-}
+},
+"include": ["**/*"],
 ```
 
 Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't work.

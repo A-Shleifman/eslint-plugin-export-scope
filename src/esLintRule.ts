@@ -31,7 +31,7 @@ export const rule = createRule({
       },
     ],
   },
-  defaultOptions: [{} as Config],
+  defaultOptions: [cast<Config>({ strictMode: false })] as const,
 
   create(context) {
     const tsProgram = ESLintUtils.getParserServices(context).program;

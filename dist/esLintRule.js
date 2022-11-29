@@ -4,7 +4,7 @@ exports.rule = exports.ruleName = void 0;
 const utils_1 = require("@typescript-eslint/utils");
 const common_1 = require("./common");
 exports.ruleName = "no-imports-outside-export-scope";
-const createRule = utils_1.ESLintUtils.RuleCreator(() => "");
+const createRule = utils_1.ESLintUtils.RuleCreator(() => "https://github.com/A-Shleifman/eslint-plugin-export-scope/blob/main/no-imports-outside-export-scope.md");
 exports.rule = createRule({
     name: exports.ruleName,
     meta: {
@@ -28,7 +28,7 @@ exports.rule = createRule({
             },
         ],
     },
-    defaultOptions: [{}],
+    defaultOptions: [(0, common_1.cast)({ strictMode: false })],
     create(context) {
         const tsProgram = utils_1.ESLintUtils.getParserServices(context).program;
         const validateNode = (node) => {

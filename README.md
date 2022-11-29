@@ -4,7 +4,7 @@ Disallows importing scoped exports outside their scope.
 
 ![Before-after comparison](/readme-src/before_after.jpg "Before-after comparison")
 
-⚠️ VSCode ESLint Server may need to be restarted when `@scope` declarations are updated.
+⚠️ VSCode ESLint Server may need to be restarted when `@scope` declarations are updated to re-lint imports.
 
 ## Usage Example
 

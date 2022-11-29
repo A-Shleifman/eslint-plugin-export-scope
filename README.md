@@ -2,7 +2,9 @@
 
 Disallows importing scoped exports outside their scope.
 
-⚠️ VSCode ESLint Server may need to be restarted when accessibility declarations are updated.
+![Before-after comparison](/readme-src/before_after.jpg "Before-after comparison")
+
+⚠️ VSCode ESLint Server may need to be restarted when `@scope` declarations are updated.
 
 ## Usage Example
 
@@ -35,15 +37,15 @@ export default "";
 
 ## Installation
 
-Install [ESLint](https://eslint.org/) and the ESLint plugin:
+Install [ESLint](https://eslint.org/) and the ESLint/TS plugin:
 
 ```sh
 npm i -D eslint eslint-plugin-export-scope
 ```
 
-Add `export-scope` to the plugins section of your `.eslintrc` or `.eslintrc.js` configuration file.
+#### ESLint plugin:
 
-⚠ `parserOptions.project` is required for this plugin. If linting doesn't work, try adding `"include": ["**/*"]` to `tscofig.json` and `.eslintrc*` to `.eslintignore`
+Add `export-scope` to the plugins section of your `.eslintrc` or `.eslintrc.js` configuration file.
 
 ```json
 {
@@ -56,9 +58,11 @@ Add `export-scope` to the plugins section of your `.eslintrc` or `.eslintrc.js` 
 }
 ```
 
-Add TypeScript plugin to your `tsconfig.json`. This will hide inaccessible exports from VSCode autocomplete suggestions.
+_If linting doesn't work, try adding `"include": ["**/*"]` to `tscofig.json` and `.eslintrc*` to `.eslintignore`_
 
-⚠ You need to tell VSCode to `Use Workspace Version` of TypeScript. Otherwise this plugin won't work.
+#### TS plugin:
+
+Add TypeScript plugin to your `tsconfig.json`. This will hide inaccessible exports from VSCode autocomplete suggestions.
 
 ```json
 "compilerOptions": {
@@ -67,6 +71,10 @@ Add TypeScript plugin to your `tsconfig.json`. This will hide inaccessible expor
   ],
 }
 ```
+
+Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't work.
+
+![Select TS version](/readme-src/ts_version.png "Select TS version")
 
 ## Strict Mode
 

@@ -48,8 +48,6 @@ npm i -D eslint eslint-plugin-export-scope
 Add `export-scope` to the plugins section of your `.eslintrc` or `.eslintrc.js` configuration file.
 
 ```json
-// "plugins": [],
-// "rules": {},
 "overrides": [{
   "files": ["*.js", "*.mjs", "*.jsx", "*.ts", "*.mts", "*.tsx"],
   "parser": "@typescript-eslint/parser",

@@ -6,12 +6,12 @@ Disallows importing scoped exports outside their scope.
 
 ## Usage Example
 
-| @scope path | restrict export to the ↓dir↓ and all subdirs                                   |
-| ----------- | ------------------------------------------------------------------------------ |
-| .           | current directory (default in the [Strict Mode](<#strict-mode-(recommended)>)) |
-| ..          | parent directory                                                               |
-| ../..       | two directories above                                                          |
-| \*          | global export                                                                  |
+| @scope path | restrict export to the ↓dir↓ and all subdirs                               |
+| ----------- | -------------------------------------------------------------------------- |
+| .           | current directory (default in the [Strict Mode](#strict-mode-recommended)) |
+| ..          | parent directory                                                           |
+| ../..       | two directories above                                                      |
+| \*          | global export                                                              |
 
 ```ts
 // 👇 Applies to all exports in the file unless overriden with a local @scope

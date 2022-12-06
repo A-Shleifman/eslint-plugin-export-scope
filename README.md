@@ -6,6 +6,8 @@ Disallows importing scoped exports outside their scope.
 
 ## Usage Example
 
+<p align="center">
+
 | @scope path | restrict export to the ↓dir↓ and all subdirs                               |
 | ----------- | -------------------------------------------------------------------------- |
 | .           | current directory (default in the [Strict Mode](#strict-mode-recommended)) |
@@ -13,7 +15,7 @@ Disallows importing scoped exports outside their scope.
 | ../..       | two directories above                                                      |
 | \*          | global export                                                              |
 
-<br>
+</p>
 
 ```ts
 // 👇 Applies to all exports in the file unless overriden with a local @scope

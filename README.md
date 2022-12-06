@@ -13,6 +13,8 @@ Disallows importing scoped exports outside their scope.
 | ../..       | two directories above                                                      |
 | \*          | global export                                                              |
 
+<br>
+
 ```ts
 // 👇 Applies to all exports in the file unless overriden with a local @scope
 /** @scope default .. */
@@ -37,9 +39,9 @@ export default "";
 
 ⚠️ To re-lint imports in VSCode after updating `@scope` declarations ESLint Server needs to be restarted [(ESLint limitation)](https://github.com/microsoft/vscode-eslint/issues/1565#event-7958473201).
 
-<div style="margin: auto; max-width: 200px;">
-  <img src="readme-src/restart_eslint_server.png" alt="Restart ESLint Server" />
-</div>
+<p align="center">
+  <img src="readme-src/restart_eslint_server.png" alt="Restart ESLint Server" width="200" />
+</p>
 
 ## Strict Mode (Recommended)
 
@@ -104,6 +106,6 @@ Add TypeScript plugin to your `tsconfig.json`. This will hide inaccessible expor
 
 Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't work.
 
-<div style="margin: auto; max-width: 600px;">
-  <img src="readme-src/ts_version.png" alt="Select TS version" />
-</div>
+<p align="center">
+  <img src="readme-src/ts_version.png" alt="Select TS version" width="600" />
+</p>

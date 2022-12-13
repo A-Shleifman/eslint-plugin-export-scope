@@ -28,10 +28,10 @@ export const checkIsAccessible = ({
   tsProgram: Program;
   importPath: string | undefined;
   exportPath: string | undefined;
-  exportName: string | undefined;
+  exportName?: string;
   strictMode: Config["strictMode"] | undefined;
 }) => {
-  if (!importPath || !exportPath || !exportName || exportPath.includes("node_modules")) return true;
+  if (!importPath || !exportPath || exportPath.includes("node_modules")) return true;
 
   const exportFile = tsProgram.getSourceFile(exportPath);
   const exportDir = path.dirname(exportPath);
@@ -55,9 +55,11 @@ export const checkIsAccessible = ({
   scopePath = fileTagPath ? fileTagPath : scopePath;
 
   // 3) parse local tag
-  const comments = getExportComments(tsProgram, exportFile, exportName);
-  const [, localTagPath] = comments.match(/@scope\s+([./*]+)/) ?? [];
-  scopePath = localTagPath ? localTagPath : scopePath;
+  if (exportName) {
+    const comments = getExportComments(tsProgram, exportFile, exportName);
+    const [, localTagPath] = comments.match(/@scope\s+([./*]+)/) ?? [];
+    scopePath = localTagPath ? localTagPath : scopePath;
+  }
 
   // 4) defer to project settings
   if (strictMode) {

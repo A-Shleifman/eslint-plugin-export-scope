@@ -20,7 +20,7 @@ const getExportComments = (tsProgram, exportFile, exportName) => {
 };
 const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, strictMode, }) => {
     var _a, _b, _c, _d;
-    if (!importPath || !exportPath || !exportName || exportPath.includes("node_modules"))
+    if (!importPath || !exportPath || exportPath.includes("node_modules"))
         return true;
     const exportFile = tsProgram.getSourceFile(exportPath);
     const exportDir = path_1.default.dirname(exportPath);
@@ -41,9 +41,11 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
     const [, fileTagPath] = (_c = fileComments.match(/@scope\s+default\s+([./*]+)/)) !== null && _c !== void 0 ? _c : [];
     scopePath = fileTagPath ? fileTagPath : scopePath;
     // 3) parse local tag
-    const comments = getExportComments(tsProgram, exportFile, exportName);
-    const [, localTagPath] = (_d = comments.match(/@scope\s+([./*]+)/)) !== null && _d !== void 0 ? _d : [];
-    scopePath = localTagPath ? localTagPath : scopePath;
+    if (exportName) {
+        const comments = getExportComments(tsProgram, exportFile, exportName);
+        const [, localTagPath] = (_d = comments.match(/@scope\s+([./*]+)/)) !== null && _d !== void 0 ? _d : [];
+        scopePath = localTagPath ? localTagPath : scopePath;
+    }
     // 4) defer to project settings
     if (strictMode) {
         scopePath !== null && scopePath !== void 0 ? scopePath : (scopePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");

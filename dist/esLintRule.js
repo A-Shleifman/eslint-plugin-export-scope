@@ -4,7 +4,6 @@ exports.rule = exports.ruleName = void 0;
 const utils_1 = require("@typescript-eslint/utils");
 const common_1 = require("./common");
 exports.ruleName = "no-imports-outside-export-scope";
-const isImportDeclaration = (node) => node.type === "ImportDeclaration";
 const createRule = utils_1.ESLintUtils.RuleCreator(() => "https://github.com/A-Shleifman/eslint-plugin-export-scope/blob/main/no-imports-outside-export-scope.md");
 exports.rule = createRule({
     name: exports.ruleName,
@@ -39,40 +38,27 @@ exports.rule = createRule({
             exportName,
             strictMode: context.options[0].strictMode,
         });
-        const validateImportSpecifier = (node) => {
+        const validateNode = (node, exportName) => {
             var _a;
-            const tsNode = utils_1.ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(node);
-            if (!(tsNode === null || tsNode === void 0 ? void 0 : tsNode.name))
+            const parseNode = "source" in node ? node.source : node.parent && "source" in node.parent ? node.parent.source : node;
+            if (!parseNode)
                 return;
-            const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode.name);
-            const exportSymbol = importSymbol && tsProgram.getTypeChecker().getImmediateAliasedSymbol(importSymbol);
-            const exportPath = (_a = exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.valueDeclaration) === null || _a === void 0 ? void 0 : _a.getSourceFile().fileName;
-            if (!checkIsAccessible({ exportPath, exportName: exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.name })) {
+            const tsNode = utils_1.ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(parseNode);
+            const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode);
+            const exportPath = (_a = importSymbol === null || importSymbol === void 0 ? void 0 : importSymbol.valueDeclaration) === null || _a === void 0 ? void 0 : _a.getSourceFile().fileName;
+            if (!checkIsAccessible({ exportPath, exportName })) {
                 context.report({
                     node,
                     messageId: "exportScope",
-                    data: { identifier: `'${node.local.name}'` },
+                    data: { identifier: exportName ? `'${exportName}'` : "module" },
                 });
             }
         };
         return {
-            ImportDeclaration: (node) => {
-                var _a;
-                if (node.specifiers.length)
-                    return;
-                const tsNode = utils_1.ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(node.source);
-                const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode);
-                const exportPath = (_a = importSymbol === null || importSymbol === void 0 ? void 0 : importSymbol.valueDeclaration) === null || _a === void 0 ? void 0 : _a.getSourceFile().fileName;
-                if (!checkIsAccessible({ exportPath })) {
-                    context.report({
-                        node,
-                        messageId: "exportScope",
-                        data: { identifier: "module" },
-                    });
-                }
-            },
-            ImportSpecifier: validateImportSpecifier,
-            ImportDefaultSpecifier: validateImportSpecifier,
+            ImportDeclaration: (node) => !node.specifiers.length && validateNode(node),
+            ImportExpression: (node) => validateNode(node),
+            ImportSpecifier: (node) => validateNode(node, node.imported.name),
+            ImportDefaultSpecifier: (node) => validateNode(node, "default"),
         };
     },
 });

@@ -1,12 +1,8 @@
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
 import { JSONSchema4 } from "@typescript-eslint/utils/dist/json-schema";
-import path from "path";
 import { cast, checkIsAccessible as _checkIsAccessible, Config } from "./common";
 
 export const ruleName = "no-imports-outside-export-scope";
-
-const isImportDeclaration = (node: { type: string }): node is TSESTree.ImportDeclaration =>
-  node.type === "ImportDeclaration";
 
 const createRule = ESLintUtils.RuleCreator(
   () => "https://github.com/A-Shleifman/eslint-plugin-export-scope/blob/main/no-imports-outside-export-scope.md",
@@ -52,42 +48,37 @@ export const rule = createRule({
         strictMode: context.options[0].strictMode,
       });
 
-    const validateImportSpecifier = (node: TSESTree.ImportSpecifier | TSESTree.ImportDefaultSpecifier) => {
-      const tsNode = ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(node);
+    const validateNode = (
+      node:
+        | TSESTree.ImportDeclaration
+        | TSESTree.ImportExpression
+        | TSESTree.ImportSpecifier
+        | TSESTree.ImportDefaultSpecifier,
+      exportName?: string,
+    ) => {
+      const parseNode =
+        "source" in node ? node.source : node.parent && "source" in node.parent ? node.parent.source : node;
 
-      if (!tsNode?.name) return;
+      if (!parseNode) return;
 
-      const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode.name);
-      const exportSymbol = importSymbol && tsProgram.getTypeChecker().getImmediateAliasedSymbol(importSymbol);
-      const exportPath = exportSymbol?.valueDeclaration?.getSourceFile().fileName;
+      const tsNode = ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(parseNode);
+      const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode);
+      const exportPath = importSymbol?.valueDeclaration?.getSourceFile().fileName;
 
-      if (!checkIsAccessible({ exportPath, exportName: exportSymbol?.name })) {
+      if (!checkIsAccessible({ exportPath, exportName })) {
         context.report({
           node,
           messageId: "exportScope",
-          data: { identifier: `'${node.local.name}'` },
+          data: { identifier: exportName ? `'${exportName}'` : "module" },
         });
       }
     };
 
     return {
-      ImportDeclaration: (node) => {
-        if (node.specifiers.length) return;
-
-        const tsNode = ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(node.source);
-        const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode);
-        const exportPath = importSymbol?.valueDeclaration?.getSourceFile().fileName;
-
-        if (!checkIsAccessible({ exportPath })) {
-          context.report({
-            node,
-            messageId: "exportScope",
-            data: { identifier: "module" },
-          });
-        }
-      },
-      ImportSpecifier: validateImportSpecifier,
-      ImportDefaultSpecifier: validateImportSpecifier,
+      ImportDeclaration: (node) => !node.specifiers.length && validateNode(node),
+      ImportExpression: (node) => validateNode(node),
+      ImportSpecifier: (node) => validateNode(node, node.imported.name),
+      ImportDefaultSpecifier: (node) => validateNode(node, "default"),
     };
   },
 });

@@ -4,6 +4,6 @@ import Component from "./Component";
 
 import "./Component/ChildComponent/listeners";
 
-import("./Component/ChildComponent/listeners").then(console.log);
+import("./Component/ChildComponent/index").then(console.log);
 
 console.log(context, helper2, helper1, Component, ChildComponent, globalExport);

@@ -15,9 +15,11 @@ test("cannot import outside export scope", async () => {
   const errors = result.flatMap((x) => x.messages.map((x) => x.message));
 
   expect(errors).toEqual([
-    "Cannot import 'context' outside its export scope",
+    "Cannot import 'default' outside its export scope",
     "Cannot import 'helper2' outside its export scope",
-    "Cannot import 'ChildComponent' outside its export scope",
+    "Cannot import 'default' outside its export scope",
+    "Cannot import module outside its export scope",
+    "Cannot import module outside its export scope",
   ]);
 });
 
@@ -26,7 +28,7 @@ test("cannot import exports outside their folder if `defaultProjectScope` option
 
   const errors = result.flatMap((x) => x.messages.map((x) => x.message));
 
-  expect(errors).toEqual(["Cannot import 'state' outside its export scope"]);
+  expect(errors).toEqual(["Cannot import 'default' outside its export scope"]);
 });
 
 test("can import within export scope and can import node_modules", async () => {

@@ -1,6 +1,8 @@
 # eslint-plugin-export-scope
 
-Disallows importing scoped exports outside their scope.
+### Disallows importing scoped exports outside their scope.
+
+Set default export scope (visibility) for the whole project/folder/file or for individual exports.
 
 ![Before-after comparison](/readme-src/before_after.jpg "Before-after comparison")
 

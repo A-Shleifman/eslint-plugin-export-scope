@@ -1,7 +1,6 @@
 src
 node_modules
 readme-src
-no-imports-outside-export-scope.md
 tsconfig.json
 .vscode
 .eslintrc.js

@@ -4,7 +4,7 @@ exports.rule = exports.ruleName = void 0;
 const utils_1 = require("@typescript-eslint/utils");
 const common_1 = require("./common");
 exports.ruleName = "no-imports-outside-export-scope";
-const createRule = utils_1.ESLintUtils.RuleCreator(() => "https://github.com/A-Shleifman/eslint-plugin-export-scope/blob/main/no-imports-outside-export-scope.md");
+const createRule = utils_1.ESLintUtils.RuleCreator(() => "https://github.com/A-Shleifman/eslint-plugin-export-scope");
 exports.rule = createRule({
     name: exports.ruleName,
     meta: {

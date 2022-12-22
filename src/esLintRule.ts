@@ -61,7 +61,7 @@ export const rule = createRule({
 
       const tsNode = ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(parseNode);
       const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode);
-      const exportPath = importSymbol?.valueDeclaration?.getSourceFile().fileName;
+      const exportPath = importSymbol?.declarations?.[0]?.getSourceFile().fileName;
 
       if (!checkIsAccessible({ exportPath, exportName })) {
         context.report({

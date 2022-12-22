@@ -8,7 +8,7 @@ export type Config = {
 const getExportComments = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
   const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
   const exportSymbol = symbols?.exports?.get(escapeLeadingUnderscores(exportName));
-  const exportSymbolStartIndex = exportSymbol?.valueDeclaration?.getStart() ?? 0;
+  const exportSymbolStartIndex = exportSymbol?.declarations?.[0]?.getStart() ?? 0;
 
   let exportStatementIndex = -1;
   while (exportFile.statements[++exportStatementIndex].getEnd() < exportSymbolStartIndex);

@@ -7,14 +7,14 @@ exports.cast = exports.checkIsAccessible = void 0;
 const path_1 = __importDefault(require("path"));
 const typescript_1 = require("typescript");
 const getExportComments = (tsProgram, exportFile, exportName) => {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g;
     const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
     const exportSymbol = (_a = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _a === void 0 ? void 0 : _a.get((0, typescript_1.escapeLeadingUnderscores)(exportName));
-    const exportSymbolStartIndex = (_c = (_b = exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.valueDeclaration) === null || _b === void 0 ? void 0 : _b.getStart()) !== null && _c !== void 0 ? _c : 0;
+    const exportSymbolStartIndex = (_d = (_c = (_b = exportSymbol === null || exportSymbol === void 0 ? void 0 : exportSymbol.declarations) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.getStart()) !== null && _d !== void 0 ? _d : 0;
     let exportStatementIndex = -1;
     while (exportFile.statements[++exportStatementIndex].getEnd() < exportSymbolStartIndex)
         ;
-    const prevStatementEndIndex = (_f = (_e = (_d = exportFile.statements) === null || _d === void 0 ? void 0 : _d[exportStatementIndex - 1]) === null || _e === void 0 ? void 0 : _e.getEnd()) !== null && _f !== void 0 ? _f : 0;
+    const prevStatementEndIndex = (_g = (_f = (_e = exportFile.statements) === null || _e === void 0 ? void 0 : _e[exportStatementIndex - 1]) === null || _f === void 0 ? void 0 : _f.getEnd()) !== null && _g !== void 0 ? _g : 0;
     const exportStatementStartIndex = exportFile.statements[exportStatementIndex].getStart();
     return exportFile.getFullText().slice(prevStatementEndIndex, exportStatementStartIndex);
 };

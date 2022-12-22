@@ -39,13 +39,13 @@ exports.rule = createRule({
             strictMode: context.options[0].strictMode,
         });
         const validateNode = (node, exportName) => {
-            var _a;
+            var _a, _b;
             const parseNode = "source" in node ? node.source : node.parent && "source" in node.parent ? node.parent.source : node;
             if (!parseNode)
                 return;
             const tsNode = utils_1.ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(parseNode);
             const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode);
-            const exportPath = (_a = importSymbol === null || importSymbol === void 0 ? void 0 : importSymbol.valueDeclaration) === null || _a === void 0 ? void 0 : _a.getSourceFile().fileName;
+            const exportPath = (_b = (_a = importSymbol === null || importSymbol === void 0 ? void 0 : importSymbol.declarations) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.getSourceFile().fileName;
             if (!checkIsAccessible({ exportPath, exportName })) {
                 context.report({
                     node,

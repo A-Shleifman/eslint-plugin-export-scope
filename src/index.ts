@@ -14,4 +14,4 @@ const configs = {
 
 const rules = { [ruleName]: rule };
 
-export = Object.assign(tsLanguageServicePlugin, { rules, configs });
+export = { ...tsLanguageServicePlugin, rules, configs };

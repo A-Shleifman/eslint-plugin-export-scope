@@ -1,67 +1,45 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tsLanguageServicePlugin = void 0;
-Promise.resolve().then(() => __importStar(require("typescript/lib/tsserverlibrary")));
 const common_1 = require("./common");
-function tsLanguageServicePlugin() {
+function tsLanguageServicePlugin(modules) {
+    const ts = modules.typescript;
     function create(info) {
-        const { strictMode } = info.config;
-        const proxy = Object.assign({}, info.languageService);
-        proxy.getCompletionsAtPosition = (importPath, ...args) => {
-            const original = info.languageService.getCompletionsAtPosition(importPath, ...args);
-            const tsProgram = info.languageService.getProgram();
+        const ls = info.languageService;
+        const proxy = Object.assign({}, ls);
+        proxy.getCompletionsAtPosition = (importPath, position, ...args) => {
+            const tsProgram = ls.getProgram();
+            const original = ls.getCompletionsAtPosition(importPath, position, ...args);
             if (!original || !tsProgram)
                 return original;
-            const filtered = original === null || original === void 0 ? void 0 : original.entries.filter((entry) => {
+            const filtered = original.entries.filter((entry) => {
+                var _a;
                 if (entry.kindModifiers !== "export")
                     return true;
-                // TODO: `import {%named export%} from '';` will not have entry.data, but should still be handled
-                if (!entry.data)
-                    return true;
-                const { exportName, fileName: exportPath } = entry.data;
-                return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName, strictMode });
+                const symbol = ls.getCompletionEntrySymbol(importPath, position, entry.name, undefined);
+                const exportPath = (_a = symbol === null || symbol === void 0 ? void 0 : symbol.declarations) === null || _a === void 0 ? void 0 : _a[0].getSourceFile().fileName;
+                return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName: entry.name });
             });
             return Object.assign(Object.assign({}, original), { entries: filtered !== null && filtered !== void 0 ? filtered : [] });
         };
         proxy.getCodeFixesAtPosition = (importPath, ...args) => {
-            const original = info.languageService.getCodeFixesAtPosition(importPath, ...args);
-            const tsProgram = info.languageService.getProgram();
+            const fixes = ls.getCodeFixesAtPosition(importPath, ...args);
+            const tsProgram = ls.getProgram();
             if (!tsProgram)
-                return original;
-            return original.filter((fix) => {
-                var _a, _b;
+                return fixes;
+            return fixes.filter((fix) => {
+                var _a, _b, _c;
                 if (fix.fixName !== "import")
                     return true;
-                const importMatch = /['"]([^'"]+?)['"][^'"]*['"]([^'"]+?)['"]/;
+                const exportPathRegex = /["]([^"]+?)["]$/;
                 // TODO: find a more reliable source of this data
-                const [, exportName, relativeExportPath] = (_a = fix.description.match(importMatch)) !== null && _a !== void 0 ? _a : [];
+                const [, relativeExportPath] = (_a = fix.description.match(exportPathRegex)) !== null && _a !== void 0 ? _a : [];
+                const exportName = (_c = (_b = fix.changes) === null || _b === void 0 ? void 0 : _b[0].textChanges) === null || _c === void 0 ? void 0 : _c[0].newText.replace(/[{} ]/g, "");
                 if (!relativeExportPath)
                     return true;
-                const exportPath = (_b = info.project.resolveModuleNames([relativeExportPath], importPath)[0]) === null || _b === void 0 ? void 0 : _b.resolvedFileName;
-                return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName, strictMode });
+                const { resolvedModule } = ts.resolveModuleName(relativeExportPath, importPath, info.project.getCompilerOptions(), ts.sys);
+                const exportPath = resolvedModule === null || resolvedModule === void 0 ? void 0 : resolvedModule.resolvedFileName;
+                return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName });
             });
         };
         return proxy;

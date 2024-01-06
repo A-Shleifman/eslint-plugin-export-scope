@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cast = exports.checkIsAccessible = void 0;
 const path_1 = __importDefault(require("path"));
 const typescript_1 = require("typescript");
+// export type Config = {
+//   strictMode?: boolean;
+// };
 const getExportComments = (tsProgram, exportFile, exportName) => {
     var _a, _b, _c, _d, _e, _f, _g;
     const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
@@ -18,7 +21,7 @@ const getExportComments = (tsProgram, exportFile, exportName) => {
     const exportStatementStartIndex = exportFile.statements[exportStatementIndex].getStart();
     return exportFile.getFullText().slice(prevStatementEndIndex, exportStatementStartIndex);
 };
-const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, strictMode, }) => {
+const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, }) => {
     var _a, _b, _c, _d;
     if (!importPath || !exportPath || exportPath.includes("node_modules"))
         return true;
@@ -47,9 +50,8 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, stri
         scopePath = localTagPath ? localTagPath : scopePath;
     }
     // 4) defer to project settings
-    if (strictMode) {
-        scopePath !== null && scopePath !== void 0 ? scopePath : (scopePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");
-    }
+    // TODO: handle strict mode alternative
+    scopePath !== null && scopePath !== void 0 ? scopePath : (scopePath = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");
     if (!scopePath || scopePath === "*")
         return true;
     scopePath = scopePath.replaceAll("/", path_1.default.sep);

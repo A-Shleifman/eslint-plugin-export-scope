@@ -11,40 +11,34 @@ exports.rule = createRule({
         type: "problem",
         docs: {
             description: "Disallows importing scoped exports outside their scope",
-            recommended: false,
         },
         messages: {
             exportScope: "Cannot import {{ identifier }} outside its export scope",
         },
-        schema: [
-            {
-                type: "object",
-                properties: (0, common_1.cast)({
-                    strictMode: {
-                        type: "boolean",
-                    },
-                }),
-                additionalProperties: false,
-            },
-        ],
+        schema: [],
+        // schema: [
+        //   {
+        //     type: "object",
+        //     properties: cast<Record<keyof Config, JSONSchema4>>({
+        //       strictMode: {
+        //         type: "boolean",
+        //       },
+        //     }),
+        //     additionalProperties: false,
+        //   },
+        // ],
     },
-    defaultOptions: [(0, common_1.cast)({ strictMode: false })],
+    // defaultOptions: [cast<Config>({ strictMode: false })] as const,
+    defaultOptions: [],
     create(context) {
-        const tsProgram = utils_1.ESLintUtils.getParserServices(context).program;
-        const checkIsAccessible = ({ exportPath, exportName, }) => (0, common_1.checkIsAccessible)({
-            tsProgram,
-            importPath: context.getFilename(),
-            exportPath,
-            exportName,
-            strictMode: context.options[0].strictMode,
-        });
+        const services = utils_1.ESLintUtils.getParserServices(context);
+        const checkIsAccessible = (props) => (0, common_1.checkIsAccessible)(Object.assign({ tsProgram: services.program, importPath: context.filename }, props));
         const validateNode = (node, exportName) => {
             var _a, _b;
             const parseNode = "source" in node ? node.source : node.parent && "source" in node.parent ? node.parent.source : node;
             if (!parseNode)
                 return;
-            const tsNode = utils_1.ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(parseNode);
-            const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode);
+            const importSymbol = services.getSymbolAtLocation(parseNode);
             const exportPath = (_b = (_a = importSymbol === null || importSymbol === void 0 ? void 0 : importSymbol.declarations) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.getSourceFile().fileName;
             if (!checkIsAccessible({ exportPath, exportName })) {
                 context.report({

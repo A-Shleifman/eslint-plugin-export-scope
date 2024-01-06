@@ -4,7 +4,8 @@ const eslint = new ESLint({
   overrideConfigFile: "src/__tests__/project/.eslintrc.js",
   overrideConfig: {
     parserOptions: {
-      project: "src/__tests__/project/tsconfig.json",
+      project: true,
+      tsconfigRootDir: __dirname,
     },
   },
 });

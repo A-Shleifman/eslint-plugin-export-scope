@@ -6,7 +6,8 @@
       "type": "node",
       "request": "attach",
       "name": "Attach to VS Code TS Server via Port",
-      "processId": "${command:PickProcess}"
+      "port": 5667,
+      "customDescriptionGenerator": "'__tsDebuggerDisplay' in this ? this.__tsDebuggerDisplay(defaultValue) : defaultValue"
     }
   ]
 }

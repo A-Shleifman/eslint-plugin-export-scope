@@ -6,6 +6,6 @@ import { util1 } from "./Component/utils";
 
 import "./Component/ChildComponent/listeners";
 
-import("./Component/ChildComponent/index").then(console.log);
+// import("./Component/ChildComponent/index").then(console.log);
 
 console.log(context, helper2, helper1, Component, ChildComponent, globalExport, globalState, util1);

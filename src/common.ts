@@ -1,9 +1,9 @@
 import path from "path";
 import { escapeLeadingUnderscores, Program, SourceFile } from "typescript";
 
-export type Config = {
-  strictMode?: boolean;
-};
+// export type Config = {
+//   strictMode?: boolean;
+// };
 
 const getExportComments = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
   const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
@@ -23,13 +23,11 @@ export const checkIsAccessible = ({
   importPath,
   exportPath,
   exportName,
-  strictMode,
 }: {
   tsProgram: Program;
   importPath: string | undefined;
   exportPath: string | undefined;
   exportName?: string;
-  strictMode: Config["strictMode"] | undefined;
 }) => {
   if (!importPath || !exportPath || exportPath.includes("node_modules")) return true;
 
@@ -62,9 +60,8 @@ export const checkIsAccessible = ({
   }
 
   // 4) defer to project settings
-  if (strictMode) {
-    scopePath ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
-  }
+  // TODO: handle strict mode alternative
+  scopePath ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
 
   if (!scopePath || scopePath === "*") return true;
 

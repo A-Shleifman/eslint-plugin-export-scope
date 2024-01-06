@@ -1,6 +1,5 @@
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
-import { JSONSchema4 } from "@typescript-eslint/utils/dist/json-schema";
-import { cast, checkIsAccessible as _checkIsAccessible, Config } from "./common";
+import { checkIsAccessible as _checkIsAccessible } from "./common";
 
 export const ruleName = "no-imports-outside-export-scope";
 
@@ -12,39 +11,31 @@ export const rule = createRule({
     type: "problem",
     docs: {
       description: "Disallows importing scoped exports outside their scope",
-      recommended: false,
     },
     messages: {
       exportScope: "Cannot import {{ identifier }} outside its export scope",
     },
-    schema: [
-      {
-        type: "object",
-        properties: cast<Record<keyof Config, JSONSchema4>>({
-          strictMode: {
-            type: "boolean",
-          },
-        }),
-        additionalProperties: false,
-      },
-    ],
+    schema: [],
+    // schema: [
+    //   {
+    //     type: "object",
+    //     properties: cast<Record<keyof Config, JSONSchema4>>({
+    //       strictMode: {
+    //         type: "boolean",
+    //       },
+    //     }),
+    //     additionalProperties: false,
+    //   },
+    // ],
   },
-  defaultOptions: [cast<Config>({ strictMode: false })] as const,
+  // defaultOptions: [cast<Config>({ strictMode: false })] as const,
+  defaultOptions: [],
 
   create(context) {
-    const tsProgram = ESLintUtils.getParserServices(context).program;
+    const services = ESLintUtils.getParserServices(context);
 
-    const checkIsAccessible = ({
-      exportPath,
-      exportName,
-    }: Pick<Parameters<typeof _checkIsAccessible>[0], "exportPath" | "exportName">) =>
-      _checkIsAccessible({
-        tsProgram,
-        importPath: context.getFilename(),
-        exportPath,
-        exportName,
-        strictMode: context.options[0].strictMode,
-      });
+    const checkIsAccessible = (props: Pick<Parameters<typeof _checkIsAccessible>[0], "exportPath" | "exportName">) =>
+      _checkIsAccessible({ tsProgram: services.program, importPath: context.filename, ...props });
 
     const validateNode = (
       node:
@@ -59,8 +50,7 @@ export const rule = createRule({
 
       if (!parseNode) return;
 
-      const tsNode = ESLintUtils.getParserServices(context).esTreeNodeToTSNodeMap.get(parseNode);
-      const importSymbol = tsProgram.getTypeChecker().getSymbolAtLocation(tsNode);
+      const importSymbol = services.getSymbolAtLocation(parseNode);
       const exportPath = importSymbol?.declarations?.[0]?.getSourceFile().fileName;
 
       if (!checkIsAccessible({ exportPath, exportName })) {

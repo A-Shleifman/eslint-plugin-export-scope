@@ -3,15 +3,7 @@ import { ESLint } from "eslint";
 const DEFAULT_EXPORT_OUTSIDE_SCOPE = "Cannot import 'default' outside its export scope";
 const NAMED_EXPORT_OUTSIDE_SCOPE = "Cannot import 'namedExport' outside its export scope";
 
-const eslint = new ESLint({
-  overrideConfigFile: "src/__tests__/project/.eslintrc.js",
-  overrideConfig: {
-    parserOptions: {
-      project: true,
-      tsconfigRootDir: __dirname,
-    },
-  },
-});
+const eslint = new ESLint({ overrideConfigFile: "src/__tests__/project/.eslintrc.js" });
 
 const lint = async (file: string) => {
   const result = await eslint.lintFiles(`src/__tests__/project/src/${file}`);

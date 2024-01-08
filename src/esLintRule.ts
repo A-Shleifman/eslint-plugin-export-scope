@@ -16,19 +16,7 @@ export const rule = createRule({
       exportScope: "Cannot import {{ identifier }} outside its export scope",
     },
     schema: [],
-    // schema: [
-    //   {
-    //     type: "object",
-    //     properties: cast<Record<keyof Config, JSONSchema4>>({
-    //       strictMode: {
-    //         type: "boolean",
-    //       },
-    //     }),
-    //     additionalProperties: false,
-    //   },
-    // ],
   },
-  // defaultOptions: [cast<Config>({ strictMode: false })] as const,
   defaultOptions: [],
 
   create(context) {

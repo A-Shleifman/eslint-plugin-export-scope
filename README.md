@@ -1,111 +1,108 @@
 # eslint-plugin-export-scope
 
-**Disallows importing scoped exports outside their scope.**
-
-Set default export scope (visibility) for the whole project/folder/file or for individual exports.
+Set export scope (importability) for local utils, states, contexts, components, e.t.c. They should only be visible/accessible within their local scope.
 
 ![Before-after comparison](/readme-src/before_after.jpg "Before-after comparison")
 
-## Usage Example
-
 <p align="center">
 
-| @scope path | restrict export to the ↓dir↓ and all subdirs                               |
-| ----------- | -------------------------------------------------------------------------- |
-| .           | current directory (default in the [Strict Mode](#strict-mode-recommended)) |
-| ..          | parent directory                                                           |
-| ../..       | two directories above                                                      |
-| \*          | global export                                                              |
+| scope | importable from                    |                               |
+| ----- | ---------------------------------- | ----------------------------- |
+| [^0]  | current directory and children     | default for all exports       |
+| [^1]  | parent directory and children      | default for **`index`** files |
+| [^2]  | two directories above and children |                               |
+| [^*]  | anywhere                           |                               |
 
 </p>
 
-```ts
-// 👇 Applies to all exports in the file unless overriden with a local @scope
-/** @scope default .. */
+## Scoped Exports
 
-/** @scope * */
+```ts
+// default[^1]
+/** ☝ Applies to all exports in the file unless overriden with a local [^] */
+
+// [^*]
 export const helper1 = ""; // 👈 Available everywhere
 
-export const helper2 = ""; // 👈 infers scope from `@scope default`
+export const helper2 = ""; // 👈 inherits scope from `default[^1]`
 
-/** @scope ../.. */
-export default "";
+/** [^2] */ export default "";
 ```
 
-Any type of comment / JSDoc can be used. Only JSDoc offers syntax highlighting in VSCode.
+## Scope Files
 
-```ts
-// @scope .
-/* @scope . */
-/** @scope . */
-export default "";
+Set default folder scope with **scope files** like [^0], [^1], [^2], [^*]. These files are usually blank.
+
+```
+└── src
+  └── common
+    ├── [^*] 👈 this will make all exports within `common` accessible from anywhere unless a specific export is overriden on a lower level
+    ├── context.ts
+    └── utils.ts
 ```
 
-⚠️ To re-lint imports in VSCode after updating `@scope` declarations ESLint Server needs to be restarted [(ESLint limitation)](https://github.com/microsoft/vscode-eslint/issues/1565#event-7958473201).
+_Hint: creating a **[^\*]** file in the root of the project will make all exports global by default if you prefer this approach_
+
+### Exceptions
+
+Exceptions to the default scope can be provided inside **scope files**
+
+```
+└── src
+  └── generated
+    ├── [^0] 👈 exports only available within this folder
+    └── schema.ts
+  └── scripts
+    └── index.ts
+```
+
+```sh
+# [^0]
+../scripts  👈 but any file under `src/scripts` can import
+../scripts/index.ts 👈 but `src/scripts/index.ts` can import
+```
+
+## Issues
+
+⚠️ To re-lint imports in VSCode after updating `[^]` declarations ESLint Server needs to be restarted [(ESLint limitation)](https://github.com/microsoft/vscode-eslint/issues/1565#event-7958473201).
 
 <p align="center">
   <img src="readme-src/restart_eslint_server.png" alt="Restart ESLint Server" width="200" />
 </p>
 
-## Strict Mode (Recommended)
-
-You can activate the Strict Mode by setting `strictMode` to `true` in both `tsconfig.json` and `.eslintrc.*`.
-
-Strict Mode restricts all exports to the export directory (and subdirectories) by default. `index` files are accessible one level above the export directory. Default behaviour can be overriden with `@scope` properties.
-
-## Path Tags
-
-Default export scope can also be declared by adding `@` to folder/file names:
-
-| path                             | accessibility                                                   |
-| -------------------------------- | --------------------------------------------------------------- |
-| `src/@common/utils.ts`           | exports within `@common` will be global unless overriden        |
-| `src/@utils.ts`                  | exports within `@utils.ts` file will be global unless overriden |
-| `src/sub1/sub2/@..sub3/file.ts`  | exports within `@..sub3` will be available from `sub2`          |
-| `src/sub1/sub2/@...sub3/file.ts` | exports within `@...sub3` will be available from `sub1`         |
-
 ## Installation
 
-Install [ESLint](https://eslint.org/) and the ESLint/TS plugin:
+Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an ESLint plugin and a TS Language Server plugin.
 
 ```sh
 npm i -D eslint eslint-plugin-export-scope
 ```
 
-#### ESLint plugin:
+#### ESLint plugin will highlight imports outside the scope
 
-Add ESLint plugin to your `.eslintrc.js` configuration file.
-
-##### .eslintrc.js
-
-```json
-"overrides": [{
-  "files": ["*.js", "*.mjs", "*.jsx", "*.ts", "*.mts", "*.tsx"],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": { "project": "tsconfig.json" },
-  "plugins": ["export-scope"],
-  "rules": {
-    "export-scope/no-imports-outside-export-scope": [
-      "error",
-      { "strictMode": false }
-    ]
-  }
-}]
+```js
+// .eslintrc.js
+module.exports = {
+  // ...
+  overrides: [
+    {
+      files: ["*.js", "*.mjs", "*.jsx", "*.ts", "*.mts", "*.tsx"],
+      parser: "@typescript-eslint/parser",
+      parserOptions: { project: true, tsconfigRootDir: __dirname },
+      plugins: ["export-scope"],
+      rules: { "export-scope/no-imports-outside-export-scope": "error" },
+    },
+  ],
+};
 ```
 
-#### TS plugin:
-
-Add TypeScript plugin to your `tsconfig.json`. This will hide inaccessible exports from VSCode autocomplete suggestions.
-
-##### tsconfig.json
+#### TS plugin will disable autocompletion for exports outside the scope
 
 ```json
+// tsconfig.json
 "compilerOptions": {
-  "plugins": [
-    { "name": "eslint-plugin-export-scope", "strictMode": false }
-  ],
+  "plugins": [{ "name": "eslint-plugin-export-scope" }],
 },
-"include": ["**/*"],
 ```
 
 Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't work.

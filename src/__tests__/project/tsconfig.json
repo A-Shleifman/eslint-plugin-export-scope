@@ -6,6 +6,5 @@
     "esModuleInterop": true,
     "noEmit": true,
     "baseUrl": "src"
-  },
-  "include": ["./src/**/*"]
+  }
 }

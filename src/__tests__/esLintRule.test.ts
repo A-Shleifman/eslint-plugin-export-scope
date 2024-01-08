@@ -1,6 +1,7 @@
 import { ESLint } from "eslint";
 
 const DEFAULT_EXPORT_OUTSIDE_SCOPE = "Cannot import 'default' outside its export scope";
+const NAMED_EXPORT_OUTSIDE_SCOPE = "Cannot import 'namedExport' outside its export scope";
 
 const eslint = new ESLint({
   overrideConfigFile: "src/__tests__/project/.eslintrc.js",
@@ -53,5 +54,8 @@ test("whitelisted file in scope configs", async () => {
 
 test("whitelisted folder in scope configs", async () => {
   expect(await lint("Component/utils/whitelistedFolderTest.ts")).toHaveLength(0);
-  expect(await lint("Component/utils2/whitelistedFolderNegativeTest.ts")).toEqual([DEFAULT_EXPORT_OUTSIDE_SCOPE]);
+  expect(await lint("Component/utils2/whitelistedFolderNegativeTest.ts")).toEqual([
+    DEFAULT_EXPORT_OUTSIDE_SCOPE,
+    NAMED_EXPORT_OUTSIDE_SCOPE,
+  ]);
 });

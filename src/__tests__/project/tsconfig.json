@@ -2,7 +2,7 @@
   "compilerOptions": {
     "plugins": [{ "name": "eslint-plugin-export-scope" }],
     "target": "ES2017",
-    "module": "NodeNext",
+    "module": "CommonJS",
     "esModuleInterop": true,
     "noEmit": true,
     "baseUrl": "src"

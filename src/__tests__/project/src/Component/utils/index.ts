@@ -1,2 +1,2 @@
-/** @scope default * */
+/** default[^*] */
 export * from "./exports";

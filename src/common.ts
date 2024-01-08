@@ -1,9 +1,11 @@
 import path from "path";
-import { escapeLeadingUnderscores, Program, SourceFile } from "typescript";
+import fs from "fs";
+import { escapeLeadingUnderscores } from "typescript";
+import type { Program, SourceFile } from "typescript";
 
-// export type Config = {
-//   strictMode?: boolean;
-// };
+const _SCOPE_REGEXP = /\[\^(\d+|\*)\]/;
+const SCOPE_REGEXP = new RegExp(`(?<!default)${_SCOPE_REGEXP.source}`);
+const DEFAULT_SCOPE_REGEXP = new RegExp(`default${_SCOPE_REGEXP.source}`);
 
 const getExportComments = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
   const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
@@ -34,41 +36,72 @@ export const checkIsAccessible = ({
   const exportFile = tsProgram.getSourceFile(exportPath);
   const exportDir = path.dirname(exportPath);
   const importDir = path.dirname(importPath);
-  let scopePath: string | undefined;
+  let scopeUpLevels: string | undefined;
 
   if (!exportFile) return true;
 
-  // 1) parse path tag
-  const [, pathTag] = exportPath.match(/.*\/(@\.*)/) ?? [];
-  if (pathTag) {
-    // `...` => `../..`
-    const slashfulPath = [...(pathTag.slice(2) ?? [])].fill("..").join(path.sep) || ".";
-    scopePath = pathTag === "@" ? "*" : slashfulPath;
+  // 1) parse local tag
+  if (exportName) {
+    const comments = getExportComments(tsProgram, exportFile, exportName);
+    const [, localScopeUpLevels] = comments.match(SCOPE_REGEXP) ?? [];
+    scopeUpLevels = localScopeUpLevels;
   }
 
   // 2) parse file tag
-  const firstStatementEndIndex = exportFile.statements[0].getEnd();
-  const fileComments = exportFile.getFullText().slice(0, firstStatementEndIndex);
-  const [, fileTagPath] = fileComments.match(/@scope\s+default\s+([./*]+)/) ?? [];
-  scopePath = fileTagPath ? fileTagPath : scopePath;
-
-  // 3) parse local tag
-  if (exportName) {
-    const comments = getExportComments(tsProgram, exportFile, exportName);
-    const [, localTagPath] = comments.match(/@scope\s+([./*]+)/) ?? [];
-    scopePath = localTagPath ? localTagPath : scopePath;
+  if (!scopeUpLevels) {
+    const firstStatementEndIndex = exportFile.statements[0].getEnd();
+    const fileComments = exportFile.getFullText().slice(0, firstStatementEndIndex);
+    const [, fileScopeUpLevels] = fileComments.match(DEFAULT_SCOPE_REGEXP) ?? [];
+    scopeUpLevels = fileScopeUpLevels ?? scopeUpLevels;
   }
 
-  // 4) defer to project settings
-  // TODO: handle strict mode alternative
-  scopePath ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
+  // 3) parse scope files
+  if (!scopeUpLevels) {
+    let nearestScopeConfigFileName: string | undefined;
+    let currentDir = exportDir;
+    while (currentDir !== "/") {
+      const fileNames = fs.readdirSync(currentDir);
+      // console.debug("reading dir", currentDir);
+      const scopeFileName = fileNames.find((x) => SCOPE_REGEXP.test(x));
 
-  if (!scopePath || scopePath === "*") return true;
+      if (scopeFileName) {
+        nearestScopeConfigFileName = scopeFileName;
+        break;
+      }
 
-  scopePath = scopePath.replaceAll("/", path.sep);
+      if (fileNames.includes("package.json")) {
+        break;
+      }
 
-  const scopeDir = scopePath ? path.resolve(exportDir, scopePath) : exportDir;
+      currentDir = path.dirname(currentDir);
+    }
+
+    if (nearestScopeConfigFileName) {
+      [, scopeUpLevels] = nearestScopeConfigFileName.match(SCOPE_REGEXP) ?? [];
+      const scopeConfigPath = path.resolve(currentDir, nearestScopeConfigFileName);
+      const fileText = fs.readFileSync(scopeConfigPath, "utf8");
+      // console.debug("reading file", scopeConfigPath);
+
+      const isWhitelisted = fileText.split("\n").some((relativePath) => {
+        const whitelistedPath = path.resolve(path.dirname(scopeConfigPath), relativePath);
+
+        return new RegExp(`^${whitelistedPath}($|${path.sep}.*)`, "i").test(importPath);
+      });
+
+      if (isWhitelisted) return true;
+    }
+  }
+
+  // 4) handle index files
+  scopeUpLevels ??= path.parse(exportFile.fileName).name === "index" ? "1" : "0";
+
+  if (scopeUpLevels === "*") return true;
+
+  let scopeDir = exportDir;
+  for (let i = 0; i < Number(scopeUpLevels); i++) {
+    scopeDir = path.dirname(scopeDir);
+  }
+
+  // const scopeDir = scopePath ? path.resolve(exportDir, scopePath) : exportDir;
   return !path.relative(scopeDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
-
-export const cast = <T>(param: T) => param;

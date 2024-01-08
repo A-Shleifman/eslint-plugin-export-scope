@@ -1,12 +1,12 @@
 /**
  * @description context
- * @scope default .
+ * default[^0]
  */
 
-/** @scope .. */
+/** [^1] */
 export const helper1 = "";
 
 export const helper2 = "";
 
-// @scope .
+// [^0]
 export default "";

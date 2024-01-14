@@ -21,13 +21,13 @@ const getParentCompletions = (rootDir, importDir) => {
     const completions = (0, exports.getNewCompletions)();
     let currentDir = importDir;
     while (currentDir !== rootDir) {
-        completions.entries.push((0, exports.entry)((0, path_1.relative)(rootDir, currentDir), typescript_1.ScriptElementKind.directory));
+        completions.entries.push((0, exports.entry)((0, path_1.relative)(rootDir, currentDir), typescript_1.ScriptElementKind.string));
         currentDir = (0, path_1.dirname)(currentDir);
     }
     const levelsUp = Math.min(3, completions.entries.length);
-    completions.entries.push((0, exports.entry)(".", typescript_1.ScriptElementKind.directory));
+    completions.entries.push((0, exports.entry)(".", typescript_1.ScriptElementKind.string));
     for (let i = 1; i <= levelsUp; i++) {
-        completions.entries.push((0, exports.entry)(Array(i).fill("..").join("/"), typescript_1.ScriptElementKind.directory));
+        completions.entries.push((0, exports.entry)(Array(i).fill("..").join("/"), typescript_1.ScriptElementKind.string));
     }
     return completions;
 };

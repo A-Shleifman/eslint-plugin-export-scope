@@ -17,7 +17,7 @@ const getCompletionsAtPosition = (ts, info) => (importPath, position, ...args) =
     const fileTextToPosition = file === null || file === void 0 ? void 0 : file.getFullText().slice(0, position);
     if (!fileTextToPosition)
         return original;
-    if ((0, path_1.basename)(importPath) === "scope.ts") {
+    if ((0, path_1.basename)(importPath) === common_1.SCOPE_FILE_NAME) {
         return (_a = (0, scopeFileCompletions_1.getScopeFileCompletions)(ts, importDir, fileTextToPosition)) !== null && _a !== void 0 ? _a : original;
     }
     {
@@ -29,7 +29,7 @@ const getCompletionsAtPosition = (ts, info) => (importPath, position, ...args) =
             kindModifiers: "",
             sortText: "10",
             isSnippet: true,
-            insertText: `/** @s${name} ${"${0}"} */`,
+            insertText: `/** @${name} ${"${0}"} */`,
             replacementSpan: { start: position - 1, length: 1 },
         });
         if (snippetTriggerFound) {

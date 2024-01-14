@@ -49,7 +49,7 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, }) =
     }
     // 3) parse scope files
     if (!scopeUpLevels) {
-        const scopeConfigPath = (0, utils_1.getPathOfTheNearestConfig)(exportDir, "scope.ts");
+        const scopeConfigPath = (0, utils_1.getPathOfTheNearestConfig)(exportDir, exports.SCOPE_FILE_NAME);
         if (scopeConfigPath) {
             // [, scopeUpLevels] = nearestScopeConfigFileName.match(SCOPE_REGEXP) ?? [];
             const fileText = fs_1.default.readFileSync(scopeConfigPath, "utf8");

@@ -1,19 +1,12 @@
 /**
  * @description context
- * default[^0]
+ * @scopeDefault .
  */
 
-/** [^1] */
+/** @sscope .. */
 export const helper1 = "";
 
 export const helper2 = "";
 
-/**
- * @scopeException
- * @scope
- * @scopeDefault
- *
- *
- *
- */
+/** @scopeException src/Component/ChildComponent/generated */
 export default "";

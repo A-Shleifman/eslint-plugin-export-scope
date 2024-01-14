@@ -37,8 +37,8 @@ export const jsDocCompletions = (importDir: string, completions: WithMetadata<Co
     return {
       ...getNewCompletions(),
       entries: [
-        ...dirPaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.directory)),
-        ...filePaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.moduleElement)),
+        ...dirPaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.string)),
+        ...filePaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.string)),
       ],
     };
   }

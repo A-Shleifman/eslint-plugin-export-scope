@@ -1,5 +1,5 @@
 import { ScriptElementKind, type LanguageService, type server } from "typescript";
-import { checkIsAccessible } from "../common";
+import { SCOPE_FILE_NAME, checkIsAccessible } from "../common";
 import { basename, dirname } from "path";
 import { getNewCompletions } from "./tsUtils";
 
@@ -20,7 +20,7 @@ export const getCompletionsAtPosition =
 
     if (!fileTextToPosition) return original;
 
-    if (basename(importPath) === "scope.ts") {
+    if (basename(importPath) === SCOPE_FILE_NAME) {
       return getScopeFileCompletions(ts, importDir, fileTextToPosition) ?? original;
     }
 
@@ -34,7 +34,7 @@ export const getCompletionsAtPosition =
         kindModifiers: "",
         sortText: "10",
         isSnippet: true,
-        insertText: `/** @s${name} ${"${0}"} */`,
+        insertText: `/** @${name} ${"${0}"} */`,
         replacementSpan: { start: position - 1, length: 1 },
       });
 

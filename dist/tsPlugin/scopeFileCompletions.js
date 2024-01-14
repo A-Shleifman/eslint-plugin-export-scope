@@ -35,8 +35,8 @@ const getScopeFileCompletions = (ts, importDir, fileTextToPosition) => {
     }
     const { filePaths, dirPaths } = (0, utils_1.getFileTree)(rootDir);
     return Object.assign(Object.assign({}, (0, tsUtils_1.getNewCompletions)()), { entries: [
-            ...dirPaths.map((x) => (0, tsUtils_1.entry)((0, path_1.relative)(rootDir, x), typescript_1.ScriptElementKind.directory)),
-            ...filePaths.map((x) => (0, tsUtils_1.entry)((0, path_1.relative)(rootDir, x), typescript_1.ScriptElementKind.moduleElement)),
+            ...dirPaths.map((x) => (0, tsUtils_1.entry)((0, path_1.relative)(rootDir, x), typescript_1.ScriptElementKind.string)),
+            ...filePaths.map((x) => (0, tsUtils_1.entry)((0, path_1.relative)(rootDir, x), typescript_1.ScriptElementKind.string)),
         ] });
 };
 exports.getScopeFileCompletions = getScopeFileCompletions;

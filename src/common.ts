@@ -59,7 +59,7 @@ export const checkIsAccessible = ({
 
   // 3) parse scope files
   if (!scopeUpLevels) {
-    const scopeConfigPath = getPathOfTheNearestConfig(exportDir, "scope.ts");
+    const scopeConfigPath = getPathOfTheNearestConfig(exportDir, SCOPE_FILE_NAME);
 
     if (scopeConfigPath) {
       // [, scopeUpLevels] = nearestScopeConfigFileName.match(SCOPE_REGEXP) ?? [];

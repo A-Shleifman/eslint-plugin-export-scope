@@ -8,5 +8,5 @@ export const helper1 = "";
 
 export const helper2 = "";
 
-// [^0]
+/** @scope . */
 export default "";

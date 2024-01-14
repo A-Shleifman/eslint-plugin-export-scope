@@ -12,3 +12,4 @@ const configs = {
 };
 const rules = { [esLintRule_1.ruleName]: esLintRule_1.rule };
 module.exports = Object.assign(tsLanguageServicePlugin_1.tsLanguageServicePlugin, { rules, configs });
+//# sourceMappingURL=index.js.map

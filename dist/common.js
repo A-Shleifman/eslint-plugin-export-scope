@@ -3,13 +3,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIsAccessible = void 0;
+exports.checkIsAccessible = exports.getRootDir = exports.getPathOfTheNearestConfig = void 0;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const typescript_1 = require("typescript");
 const _SCOPE_REGEXP = /\[\^(\d+|\*)\]/;
 const SCOPE_REGEXP = new RegExp(`(?<!default)${_SCOPE_REGEXP.source}`);
 const DEFAULT_SCOPE_REGEXP = new RegExp(`default${_SCOPE_REGEXP.source}`);
+const getPathOfTheNearestConfig = (originPath, configFileName) => {
+    let currentDir = originPath;
+    while (currentDir !== "/") {
+        const fileNames = fs_1.default.readdirSync(currentDir);
+        // console.debug("reading dir", currentDir);
+        const isFound = fileNames.some((x) => x === configFileName);
+        if (isFound) {
+            return path_1.default.resolve(currentDir, configFileName);
+        }
+        if (fileNames.includes("package.json")) {
+            return null;
+        }
+        currentDir = path_1.default.dirname(currentDir);
+    }
+    return null;
+};
+exports.getPathOfTheNearestConfig = getPathOfTheNearestConfig;
+const getRootDir = (originPath) => {
+    const configPath = (0, exports.getPathOfTheNearestConfig)(originPath, "package.json");
+    return configPath ? path_1.default.dirname(configPath) : null;
+};
+exports.getRootDir = getRootDir;
 const getExportComments = (tsProgram, exportFile, exportName) => {
     var _a, _b, _c, _d, _e, _f, _g;
     const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
@@ -23,7 +45,7 @@ const getExportComments = (tsProgram, exportFile, exportName) => {
     return exportFile.getFullText().slice(prevStatementEndIndex, exportStatementStartIndex);
 };
 const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, }) => {
-    var _a, _b, _c;
+    var _a, _b;
     if (!importPath || !exportPath || exportPath.includes("node_modules"))
         return true;
     const exportFile = tsProgram.getSourceFile(exportPath);
@@ -47,24 +69,9 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, }) =
     }
     // 3) parse scope files
     if (!scopeUpLevels) {
-        let nearestScopeConfigFileName;
-        let currentDir = exportDir;
-        while (currentDir !== "/") {
-            const fileNames = fs_1.default.readdirSync(currentDir);
-            // console.debug("reading dir", currentDir);
-            const scopeFileName = fileNames.find((x) => SCOPE_REGEXP.test(x));
-            if (scopeFileName) {
-                nearestScopeConfigFileName = scopeFileName;
-                break;
-            }
-            if (fileNames.includes("package.json")) {
-                break;
-            }
-            currentDir = path_1.default.dirname(currentDir);
-        }
-        if (nearestScopeConfigFileName) {
-            [, scopeUpLevels] = (_c = nearestScopeConfigFileName.match(SCOPE_REGEXP)) !== null && _c !== void 0 ? _c : [];
-            const scopeConfigPath = path_1.default.resolve(currentDir, nearestScopeConfigFileName);
+        const scopeConfigPath = (0, exports.getPathOfTheNearestConfig)(exportDir, "scope.ts");
+        if (scopeConfigPath) {
+            // [, scopeUpLevels] = nearestScopeConfigFileName.match(SCOPE_REGEXP) ?? [];
             const fileText = fs_1.default.readFileSync(scopeConfigPath, "utf8");
             // console.debug("reading file", scopeConfigPath);
             const isWhitelisted = fileText.split("\n").some((relativePath) => {
@@ -87,3 +94,4 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, }) =
     return !path_1.default.relative(scopeDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
 };
 exports.checkIsAccessible = checkIsAccessible;
+//# sourceMappingURL=common.js.map

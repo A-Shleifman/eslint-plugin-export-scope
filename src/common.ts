@@ -2,36 +2,12 @@ import path from "path";
 import fs from "fs";
 import { escapeLeadingUnderscores } from "typescript";
 import type { Program, SourceFile } from "typescript";
+import { getPathOfTheNearestConfig } from "./utils";
 
+export const SCOPE_FILE_NAME = "scope.ts";
 const _SCOPE_REGEXP = /\[\^(\d+|\*)\]/;
 const SCOPE_REGEXP = new RegExp(`(?<!default)${_SCOPE_REGEXP.source}`);
 const DEFAULT_SCOPE_REGEXP = new RegExp(`default${_SCOPE_REGEXP.source}`);
-
-export const getPathOfTheNearestConfig = (originPath: string, configFileName: string) => {
-  let currentDir = originPath;
-  while (currentDir !== "/") {
-    const fileNames = fs.readdirSync(currentDir);
-    const isFound = fileNames.some((x) => x === configFileName);
-
-    if (isFound) {
-      return path.resolve(currentDir, configFileName);
-    }
-
-    if (fileNames.includes("package.json")) {
-      return null;
-    }
-
-    currentDir = path.dirname(currentDir);
-  }
-
-  return null;
-};
-
-export const getRootDir = (originPath: string) => {
-  const configPath = getPathOfTheNearestConfig(originPath, "package.json");
-
-  return configPath ? path.dirname(configPath) : null;
-};
 
 const getExportComments = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
   const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);

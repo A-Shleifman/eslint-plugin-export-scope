@@ -8,29 +8,29 @@ export const entry = (name: string, kind: CompletionEntry["kind"]): CompletionEn
   sortText: "10",
 });
 
-export const getNewSuggestions = (): WithMetadata<CompletionInfo> => ({
+export const getNewCompletions = (): WithMetadata<CompletionInfo> => ({
   isGlobalCompletion: false,
   isMemberCompletion: false,
   isNewIdentifierLocation: false,
   entries: [],
 });
 
-export const getParentSuggestions = (rootDir: string, importDir: string) => {
-  const suggestions = getNewSuggestions();
+export const getParentCompletions = (rootDir: string, importDir: string) => {
+  const completions = getNewCompletions();
 
   let currentDir = importDir;
   while (currentDir !== rootDir) {
-    suggestions.entries.push(entry(relative(rootDir, currentDir), ScriptElementKind.directory));
+    completions.entries.push(entry(relative(rootDir, currentDir), ScriptElementKind.directory));
     currentDir = dirname(currentDir);
   }
 
-  const levelsUp = Math.min(3, suggestions.entries.length);
+  const levelsUp = Math.min(3, completions.entries.length);
 
-  suggestions.entries.push(entry(".", ScriptElementKind.directory));
+  completions.entries.push(entry(".", ScriptElementKind.directory));
 
   for (let i = 1; i <= levelsUp; i++) {
-    suggestions.entries.push(entry(Array(i).fill("..").join("/"), ScriptElementKind.directory));
+    completions.entries.push(entry(Array(i).fill("..").join("/"), ScriptElementKind.directory));
   }
 
-  return suggestions;
+  return completions;
 };

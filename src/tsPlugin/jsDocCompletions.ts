@@ -1,5 +1,6 @@
-import { getRootDir } from "../common";
-import { getParentSuggestions, entry } from "./tsUtils";
+import { relative } from "path";
+import { getFileTree, getRootDir } from "../utils";
+import { getParentCompletions, entry, getNewCompletions } from "./tsUtils";
 import { ScriptElementKind, type WithMetadata, type CompletionInfo } from "typescript";
 
 export const jsDocCompletions = (importDir: string, completions: WithMetadata<CompletionInfo>, jsDoc: string) => {
@@ -23,11 +24,23 @@ export const jsDocCompletions = (importDir: string, completions: WithMetadata<Co
     addJsDocProp("scopeException");
   }
 
-  const isAfterScopeDeclaration = /(@scope|@scopeDefault)\s+$/.test(jsDoc);
-  if (isAfterScopeDeclaration) {
-    const rootDir = getRootDir(importDir);
+  const rootDir = getRootDir(importDir);
+  if (!rootDir) return completions;
 
-    if (rootDir) return getParentSuggestions(rootDir, importDir);
+  if (/(@scope|@scopeDefault)\s+$/.test(jsDoc)) {
+    return getParentCompletions(rootDir, importDir);
+  }
+
+  if (/@scopeException\s+$/.test(jsDoc)) {
+    const { filePaths, dirPaths } = getFileTree(rootDir);
+
+    return {
+      ...getNewCompletions(),
+      entries: [
+        ...dirPaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.directory)),
+        ...filePaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.moduleElement)),
+      ],
+    };
   }
 
   return completions;

@@ -8,5 +8,12 @@ export const helper1 = "";
 
 export const helper2 = "";
 
-/** @scope . */
+/**
+ * @scopeException
+ * @scope
+ * @scopeDefault
+ *
+ *
+ *
+ */
 export default "";

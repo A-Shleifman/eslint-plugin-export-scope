@@ -1,7 +1,7 @@
 import { ScriptElementKind, type LanguageService, type server } from "typescript";
 import { checkIsAccessible } from "../common";
 import { basename, dirname } from "path";
-import { getNewSuggestions } from "./tsUtils";
+import { getNewCompletions } from "./tsUtils";
 
 import type { WithMetadata, CompletionInfo, CompletionEntry } from "typescript";
 import { getScopeFileCompletions } from "./scopeFileCompletions";
@@ -40,7 +40,7 @@ export const getCompletionsAtPosition =
 
       if (snippetTriggerFound) {
         return {
-          ...getNewSuggestions(),
+          ...getNewCompletions(),
           isGlobalCompletion: true,
           entries: [atSnippet("scope"), atSnippet("scopeDefault"), atSnippet("scopeException")],
         };
@@ -52,7 +52,7 @@ export const getCompletionsAtPosition =
       const lastJSDocPos = fileTextToPosition.lastIndexOf("/**");
       const lastClosingJSDocPos = fileTextToPosition.lastIndexOf("*/");
       if (lastClosingJSDocPos < lastJSDocPos) {
-        return jsDocCompletions(importDir, original ?? getNewSuggestions(), fileTextToPosition.slice(lastJSDocPos));
+        return jsDocCompletions(importDir, original ?? getNewCompletions(), fileTextToPosition.slice(lastJSDocPos));
       }
     }
 

@@ -3,34 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIsAccessible = exports.getRootDir = exports.getPathOfTheNearestConfig = void 0;
+exports.checkIsAccessible = exports.SCOPE_FILE_NAME = void 0;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const typescript_1 = require("typescript");
+const utils_1 = require("./utils");
+exports.SCOPE_FILE_NAME = "scope.ts";
 const _SCOPE_REGEXP = /\[\^(\d+|\*)\]/;
 const SCOPE_REGEXP = new RegExp(`(?<!default)${_SCOPE_REGEXP.source}`);
 const DEFAULT_SCOPE_REGEXP = new RegExp(`default${_SCOPE_REGEXP.source}`);
-const getPathOfTheNearestConfig = (originPath, configFileName) => {
-    let currentDir = originPath;
-    while (currentDir !== "/") {
-        const fileNames = fs_1.default.readdirSync(currentDir);
-        const isFound = fileNames.some((x) => x === configFileName);
-        if (isFound) {
-            return path_1.default.resolve(currentDir, configFileName);
-        }
-        if (fileNames.includes("package.json")) {
-            return null;
-        }
-        currentDir = path_1.default.dirname(currentDir);
-    }
-    return null;
-};
-exports.getPathOfTheNearestConfig = getPathOfTheNearestConfig;
-const getRootDir = (originPath) => {
-    const configPath = (0, exports.getPathOfTheNearestConfig)(originPath, "package.json");
-    return configPath ? path_1.default.dirname(configPath) : null;
-};
-exports.getRootDir = getRootDir;
 const getExportComments = (tsProgram, exportFile, exportName) => {
     var _a, _b, _c, _d, _e, _f, _g;
     const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
@@ -68,7 +49,7 @@ const checkIsAccessible = ({ tsProgram, importPath, exportPath, exportName, }) =
     }
     // 3) parse scope files
     if (!scopeUpLevels) {
-        const scopeConfigPath = (0, exports.getPathOfTheNearestConfig)(exportDir, "scope.ts");
+        const scopeConfigPath = (0, utils_1.getPathOfTheNearestConfig)(exportDir, "scope.ts");
         if (scopeConfigPath) {
             // [, scopeUpLevels] = nearestScopeConfigFileName.match(SCOPE_REGEXP) ?? [];
             const fileText = fs_1.default.readFileSync(scopeConfigPath, "utf8");

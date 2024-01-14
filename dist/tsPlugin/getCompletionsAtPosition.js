@@ -33,7 +33,7 @@ const getCompletionsAtPosition = (ts, info) => (importPath, position, ...args) =
             replacementSpan: { start: position - 1, length: 1 },
         });
         if (snippetTriggerFound) {
-            return Object.assign(Object.assign({}, (0, tsUtils_1.getNewSuggestions)()), { isGlobalCompletion: true, entries: [atSnippet("scope"), atSnippet("scopeDefault"), atSnippet("scopeException")] });
+            return Object.assign(Object.assign({}, (0, tsUtils_1.getNewCompletions)()), { isGlobalCompletion: true, entries: [atSnippet("scope"), atSnippet("scopeDefault"), atSnippet("scopeException")] });
         }
     }
     {
@@ -41,7 +41,7 @@ const getCompletionsAtPosition = (ts, info) => (importPath, position, ...args) =
         const lastJSDocPos = fileTextToPosition.lastIndexOf("/**");
         const lastClosingJSDocPos = fileTextToPosition.lastIndexOf("*/");
         if (lastClosingJSDocPos < lastJSDocPos) {
-            return (0, jsDocCompletions_1.jsDocCompletions)(importDir, original !== null && original !== void 0 ? original : (0, tsUtils_1.getNewSuggestions)(), fileTextToPosition.slice(lastJSDocPos));
+            return (0, jsDocCompletions_1.jsDocCompletions)(importDir, original !== null && original !== void 0 ? original : (0, tsUtils_1.getNewCompletions)(), fileTextToPosition.slice(lastJSDocPos));
         }
     }
     // -------------- accessibility validation --------------

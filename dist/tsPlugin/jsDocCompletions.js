@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.jsDocCompletions = void 0;
-const common_1 = require("../common");
+const path_1 = require("path");
+const utils_1 = require("../utils");
 const tsUtils_1 = require("./tsUtils");
 const typescript_1 = require("typescript");
 const jsDocCompletions = (importDir, completions, jsDoc) => {
@@ -22,11 +23,18 @@ const jsDocCompletions = (importDir, completions, jsDoc) => {
         addJsDocProp("scopeDefault");
         addJsDocProp("scopeException");
     }
-    const isAfterScopeDeclaration = /(@scope|@scopeDefault)\s+$/.test(jsDoc);
-    if (isAfterScopeDeclaration) {
-        const rootDir = (0, common_1.getRootDir)(importDir);
-        if (rootDir)
-            return (0, tsUtils_1.getParentSuggestions)(rootDir, importDir);
+    const rootDir = (0, utils_1.getRootDir)(importDir);
+    if (!rootDir)
+        return completions;
+    if (/(@scope|@scopeDefault)\s+$/.test(jsDoc)) {
+        return (0, tsUtils_1.getParentCompletions)(rootDir, importDir);
+    }
+    if (/@scopeException\s+$/.test(jsDoc)) {
+        const { filePaths, dirPaths } = (0, utils_1.getFileTree)(rootDir);
+        return Object.assign(Object.assign({}, (0, tsUtils_1.getNewCompletions)()), { entries: [
+                ...dirPaths.map((x) => (0, tsUtils_1.entry)((0, path_1.relative)(rootDir, x), typescript_1.ScriptElementKind.directory)),
+                ...filePaths.map((x) => (0, tsUtils_1.entry)((0, path_1.relative)(rootDir, x), typescript_1.ScriptElementKind.moduleElement)),
+            ] });
     }
     return completions;
 };

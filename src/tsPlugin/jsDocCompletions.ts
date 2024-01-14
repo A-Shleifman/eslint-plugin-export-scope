@@ -27,11 +27,11 @@ export const jsDocCompletions = (importDir: string, completions: WithMetadata<Co
   const rootDir = getRootDir(importDir);
   if (!rootDir) return completions;
 
-  if (/(@scope|@scopeDefault)\s+$/.test(jsDoc)) {
+  if (/(@scope|@scopeDefault)\s+([^\s]*)$/.test(jsDoc)) {
     return getParentCompletions(rootDir, importDir);
   }
 
-  if (/@scopeException\s+$/.test(jsDoc)) {
+  if (/@scopeException\s+([^\s]*)$/.test(jsDoc)) {
     const { filePaths, dirPaths } = getFileTree(rootDir);
 
     return {

@@ -22,7 +22,7 @@ const getCompletionsAtPosition = (ts, info) => (importPath, position, ...args) =
     }
     {
         // -------------- snippets --------------
-        const snippetTriggerFound = /\n\s+(@)$/.test(fileTextToPosition);
+        const snippetTriggerFound = /\n\s*(@)$/.test(fileTextToPosition);
         const atSnippet = (name) => ({
             name: `@${name}`,
             kind: typescript_1.ScriptElementKind.unknown,

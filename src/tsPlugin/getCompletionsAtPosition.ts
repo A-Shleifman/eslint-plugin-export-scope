@@ -26,7 +26,7 @@ export const getCompletionsAtPosition =
 
     {
       // -------------- snippets --------------
-      const snippetTriggerFound = /\n\s+(@)$/.test(fileTextToPosition);
+      const snippetTriggerFound = /\n\s*(@)$/.test(fileTextToPosition);
 
       const atSnippet = (name: string): CompletionEntry => ({
         name: `@${name}`,

@@ -1,26 +1,22 @@
-import path from "path";
-import fs from "fs";
+import path, { resolve } from "path";
 import { escapeLeadingUnderscores } from "typescript";
-import type { Program, SourceFile } from "typescript";
-import { getPathOfTheNearestConfig } from "./utils";
+import type { Program } from "typescript";
+import { getPathOfTheNearestConfig, getRootDir } from "./utils";
 
 export const SCOPE_FILE_NAME = "scope.ts";
-const _SCOPE_REGEXP = /\[\^(\d+|\*)\]/;
-const SCOPE_REGEXP = new RegExp(`(?<!default)${_SCOPE_REGEXP.source}`);
-const DEFAULT_SCOPE_REGEXP = new RegExp(`default${_SCOPE_REGEXP.source}`);
 
-const getExportComments = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
-  const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
-  const exportSymbol = symbols?.exports?.get(escapeLeadingUnderscores(exportName));
-  const exportSymbolStartIndex = exportSymbol?.declarations?.[0]?.getStart() ?? 0;
+// const getExportComments = (tsProgram: Program, exportFile: SourceFile, exportName: string) => {
+//   const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
+//   const exportSymbol = symbols?.exports?.get(escapeLeadingUnderscores(exportName));
+//   const exportSymbolStartIndex = exportSymbol?.declarations?.[0]?.getStart() ?? 0;
 
-  let exportStatementIndex = -1;
-  while (exportFile.statements[++exportStatementIndex].getEnd() < exportSymbolStartIndex);
+//   let exportStatementIndex = -1;
+//   while (exportFile.statements[++exportStatementIndex].getEnd() < exportSymbolStartIndex);
 
-  const prevStatementEndIndex = exportFile.statements?.[exportStatementIndex - 1]?.getEnd() ?? 0;
-  const exportStatementStartIndex = exportFile.statements[exportStatementIndex].getStart();
-  return exportFile.getFullText().slice(prevStatementEndIndex, exportStatementStartIndex);
-};
+//   const prevStatementEndIndex = exportFile.statements?.[exportStatementIndex - 1]?.getEnd() ?? 0;
+//   const exportStatementStartIndex = exportFile.statements[exportStatementIndex].getStart();
+//   return exportFile.getFullText().slice(prevStatementEndIndex, exportStatementStartIndex);
+// };
 
 export const checkIsAccessible = ({
   tsProgram,
@@ -38,54 +34,76 @@ export const checkIsAccessible = ({
   const exportFile = tsProgram.getSourceFile(exportPath);
   const exportDir = path.dirname(exportPath);
   const importDir = path.dirname(importPath);
-  let scopeUpLevels: string | undefined;
+  let scope: string | undefined;
 
   if (!exportFile) return true;
 
-  // 1) parse local tag
+  // 1) parse local scope
   if (exportName) {
-    const comments = getExportComments(tsProgram, exportFile, exportName);
-    const [, localScopeUpLevels] = comments.match(SCOPE_REGEXP) ?? [];
-    scopeUpLevels = localScopeUpLevels;
+    const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
+    const exportSymbol = symbols?.exports?.get(escapeLeadingUnderscores(exportName));
+    exportSymbol?.getJsDocTags().forEach((tag) => {
+      if (tag.name === "scopeException") {
+        const exception = tag.text?.at(0)?.text;
+        if (!exception) return;
+
+        const exceptionFullPath = resolve(exportDir, exception);
+
+        if (!path.relative(exceptionFullPath.toLowerCase(), importDir.toLowerCase()).startsWith(".")) {
+          return true;
+        }
+      }
+
+      if (tag.name === "scope") {
+        scope = tag.text?.at(0)?.text;
+      }
+    });
   }
 
-  // 2) parse file tag
-  if (!scopeUpLevels) {
+  // 2) parse file scope
+  if (!scope) {
     const firstStatementEndIndex = exportFile.statements[0].getEnd();
     const fileComments = exportFile.getFullText().slice(0, firstStatementEndIndex);
-    const [, fileScopeUpLevels] = fileComments.match(DEFAULT_SCOPE_REGEXP) ?? [];
-    scopeUpLevels = fileScopeUpLevels ?? scopeUpLevels;
+    [, scope] = fileComments.match(/@scopeDefault\s+([^\s]+)/) ?? [];
   }
 
-  // 3) parse scope files
-  if (!scopeUpLevels) {
+  // 3) parse folder scope
+  if (!scope) {
     const scopeConfigPath = getPathOfTheNearestConfig(exportDir, SCOPE_FILE_NAME);
+    const scopeFile = scopeConfigPath && tsProgram.getSourceFile(scopeConfigPath);
 
-    if (scopeConfigPath) {
-      // [, scopeUpLevels] = nearestScopeConfigFileName.match(SCOPE_REGEXP) ?? [];
-      const fileText = fs.readFileSync(scopeConfigPath, "utf8");
-      // console.debug("reading file", scopeConfigPath);
+    if (scopeFile) {
+      const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(scopeFile);
+      const exportSymbols = symbols?.exports?.get(escapeLeadingUnderscores("default"));
 
-      const isWhitelisted = fileText.split("\n").some((relativePath) => {
-        const whitelistedPath = path.resolve(path.dirname(scopeConfigPath), relativePath);
+      console.log(exportSymbols);
 
-        return new RegExp(`^${whitelistedPath}($|${path.sep}.*)`, "i").test(importPath);
-      });
+      // const fileText = fs.readFileSync(scopeConfigPath, "utf8");
 
-      if (isWhitelisted) return true;
+      // const isWhitelisted = fileText.split("\n").some((relativePath) => {
+      //   const whitelistedPath = path.resolve(path.dirname(scopeConfigPath), relativePath);
+
+      //   return new RegExp(`^${whitelistedPath}($|${path.sep}.*)`, "i").test(importPath);
+      // });
+
+      // if (isWhitelisted) return true;
     }
   }
 
   // 4) handle index files
-  scopeUpLevels ??= path.parse(exportFile.fileName).name === "index" ? "1" : "0";
+  scope ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
 
-  if (scopeUpLevels === "*") return true;
+  if (scope === "*") return true;
 
-  let scopeDir = exportDir;
-  for (let i = 0; i < Number(scopeUpLevels); i++) {
-    scopeDir = path.dirname(scopeDir);
+  let fullScopePath: string;
+  if (scope.startsWith(".")) {
+    fullScopePath = path.resolve(exportDir, scope);
+  } else {
+    const rootDir = getRootDir(exportDir);
+    if (!rootDir) return true;
+
+    fullScopePath = path.resolve(rootDir, scope);
   }
 
-  // const scopeDir = scopePath ? path.resolve(exportDir, scopePath) : exportDir;
-  return !path.relative(scopeDir.toLowerCase(), importDir.toLowerCase()).startsWith(".");
+  return !path.relative(fullScopePath, importDir).startsWith(".");
 };

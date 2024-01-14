@@ -1,13 +1,15 @@
 /**
  * @description context
- * @scopeDefault ..
+ * @scopeDefault .
  */
 
-/** @scope . */
+/** @scope .. */
 export const helper1 = "";
 
 export const helper2 = "";
 
-/** @scope .. */
-/** @scopeException src/Component/ChildComponent/generated */
+/**
+ * @scope ..
+ * @scopeException src/Component/ChildComponent/generated
+ */
 export default "";

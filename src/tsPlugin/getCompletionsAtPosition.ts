@@ -1,9 +1,11 @@
 import { ScriptElementKind, type LanguageService, type server } from "typescript";
-import { checkIsAccessible, getRootDir } from "../common";
-import { basename, dirname, relative } from "path";
-import { getParentSuggestions, entry, getNewSuggestions } from "./tsUtils";
+import { checkIsAccessible } from "../common";
+import { basename, dirname } from "path";
+import { getNewSuggestions } from "./tsUtils";
 
-import type { WithMetadata, CompletionInfo } from "typescript";
+import type { WithMetadata, CompletionInfo, CompletionEntry } from "typescript";
+import { getScopeFileCompletions } from "./scopeFileCompletions";
+import { jsDocCompletions } from "./jsDocCompletions";
 
 export const getCompletionsAtPosition =
   (ts: typeof import("typescript"), info: server.PluginCreateInfo): LanguageService["getCompletionsAtPosition"] =>
@@ -19,108 +21,42 @@ export const getCompletionsAtPosition =
     if (!fileTextToPosition) return original;
 
     if (basename(importPath) === "scope.ts") {
-      const lastLine = fileTextToPosition.split("\n").pop() ?? "";
+      return getScopeFileCompletions(ts, importDir, fileTextToPosition) ?? original;
+    }
 
-      const stack: string[] = [];
-      lastLine.split("").forEach((c) => {
-        if (c === `'` || c === `"` || c === "`") {
-          if (stack.at(-1) === c) {
-            stack.pop();
-          } else {
-            stack.push(c);
-          }
-        }
+    {
+      // -------------- snippets --------------
+      const snippetTriggerFound = /\n\s+(@)$/.test(fileTextToPosition);
+
+      const atSnippet = (name: string): CompletionEntry => ({
+        name: `@${name}`,
+        kind: ScriptElementKind.unknown,
+        kindModifiers: "",
+        sortText: "10",
+        isSnippet: true,
+        insertText: `/** @s${name} ${"${0}"} */`,
+        replacementSpan: { start: position - 1, length: 1 },
       });
 
-      const openQuote = stack.at(-1);
-
-      if (openQuote) {
-        const rootDir = getRootDir(importDir);
-
-        if (!rootDir) return original;
-
-        const lastExportDefaultPos = fileTextToPosition.lastIndexOf("export default");
-        const lastExportPos = fileTextToPosition.lastIndexOf("export");
-        const isDefaultExport = lastExportDefaultPos === lastExportPos;
-        if (isDefaultExport) {
-          return getParentSuggestions(rootDir, importDir);
-        }
-
-        const paths = ts.sys.readDirectory(rootDir, [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"], ["node_modules"]);
-
-        const relativePaths = paths.map((x) => relative(rootDir, x));
-
-        const dirs = relativePaths.reduce((acc, path) => {
-          path = dirname(path); // removes filename
-
-          while (path !== ".") {
-            acc.add(path);
-            path = dirname(path);
-          }
-
-          return acc;
-        }, new Set<string>());
-
+      if (snippetTriggerFound) {
         return {
           ...getNewSuggestions(),
-          entries: [
-            ...[...dirs].map((x) => entry(x, ScriptElementKind.directory)),
-            ...relativePaths.map((x) => entry(x, ScriptElementKind.moduleElement)),
-          ],
+          isGlobalCompletion: true,
+          entries: [atSnippet("scope"), atSnippet("scopeDefault"), atSnippet("scopeException")],
         };
       }
     }
 
-    const snippetTriggerFound = /^\s+(@)$/m.test(fileTextToPosition);
-
-    if (snippetTriggerFound) {
-      return {
-        ...getNewSuggestions(),
-        isGlobalCompletion: true,
-        entries: [
-          {
-            name: "@scope",
-            kind: ScriptElementKind.unknown,
-            kindModifiers: "",
-            sortText: "10",
-            isSnippet: true,
-            insertText: "/** @scope ${0} */",
-            replacementSpan: {
-              start: position - 1,
-              length: 1,
-            },
-          },
-        ],
-      };
+    {
+      // -------------- jsdoc completions --------------
+      const lastJSDocPos = fileTextToPosition.lastIndexOf("/**");
+      const lastClosingJSDocPos = fileTextToPosition.lastIndexOf("*/");
+      if (lastClosingJSDocPos < lastJSDocPos) {
+        return jsDocCompletions(importDir, original ?? getNewSuggestions(), fileTextToPosition.slice(lastJSDocPos));
+      }
     }
 
-    const lastJSDocPos = fileTextToPosition.lastIndexOf("/**");
-    const lastClosingJSDocPos = fileTextToPosition.lastIndexOf("*/");
-
-    if (lastClosingJSDocPos < lastJSDocPos) {
-      const jsdoc = fileTextToPosition.slice(lastJSDocPos);
-
-      const suggestions = original ?? getNewSuggestions();
-
-      const isEmpty = /^\/\*\*(\*|\s)*$/m.test(jsdoc);
-      if (isEmpty && suggestions.entries.every((x) => x.name !== "@scope")) {
-        suggestions.entries.push(entry("@scope", ScriptElementKind.keyword));
-      }
-
-      const isAfterAtSymbol = /^\/\*\*(\*|\s)*@$/m.test(jsdoc);
-      if (isAfterAtSymbol && suggestions.entries.every((x) => x.name !== "scope")) {
-        suggestions.entries.push(entry("scope", ScriptElementKind.keyword));
-      }
-
-      const isAfterScopeDeclaration = /^\/\*\*(\*|\s)*@scope\s+$/m.test(jsdoc);
-      if (isAfterScopeDeclaration) {
-        const rootDir = getRootDir(importDir);
-
-        return rootDir ? getParentSuggestions(rootDir, importDir) : suggestions;
-      }
-
-      return suggestions;
-    }
+    // -------------- accessibility validation --------------
 
     if (!original || !tsProgram) return original;
 

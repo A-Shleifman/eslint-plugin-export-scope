@@ -1,5 +1,5 @@
 import { rule, ruleName } from "./esLintRule";
-import { tsLanguageServicePlugin } from "./tsLanguageServicePlugin";
+import { tsLanguageServicePlugin } from "./tsPlugin";
 
 const esLintPluginName = "export-scope";
 

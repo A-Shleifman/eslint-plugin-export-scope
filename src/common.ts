@@ -11,7 +11,6 @@ export const getPathOfTheNearestConfig = (originPath: string, configFileName: st
   let currentDir = originPath;
   while (currentDir !== "/") {
     const fileNames = fs.readdirSync(currentDir);
-    // console.debug("reading dir", currentDir);
     const isFound = fileNames.some((x) => x === configFileName);
 
     if (isFound) {

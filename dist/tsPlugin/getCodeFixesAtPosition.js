@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCodeFixesAtPosition = void 0;
-const common_1 = require("../common");
+const importabilityChecker_1 = require("../importabilityChecker");
 const getCodeFixesAtPosition = (ts, info) => (importPath, ...args) => {
     const ls = info.languageService;
     const fixes = ls.getCodeFixesAtPosition(importPath, ...args);
@@ -20,7 +20,7 @@ const getCodeFixesAtPosition = (ts, info) => (importPath, ...args) => {
             return true;
         const { resolvedModule } = ts.resolveModuleName(relativeExportPath, importPath, info.project.getCompilerOptions(), ts.sys);
         const exportPath = resolvedModule === null || resolvedModule === void 0 ? void 0 : resolvedModule.resolvedFileName;
-        return (0, common_1.checkIsAccessible)({ tsProgram, importPath, exportPath, exportName });
+        return (0, importabilityChecker_1.checkIsImportable)({ tsProgram, importPath, exportPath, exportName });
     });
 };
 exports.getCodeFixesAtPosition = getCodeFixesAtPosition;

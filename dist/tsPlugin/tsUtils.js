@@ -26,6 +26,7 @@ const getParentCompletions = (rootDir, importDir) => {
     }
     const levelsUp = Math.min(3, completions.entries.length);
     completions.entries.push((0, exports.entry)(".", typescript_1.ScriptElementKind.string));
+    completions.entries.push((0, exports.entry)("*", typescript_1.ScriptElementKind.string));
     for (let i = 1; i <= levelsUp; i++) {
         completions.entries.push((0, exports.entry)(Array(i).fill("..").join("/"), typescript_1.ScriptElementKind.string));
     }

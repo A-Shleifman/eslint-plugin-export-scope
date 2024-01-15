@@ -1,2 +1,0 @@
-/** default[^*] */
-export * from "./exports";

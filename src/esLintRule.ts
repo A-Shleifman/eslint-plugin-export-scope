@@ -1,5 +1,5 @@
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
-import { checkIsAccessible as _checkIsAccessible } from "./common";
+import { checkIsImportable as _checkIsImportable } from "./importabilityChecker";
 
 export const ruleName = "no-imports-outside-export-scope";
 
@@ -22,8 +22,8 @@ export const rule = createRule({
   create(context) {
     const services = ESLintUtils.getParserServices(context);
 
-    const checkIsAccessible = (props: Pick<Parameters<typeof _checkIsAccessible>[0], "exportPath" | "exportName">) =>
-      _checkIsAccessible({ tsProgram: services.program, importPath: context.filename, ...props });
+    const checkIsImportable = (props: Pick<Parameters<typeof _checkIsImportable>[0], "exportPath" | "exportName">) =>
+      _checkIsImportable({ tsProgram: services.program, importPath: context.filename, ...props });
 
     const validateNode = (
       node:
@@ -41,7 +41,7 @@ export const rule = createRule({
       const importSymbol = services.getSymbolAtLocation(parseNode);
       const exportPath = importSymbol?.declarations?.[0]?.getSourceFile().fileName;
 
-      if (!checkIsAccessible({ exportPath, exportName })) {
+      if (!checkIsImportable({ exportPath, exportName })) {
         context.report({
           node,
           messageId: "exportScope",

@@ -1,3 +1,3 @@
-// default[^*]
+/** @scopeDefault * */
 
 export const CONSTANT = "";

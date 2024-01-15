@@ -1,6 +1,6 @@
 import { readdirSync } from "fs";
 import { dirname, extname, resolve } from "path";
-import { SCOPE_FILE_NAME } from "./common";
+import { SCOPE_FILE_NAME } from "./importabilityChecker";
 
 export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
   const extSet = new Set(extensions);
@@ -52,8 +52,11 @@ export const getPathOfTheNearestConfig = (originPath: string, configFileName: st
   return null;
 };
 
+// TODO: memoize
 export const getRootDir = (originPath: string) => {
   const configPath = getPathOfTheNearestConfig(originPath, "package.json");
 
   return configPath ? dirname(configPath) : null;
 };
+
+export const isStringArray = (x: unknown): x is string[] => Array.isArray(x) && x.every((x) => typeof x === "string");

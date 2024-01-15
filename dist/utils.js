@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRootDir = exports.getPathOfTheNearestConfig = exports.getFileTree = void 0;
+exports.isStringArray = exports.getRootDir = exports.getPathOfTheNearestConfig = exports.getFileTree = void 0;
 const fs_1 = require("fs");
 const path_1 = require("path");
-const common_1 = require("./common");
+const importabilityChecker_1 = require("./importabilityChecker");
 const getFileTree = (dir, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
     const extSet = new Set(extensions);
     const filePaths = [];
@@ -11,7 +11,7 @@ const getFileTree = (dir, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "m
     const traverse = (dir) => {
         const entries = (0, fs_1.readdirSync)(dir, { withFileTypes: true });
         entries.map((x) => {
-            if (x.name === common_1.SCOPE_FILE_NAME)
+            if (x.name === importabilityChecker_1.SCOPE_FILE_NAME)
                 return;
             if (x.name === "node_modules" || x.name.startsWith("."))
                 return;
@@ -47,9 +47,12 @@ const getPathOfTheNearestConfig = (originPath, configFileName) => {
     return null;
 };
 exports.getPathOfTheNearestConfig = getPathOfTheNearestConfig;
+// TODO: memoize
 const getRootDir = (originPath) => {
     const configPath = (0, exports.getPathOfTheNearestConfig)(originPath, "package.json");
     return configPath ? (0, path_1.dirname)(configPath) : null;
 };
 exports.getRootDir = getRootDir;
+const isStringArray = (x) => Array.isArray(x) && x.every((x) => typeof x === "string");
+exports.isStringArray = isStringArray;
 //# sourceMappingURL=utils.js.map

@@ -1,0 +1,2 @@
+/** @scope . */
+export const subSchema = {};

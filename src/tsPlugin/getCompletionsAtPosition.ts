@@ -1,5 +1,5 @@
 import { ScriptElementKind, type LanguageService, type server } from "typescript";
-import { SCOPE_FILE_NAME, checkIsAccessible } from "../common";
+import { SCOPE_FILE_NAME, checkIsImportable } from "../importabilityChecker";
 import { basename, dirname } from "path";
 import { getNewCompletions } from "./tsUtils";
 
@@ -26,19 +26,23 @@ export const getCompletionsAtPosition =
 
     {
       // -------------- snippets --------------
-      const snippetTriggerFound = /\n\s*(@)$/.test(fileTextToPosition);
-
-      const atSnippet = (name: string): CompletionEntry => ({
-        name: `@${name}`,
-        kind: ScriptElementKind.unknown,
-        kindModifiers: "",
-        sortText: "10",
-        isSnippet: true,
-        insertText: `/** @${name} ${"${0}"} */`,
-        replacementSpan: { start: position - 1, length: 1 },
-      });
+      const lastLine = fileTextToPosition.split("\n").at(-1)?.trimStart();
+      // autocompletion in VSCode only triggers direcly after @ symbol
+      const snippetTriggerFound = ["@scope", "@scopeDefault", "@scopeException"].some(
+        (x) => lastLine && x.startsWith(lastLine),
+      );
 
       if (snippetTriggerFound) {
+        const atSnippet = (name: string): CompletionEntry => ({
+          name: `@${name}`,
+          kind: ScriptElementKind.unknown,
+          kindModifiers: "",
+          sortText: "10",
+          isSnippet: true,
+          insertText: `/** @${name} ${"${0}"} */`,
+          replacementSpan: { start: position - 1, length: 1 },
+        });
+
         return {
           ...getNewCompletions(),
           isGlobalCompletion: true,
@@ -66,7 +70,7 @@ export const getCompletionsAtPosition =
       const symbol = ls.getCompletionEntrySymbol(importPath, position, entry.name, undefined);
       const exportPath = symbol?.declarations?.[0].getSourceFile().fileName;
 
-      return checkIsAccessible({ tsProgram, importPath, exportPath, exportName: entry.name });
+      return checkIsImportable({ tsProgram, importPath, exportPath, exportName: entry.name });
     });
 
     return { ...original, entries: filtered ?? [] };

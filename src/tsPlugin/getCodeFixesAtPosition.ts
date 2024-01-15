@@ -1,5 +1,5 @@
 import type { LanguageService, server } from "typescript";
-import { checkIsAccessible } from "../common";
+import { checkIsImportable } from "../importabilityChecker";
 
 export const getCodeFixesAtPosition =
   (ts: typeof import("typescript"), info: server.PluginCreateInfo): LanguageService["getCodeFixesAtPosition"] =>
@@ -29,6 +29,6 @@ export const getCodeFixesAtPosition =
 
       const exportPath = resolvedModule?.resolvedFileName;
 
-      return checkIsAccessible({ tsProgram, importPath, exportPath, exportName });
+      return checkIsImportable({ tsProgram, importPath, exportPath, exportName });
     });
   };

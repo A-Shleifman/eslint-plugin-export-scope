@@ -49,7 +49,6 @@ export const getPathOfTheNearestConfig = (originPath: string, configFileName: st
     return result;
   };
 
-  console.log("LOOKING FOR THE NEAREST CONFIG!", originPath, configFileName);
   let currentDir = originPath;
   while (currentDir !== "/") {
     const fileNames = readdirSync(currentDir);

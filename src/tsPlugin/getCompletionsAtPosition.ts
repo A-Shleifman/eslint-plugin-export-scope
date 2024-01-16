@@ -67,8 +67,12 @@ export const getCompletionsAtPosition =
     const filtered = original.entries.filter((entry) => {
       if (entry.kindModifiers !== "export") return true;
 
-      const symbol = ls.getCompletionEntrySymbol(importPath, position, entry.name, undefined);
-      const exportPath = symbol?.declarations?.[0].getSourceFile().fileName;
+      let exportPath = entry.data?.fileName;
+
+      if (!exportPath) {
+        const symbol = ls.getCompletionEntrySymbol(importPath, position, entry.name, undefined);
+        exportPath = symbol?.declarations?.[0].getSourceFile().fileName;
+      }
 
       return checkIsImportable({ tsProgram, importPath, exportPath, exportName: entry.name });
     });

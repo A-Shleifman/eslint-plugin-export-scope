@@ -50,11 +50,14 @@ const getCompletionsAtPosition = (ts, info) => (importPath, position, ...args) =
     if (!original || !tsProgram)
         return original;
     const filtered = original.entries.filter((entry) => {
-        var _a;
+        var _a, _b;
         if (entry.kindModifiers !== "export")
             return true;
-        const symbol = ls.getCompletionEntrySymbol(importPath, position, entry.name, undefined);
-        const exportPath = (_a = symbol === null || symbol === void 0 ? void 0 : symbol.declarations) === null || _a === void 0 ? void 0 : _a[0].getSourceFile().fileName;
+        let exportPath = (_a = entry.data) === null || _a === void 0 ? void 0 : _a.fileName;
+        if (!exportPath) {
+            const symbol = ls.getCompletionEntrySymbol(importPath, position, entry.name, undefined);
+            exportPath = (_b = symbol === null || symbol === void 0 ? void 0 : symbol.declarations) === null || _b === void 0 ? void 0 : _b[0].getSourceFile().fileName;
+        }
         return (0, importabilityChecker_1.checkIsImportable)({ tsProgram, importPath, exportPath, exportName: entry.name });
     });
     return Object.assign(Object.assign({}, original), { entries: filtered !== null && filtered !== void 0 ? filtered : [] });

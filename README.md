@@ -6,46 +6,66 @@ Set export scope (importability) for local utils, states, contexts, components, 
 
 <p align="center">
 
-| scope | importable from                    |                               |
-| ----- | ---------------------------------- | ----------------------------- |
-| [^0]  | current directory and children     | default for all exports       |
-| [^1]  | parent directory and children      | default for **`index`** files |
-| [^2]  | two directories above and children |                               |
-| [^*]  | anywhere                           |                               |
+| scope           | importable from                         |                               |
+| --------------- | --------------------------------------- | ----------------------------- |
+| .               | current directory and children          | default for all exports       |
+| ..              | parent directory and children           | default for **`index`** files |
+| ../..           | two directories above and children      |                               |
+| src/consumer    | within specified directory and children |                               |
+| src/consumer.ts | within specified file                   |                               |
+| \*              | anywhere                                |                               |
 
 </p>
 
 ## Scoped Exports
 
 ```ts
-// default[^1]
-/** ☝ Applies to all exports in the file unless overriden with a local [^] */
+/** @scopeDefault ../.. */
+/** ☝ Applies to all exports in the file unless overriden with a local `@scope` */
 
-// [^*]
+/** @scope * */
 export const helper1 = ""; // 👈 Available everywhere
 
-export const helper2 = ""; // 👈 inherits scope from `default[^1]`
+export const helper2 = ""; // 👈 inherits scope `../..` from `@scopeDefault`
 
-/** [^2] */ export default "";
+/** @scope src/components */
+export default "";
 ```
 
-## Scope Files
+## Default folder scope with `.scope.ts` files
 
-Set default folder scope with **scope files** like [^0], [^1], [^2], [^*]. These files are usually blank.
-
-```
+```ts
 └── src
-  └── common
-    ├── [^*] 👈 this will make all exports within `common` accessible from anywhere unless a specific export is overriden on a lower level
+  └── `common`
+    ├── utils.ts
     ├── context.ts
-    └── utils.ts
+    └── `.scope.ts`
+             │
+             │
+  ╭────────────────────╮
+  │ export default '*' │
+  ╰────────────────────╯
+// ⬆ this will make all exports within `common` accessible from anywhere unless a specific export is overriden on a lower level
+
 ```
 
-_Hint: creating a **[^\*]** file in the root of the project will make all exports global by default if you prefer this approach_
+_Hint: creating an `export default '*'` `scope` file in the root of the project will make all exports global by default if you prefer this approach._
 
 ### Exceptions
 
-Exceptions to the default scope can be provided inside **scope files**
+#### Export scope exceptions
+
+```ts
+// schema.ts
+/**
+ * @scope ..
+ * @scopeException src/schemaConsumer 👈 whole folder has access
+ * @scopeException src/schemaConsumer/index.ts 👈 whole file has access
+ */
+export default "";
+```
+
+#### Folder scope exceptions in `.scope.ts` files
 
 ```
 └── src
@@ -56,15 +76,28 @@ Exceptions to the default scope can be provided inside **scope files**
     └── index.ts
 ```
 
-```sh
-# [^0]
-../scripts  👈 but any file under `src/scripts` can import
-../scripts/index.ts 👈 but `src/scripts/index.ts` can import
+```ts
+└── src
+  └── `generated`
+    ├── schema.ts
+    └── `.scope.ts`
+             │
+             │
+  ╭──────────────────────────────────╮
+  │ export default '.';              │
+  │                                  │
+  │ export const exceptions = [      │
+  │   'src/schemaConsumer',          │
+  │   'src/scripts/schemaParser.ts', │
+  │ ]                                │
+  ╰──────────────────────────────────╯
+// ⬆ by default exports are only importable within `generated` folder, but folders/files in exceptions are exempt.
+
 ```
 
 ## Issues
 
-⚠️ To re-lint imports in VSCode after updating `[^]` declarations ESLint Server needs to be restarted [(ESLint limitation)](https://github.com/microsoft/vscode-eslint/issues/1565#event-7958473201).
+⚠️ To re-lint an import in VSCode after updating a `scope` declaration either `touch` this import or restart the ESLint Server [(ESLint limitation)](https://github.com/microsoft/vscode-eslint/issues/1565#event-7958473201).
 
 <p align="center">
   <img src="readme-src/restart_eslint_server.png" alt="Restart ESLint Server" width="200" />
@@ -72,7 +105,7 @@ Exceptions to the default scope can be provided inside **scope files**
 
 ## Installation
 
-Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an ESLint plugin and a TS Language Server plugin.
+Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin and a `TS Language Server` plugin.
 
 ```sh
 npm i -D eslint eslint-plugin-export-scope
@@ -84,6 +117,7 @@ npm i -D eslint eslint-plugin-export-scope
 // .eslintrc.js
 module.exports = {
   // ...
+  ignorePatterns: ["!.scope.ts"],
   overrides: [
     {
       files: ["*.js", "*.mjs", "*.jsx", "*.ts", "*.mts", "*.tsx"],
@@ -103,6 +137,7 @@ module.exports = {
 "compilerOptions": {
   "plugins": [{ "name": "eslint-plugin-export-scope" }],
 },
+"include": ["**/*", "**/.scope.ts"]
 ```
 
 Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't work.

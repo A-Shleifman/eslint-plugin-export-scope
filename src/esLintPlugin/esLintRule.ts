@@ -1,7 +1,7 @@
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
-import { checkIsImportable as _checkIsImportable } from "../importabilityChecker";
+import { SCOPE_FILE_NAME, checkIsImportable as _checkIsImportable } from "../importabilityChecker";
 import { getFullScopePath } from "../utils";
-import { dirname } from "path";
+import { basename, dirname } from "path";
 import fs from "fs";
 import { getPathLoc, getScopeDeclarations } from "./esLintUtils";
 
@@ -20,7 +20,7 @@ export const rule = createRule({
     },
     messages: {
       exportScope: "Cannot import {{ identifier }} outside its export scope",
-      invalidPath: "Invalid scope path: {{ identifier }}",
+      invalidPath: `Invalid scope path: "{{ identifier }}"`,
       onlyParents: "Only parent dirs are allowed for @scope and @scopeDefault",
     },
     schema: [],
@@ -101,12 +101,39 @@ export const rule = createRule({
       });
     };
 
+    const validateImportString = (node: TSESTree.Literal) => {
+      if (basename(context.filename) !== SCOPE_FILE_NAME) return;
+      const exportDir = dirname(context.filename);
+      node.loc.start.column += 1;
+      node.loc.end.column -= 1;
+
+      if (typeof node.value !== "string") {
+        return;
+      }
+
+      const fullPath = getFullScopePath(exportDir, node.value);
+      if (!fullPath) return;
+
+      if (node.parent.type === "ExportDefaultDeclaration") {
+        if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {
+          return context.report({ node, messageId: "onlyParents", loc: node.loc });
+        }
+      }
+
+      if (["ArrayExpression", "ExportDefaultDeclaration"].includes(node.parent.type)) {
+        if (!fs.existsSync(fullPath)) {
+          context.report({ node, messageId: "invalidPath", data: { identifier: fullPath }, loc: node.loc });
+        }
+      }
+    };
+
     return {
       ImportDeclaration: (node) => !node.specifiers.length && validateNode(node),
       ImportExpression: (node) => validateNode(node),
       ImportSpecifier: (node) => validateNode(node, node.imported.name),
       ImportDefaultSpecifier: (node) => validateNode(node, "default"),
       Program: (node) => validateJsDoc(node),
+      Literal: (node) => validateImportString(node),
     };
   },
 });

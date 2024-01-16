@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  ignorePatterns: [".eslintrc.js", "node_modules"],
+  ignorePatterns: ["!.scope.ts", ".eslintrc.js", "node_modules"],
   overrides: [
     {
       files: ["*.js", "*.mjs", "*.jsx", "*.ts", "*.mts", "*.tsx"],

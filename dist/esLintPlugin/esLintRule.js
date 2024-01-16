@@ -22,7 +22,7 @@ exports.rule = createRule({
         },
         messages: {
             exportScope: "Cannot import {{ identifier }} outside its export scope",
-            invalidPath: "Invalid scope path: {{ identifier }}",
+            invalidPath: `Invalid scope path: "{{ identifier }}"`,
             onlyParents: "Only parent dirs are allowed for @scope and @scopeDefault",
         },
         schema: [],
@@ -80,12 +80,36 @@ exports.rule = createRule({
                 }
             });
         };
+        const validateImportString = (node) => {
+            if ((0, path_1.basename)(context.filename) !== importabilityChecker_1.SCOPE_FILE_NAME)
+                return;
+            const exportDir = (0, path_1.dirname)(context.filename);
+            node.loc.start.column += 1;
+            node.loc.end.column -= 1;
+            if (typeof node.value !== "string") {
+                return;
+            }
+            const fullPath = (0, utils_2.getFullScopePath)(exportDir, node.value);
+            if (!fullPath)
+                return;
+            if (node.parent.type === "ExportDefaultDeclaration") {
+                if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {
+                    return context.report({ node, messageId: "onlyParents", loc: node.loc });
+                }
+            }
+            if (["ArrayExpression", "ExportDefaultDeclaration"].includes(node.parent.type)) {
+                if (!fs_1.default.existsSync(fullPath)) {
+                    context.report({ node, messageId: "invalidPath", data: { identifier: fullPath }, loc: node.loc });
+                }
+            }
+        };
         return {
             ImportDeclaration: (node) => !node.specifiers.length && validateNode(node),
             ImportExpression: (node) => validateNode(node),
             ImportSpecifier: (node) => validateNode(node, node.imported.name),
             ImportDefaultSpecifier: (node) => validateNode(node, "default"),
             Program: (node) => validateJsDoc(node),
+            Literal: (node) => validateImportString(node),
         };
     },
 });

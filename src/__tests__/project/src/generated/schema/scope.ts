@@ -4,4 +4,4 @@ export const exceptions = [
   "src/common/schemaParser.ts",
 ];
 
-export default "*";
+export default "..";

@@ -1,3 +1,0 @@
-/** @scopeDefault * */
-
-export const CONSTANT = "";

@@ -1,8 +1,7 @@
 import { ESLint } from "eslint";
 
 const importError = (name: string) => `Cannot import '${name}' outside its export scope`;
-const NAMED_ERROR = importError("namedExport");
-const DEFAULT_ERROR = importError("default");
+const DEFAULT_ERROR = "default";
 
 const eslint = new ESLint({ overrideConfigFile: "src/__tests__/project/.eslintrc.js" });
 
@@ -12,12 +11,56 @@ const lint = async (file: string) => {
   return result.flatMap((x) => x.messages.map((x) => x.message));
 };
 
-const expectLintErr = (path: string) => expect(lint(path)).resolves;
+const expectLintErr = (path: string, errors: string[]) => expect(lint(path)).resolves.toEqual(errors.map(importError));
 
-test("can import from node_modules", () => {
-  return expectLintErr("nodeModulesTest.ts").toHaveLength(0);
+test("can import from node_modules", async () => {
+  await expectLintErr("nodeModulesTest.ts", []);
 });
 
-test("schemaParser", () => {
-  return expectLintErr("common/schemaParser.ts").toEqual([importError("subSchema")]);
+describe("folder scope default", () => {
+  test("✔️", () => expectLintErr("generated/combinedSchema.ts", []));
+  test("🚫", () => expectLintErr("combinedSchema.control.ts", ["schema", "subSchema"]));
+});
+
+describe("folder scope file exception", () => {
+  test("✔️", () => expectLintErr("common/schemaParser.ts", []));
+  test("🚫", () => expectLintErr("common/schemaParser.control.ts", ["schema"]));
+});
+
+describe("folder scope folder exception", () => {
+  test("✔️", () => expectLintErr("components/SchemaConsumer/schemaContext.ts", []));
+  test("🚫", () => expectLintErr("components/control/schemaContext.control.ts", ["schema"]));
+});
+
+describe("index files are accessible one dir up", () => {
+  test("✔️", () => expectLintErr("constants/index.ts", []));
+  test("🚫", () => expectLintErr("constants/index.control.ts", ["PRIVATE_CONSTANT"]));
+});
+
+describe("file scope", () => {
+  test("✔️", () => expectLintErr("constantConsumer/consumer.ts", []));
+  test("🚫", () => expectLintErr("constantConsumer/consumer.control.ts", ["CONSTANT2", "CONSTANT1"]));
+});
+
+describe("export scope ..", () => {
+  test("✔️", () => expectLintErr("components/colors.ts", []));
+  test("🚫", () => expectLintErr("colors.control.ts", ["color"]));
+});
+
+describe("export scope *", () => {
+  test("✔️", () => expectLintErr("components/control/globalImport.ts", []));
+});
+
+describe("export scope absolute path", () => {
+  test("✔️", () => expectLintErr("components/control/componentCollection.ts", []));
+  test("🚫", () => expectLintErr("common/componentCollection.control.ts", [DEFAULT_ERROR]));
+});
+
+describe("export scope folder exception", () => {
+  test("✔️", () => expectLintErr("common/commonColors.ts", []));
+});
+
+describe("export scope file exception", () => {
+  test("✔️", () => expectLintErr("constants/constants.global.ts", []));
+  test("🚫", () => expectLintErr("constants/constants.local.ts", ["color"]));
 });

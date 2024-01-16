@@ -24,7 +24,6 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
         return true;
     const exportFile = tsProgram.getSourceFile(exportPath);
     const exportDir = path_1.default.dirname(exportPath);
-    const importDir = path_1.default.dirname(importPath);
     let scope;
     if (!exportFile)
         return true;
@@ -41,7 +40,7 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
                 if (!exception)
                     continue;
                 const exceptionFullPath = getFullScopePath(exportDir, exception);
-                if (exceptionFullPath && isSubPath(exceptionFullPath, importDir)) {
+                if (exceptionFullPath && isSubPath(exceptionFullPath, importPath)) {
                     return true;
                 }
             }
@@ -79,7 +78,7 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
                 const exceptionFullPath = getFullScopePath(exportDir, exception.slice(1, -1));
                 if (!exceptionFullPath)
                     continue;
-                if (isSubPath(exceptionFullPath, importDir)) {
+                if (isSubPath(exceptionFullPath, importPath)) {
                     return true;
                 }
             }
@@ -92,13 +91,7 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
     const fullScopePath = getFullScopePath(exportDir, scope);
     if (!fullScopePath)
         return true;
-    console.debug({
-        exportDir,
-        importDir,
-        fullScopePath,
-        scope,
-    });
-    return isSubPath(fullScopePath, importDir);
+    return isSubPath(fullScopePath, importPath);
 };
 exports.checkIsImportable = checkIsImportable;
 //# sourceMappingURL=importabilityChecker.js.map

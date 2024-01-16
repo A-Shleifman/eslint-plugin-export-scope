@@ -34,7 +34,6 @@ export const checkIsImportable = ({
 
   const exportFile = tsProgram.getSourceFile(exportPath);
   const exportDir = path.dirname(exportPath);
-  const importDir = path.dirname(importPath);
   let scope: string | undefined;
 
   if (!exportFile) return true;
@@ -53,7 +52,7 @@ export const checkIsImportable = ({
 
         const exceptionFullPath = getFullScopePath(exportDir, exception);
 
-        if (exceptionFullPath && isSubPath(exceptionFullPath, importDir)) {
+        if (exceptionFullPath && isSubPath(exceptionFullPath, importPath)) {
           return true;
         }
       }
@@ -96,7 +95,7 @@ export const checkIsImportable = ({
         const exceptionFullPath = getFullScopePath(exportDir, exception.slice(1, -1));
         if (!exceptionFullPath) continue;
 
-        if (isSubPath(exceptionFullPath, importDir)) {
+        if (isSubPath(exceptionFullPath, importPath)) {
           return true;
         }
       }
@@ -111,12 +110,5 @@ export const checkIsImportable = ({
   const fullScopePath = getFullScopePath(exportDir, scope);
   if (!fullScopePath) return true;
 
-  console.debug({
-    exportDir,
-    importDir,
-    fullScopePath,
-    scope,
-  });
-
-  return isSubPath(fullScopePath, importDir);
+  return isSubPath(fullScopePath, importPath);
 };

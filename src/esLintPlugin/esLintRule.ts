@@ -78,15 +78,11 @@ export const rule = createRule({
       scopeDeclarations.forEach(({ type, path, loc }) => {
         const fullPath = getFullScopePath(exportDir, path);
 
-        if (!fullPath) return;
+        if (!fullPath || path === "*") return;
 
         if (type === "scope" || type === "scopeDefault") {
           if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {
-            return context.report({
-              node,
-              messageId: "onlyParents",
-              loc: getPathLoc(context.sourceCode.text, loc),
-            });
+            return context.report({ node, messageId: "onlyParents", loc: getPathLoc(context.sourceCode.text, loc) });
           }
         }
 
@@ -112,7 +108,7 @@ export const rule = createRule({
       }
 
       const fullPath = getFullScopePath(exportDir, node.value);
-      if (!fullPath) return;
+      if (!fullPath || node.value === "*") return;
 
       if (node.parent.type === "ExportDefaultDeclaration") {
         if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {

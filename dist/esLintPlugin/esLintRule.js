@@ -59,15 +59,11 @@ exports.rule = createRule({
             const exportDir = (0, path_1.dirname)(context.filename);
             scopeDeclarations.forEach(({ type, path, loc }) => {
                 const fullPath = (0, utils_2.getFullScopePath)(exportDir, path);
-                if (!fullPath)
+                if (!fullPath || path === "*")
                     return;
                 if (type === "scope" || type === "scopeDefault") {
                     if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {
-                        return context.report({
-                            node,
-                            messageId: "onlyParents",
-                            loc: (0, esLintUtils_1.getPathLoc)(context.sourceCode.text, loc),
-                        });
+                        return context.report({ node, messageId: "onlyParents", loc: (0, esLintUtils_1.getPathLoc)(context.sourceCode.text, loc) });
                     }
                 }
                 if (!fs_1.default.existsSync(fullPath)) {
@@ -90,7 +86,7 @@ exports.rule = createRule({
                 return;
             }
             const fullPath = (0, utils_2.getFullScopePath)(exportDir, node.value);
-            if (!fullPath)
+            if (!fullPath || node.value === "*")
                 return;
             if (node.parent.type === "ExportDefaultDeclaration") {
                 if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {

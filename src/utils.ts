@@ -2,23 +2,6 @@ import { readdirSync } from "fs";
 import { dirname, extname, relative, resolve } from "path";
 import { SCOPE_FILE_NAME } from "./importabilityChecker";
 
-// const throttle = <T extends (...args: Parameters<T>) => ReturnType<T>>(func: T) => {
-//   let lastCallTime = 0;
-//   let lastResult: ReturnType<T>;
-
-//   return (...args: Parameters<T>): ReturnType<T> => {
-//     const currentTime = Date.now();
-//     if (currentTime - lastCallTime < 1000) {
-//       return lastResult;
-//     }
-
-//     lastCallTime = currentTime;
-//     lastResult = func(...args);
-//     return lastResult;
-//   };
-// };
-
-// TODO: throttle
 export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
   const extSet = new Set(extensions);
   const filePaths: string[] = [];
@@ -49,29 +32,44 @@ export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".
   return { filePaths, dirPaths };
 };
 
-// TODO: throttle
+const nearestConfigMap = new Map<string, string | null>();
+
 export const getPathOfTheNearestConfig = (originPath: string, configFileName: string) => {
+  const key = [originPath, configFileName].join("_");
+  if (nearestConfigMap.has(key)) {
+    return nearestConfigMap.get(key);
+  }
+
+  const cacheResult = (result: string | null) => {
+    nearestConfigMap.set(key, result);
+
+    // clear cache after 1 second
+    setTimeout(() => nearestConfigMap.delete(key), 1000);
+
+    return result;
+  };
+
+  console.log("LOOKING FOR THE NEAREST CONFIG!", originPath, configFileName);
   let currentDir = originPath;
   while (currentDir !== "/") {
     const fileNames = readdirSync(currentDir);
     const isFound = fileNames.some((x) => x === configFileName);
 
     if (isFound) {
-      return resolve(currentDir, configFileName);
+      return cacheResult(resolve(currentDir, configFileName));
     }
 
     if (fileNames.includes("package.json")) {
-      return null;
+      return cacheResult(null);
     }
 
     currentDir = dirname(currentDir);
   }
 
-  return null;
+  return cacheResult(null);
 };
 
 export const getRootDir = (originPath: string) => {
-  console.log("CALLING GET ROOT DIR!!");
   const configPath = getPathOfTheNearestConfig(originPath, "package.json");
 
   return configPath ? dirname(configPath) : null;

@@ -1,7 +1,24 @@
 import { readdirSync } from "fs";
-import { dirname, extname, resolve } from "path";
+import { dirname, extname, relative, resolve } from "path";
 import { SCOPE_FILE_NAME } from "./importabilityChecker";
 
+// const throttle = <T extends (...args: Parameters<T>) => ReturnType<T>>(func: T) => {
+//   let lastCallTime = 0;
+//   let lastResult: ReturnType<T>;
+
+//   return (...args: Parameters<T>): ReturnType<T> => {
+//     const currentTime = Date.now();
+//     if (currentTime - lastCallTime < 1000) {
+//       return lastResult;
+//     }
+
+//     lastCallTime = currentTime;
+//     lastResult = func(...args);
+//     return lastResult;
+//   };
+// };
+
+// TODO: throttle
 export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
   const extSet = new Set(extensions);
   const filePaths: string[] = [];
@@ -32,6 +49,7 @@ export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".
   return { filePaths, dirPaths };
 };
 
+// TODO: throttle
 export const getPathOfTheNearestConfig = (originPath: string, configFileName: string) => {
   let currentDir = originPath;
   while (currentDir !== "/") {
@@ -52,11 +70,25 @@ export const getPathOfTheNearestConfig = (originPath: string, configFileName: st
   return null;
 };
 
-// TODO: memoize
 export const getRootDir = (originPath: string) => {
+  console.log("CALLING GET ROOT DIR!!");
   const configPath = getPathOfTheNearestConfig(originPath, "package.json");
 
   return configPath ? dirname(configPath) : null;
 };
 
 export const isStringArray = (x: unknown): x is string[] => Array.isArray(x) && x.every((x) => typeof x === "string");
+
+export const getFullScopePath = (exportDir: string, scope: string) => {
+  if (scope.startsWith(".")) {
+    return resolve(exportDir, scope);
+  }
+
+  const rootDir = getRootDir(exportDir);
+  if (!rootDir) return null;
+
+  return resolve(rootDir, scope);
+};
+
+export const isSubPath = (path1: string, path2: string) =>
+  !relative(path1.toLowerCase(), path2.toLowerCase()).startsWith(".");

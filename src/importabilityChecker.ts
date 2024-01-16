@@ -1,23 +1,9 @@
 import path from "path";
 import { escapeLeadingUnderscores } from "typescript";
 import type { Program } from "typescript";
-import { getPathOfTheNearestConfig, getRootDir, isStringArray } from "./utils";
+import { getFullScopePath, getPathOfTheNearestConfig, isStringArray, isSubPath } from "./utils";
 
 export const SCOPE_FILE_NAME = ".scope.ts";
-
-const getFullScopePath = (exportDir: string, scope: string) => {
-  if (scope.startsWith(".")) {
-    return path.resolve(exportDir, scope);
-  }
-
-  const rootDir = getRootDir(exportDir);
-  if (!rootDir) return null;
-
-  return path.resolve(rootDir, scope);
-};
-
-const isSubPath = (path1: string, path2: string) =>
-  !path.relative(path1.toLowerCase(), path2.toLowerCase()).startsWith(".");
 
 export const checkIsImportable = ({
   tsProgram,

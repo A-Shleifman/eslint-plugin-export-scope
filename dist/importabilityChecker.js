@@ -8,16 +8,6 @@ const path_1 = __importDefault(require("path"));
 const typescript_1 = require("typescript");
 const utils_1 = require("./utils");
 exports.SCOPE_FILE_NAME = ".scope.ts";
-const getFullScopePath = (exportDir, scope) => {
-    if (scope.startsWith(".")) {
-        return path_1.default.resolve(exportDir, scope);
-    }
-    const rootDir = (0, utils_1.getRootDir)(exportDir);
-    if (!rootDir)
-        return null;
-    return path_1.default.resolve(rootDir, scope);
-};
-const isSubPath = (path1, path2) => !path_1.default.relative(path1.toLowerCase(), path2.toLowerCase()).startsWith(".");
 const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
     if (!importPath || !exportPath || exportPath.includes("node_modules"))
@@ -39,8 +29,8 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
                 const exception = (_d = (_c = tag.text) === null || _c === void 0 ? void 0 : _c.at(0)) === null || _d === void 0 ? void 0 : _d.text;
                 if (!exception)
                     continue;
-                const exceptionFullPath = getFullScopePath(exportDir, exception);
-                if (exceptionFullPath && isSubPath(exceptionFullPath, importPath)) {
+                const exceptionFullPath = (0, utils_1.getFullScopePath)(exportDir, exception);
+                if (exceptionFullPath && (0, utils_1.isSubPath)(exceptionFullPath, importPath)) {
                     return true;
                 }
             }
@@ -75,10 +65,10 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
         const exceptions = (_q = (_p = exceptionsValDecl === null || exceptionsValDecl === void 0 ? void 0 : exceptionsValDecl.initializer) === null || _p === void 0 ? void 0 : _p.elements) === null || _q === void 0 ? void 0 : _q.map((x) => x === null || x === void 0 ? void 0 : x.getText());
         if ((0, utils_1.isStringArray)(exceptions)) {
             for (const exception of exceptions) {
-                const exceptionFullPath = getFullScopePath(exportDir, exception.slice(1, -1));
+                const exceptionFullPath = (0, utils_1.getFullScopePath)(exportDir, exception.slice(1, -1));
                 if (!exceptionFullPath)
                     continue;
-                if (isSubPath(exceptionFullPath, importPath)) {
+                if ((0, utils_1.isSubPath)(exceptionFullPath, importPath)) {
                     return true;
                 }
             }
@@ -88,10 +78,10 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
     scope !== null && scope !== void 0 ? scope : (scope = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");
     if (scope === "*")
         return true;
-    const fullScopePath = getFullScopePath(exportDir, scope);
+    const fullScopePath = (0, utils_1.getFullScopePath)(exportDir, scope);
     if (!fullScopePath)
         return true;
-    return isSubPath(fullScopePath, importPath);
+    return (0, utils_1.isSubPath)(fullScopePath, importPath);
 };
 exports.checkIsImportable = checkIsImportable;
 //# sourceMappingURL=importabilityChecker.js.map

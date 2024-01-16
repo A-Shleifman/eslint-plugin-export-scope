@@ -1,5 +1,5 @@
 "use strict";
-const esLintRule_1 = require("./esLintRule");
+const esLintRule_1 = require("./esLintPlugin/esLintRule");
 const tsPlugin_1 = require("./tsPlugin");
 const esLintPluginName = "export-scope";
 const configs = {

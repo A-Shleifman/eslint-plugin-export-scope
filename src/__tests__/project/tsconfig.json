@@ -7,5 +7,5 @@
     "noEmit": true,
     "baseUrl": "src"
   },
-  "include": ["**/.scope.ts"]
+  "include": ["**/*", "**/.scope.ts"]
 }

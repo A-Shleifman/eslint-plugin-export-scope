@@ -51,11 +51,11 @@ export default "";
   ╭────────────────────╮
   │ export default '*' │
   ╰────────────────────╯
-// ⬆ this will make all exports within `common` accessible from anywhere unless a specific export is overriden on a lower level
+// ⬆ this will make all exports within `common`
+// accessible from anywhere unless a
+// specific export is overriden on a lower level
 
 ```
-
-_Hint: creating an `export default '*'` `scope` file in the root of the project will make all exports global by default if you prefer this approach._
 
 ### Exceptions
 
@@ -97,7 +97,9 @@ export default "";
   │   'src/scripts/schemaParser.ts', │
   │ ]                                │
   ╰──────────────────────────────────╯
-// ⬆ by default exports are only importable within `generated` folder, but folders/files in exceptions are exempt.
+// ⬆ by default exports are only importable
+// within `generated` folder, but
+// folders/files in `exceptions` are exempt.
 
 ```
 
@@ -151,3 +153,9 @@ Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't 
 <p align="center">
   <img src="readme-src/ts_version.png" alt="Select TS version" width="600" />
 </p>
+
+## Hints
+
+- Type `@` above exports for automatic jsDoc generation.
+- Use autocompletion provided within jsDocs and `.scope.ts` files.
+- Creating an `export default '*'` `.scope.ts` file in the root of the project will make all exports global by default if you prefer a less strict approach.

@@ -4,6 +4,12 @@ Set export scope (importability) for local utils, states, contexts, components, 
 
 ![Before-after comparison](/readme-src/before_after.jpg "Before-after comparison")
 
+## Demo
+
+![Demo](/readme-src/demo.gif "Demo")
+
+## Scopes
+
 <p align="center">
 
 | scope           | importable from                         |                               |

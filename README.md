@@ -40,6 +40,10 @@ export default "";
 
 ## Default folder scope with `.scope.ts` files
 
+<p align="center">
+<img src="./readme-src/scope_file.png" width="500" title="Scope File example">
+</p>
+
 ```ts
 └── src
   └── `common`
@@ -52,7 +56,7 @@ export default "";
   │ export default '*' │
   ╰────────────────────╯
 // ⬆ this will make all exports within `common`
-// accessible from anywhere unless a
+// importable from anywhere unless a
 // specific export is overriden on a lower level
 
 ```
@@ -72,15 +76,6 @@ export default "";
 ```
 
 #### Folder scope exceptions in `.scope.ts` files
-
-```
-└── src
-  └── generated
-    ├── [^0] 👈 exports only available within this folder
-    └── schema.ts
-  └── scripts
-    └── index.ts
-```
 
 ```ts
 └── src

@@ -3,7 +3,7 @@ import { escapeLeadingUnderscores } from "typescript";
 import type { Program } from "typescript";
 import { getPathOfTheNearestConfig, getRootDir, isStringArray } from "./utils";
 
-export const SCOPE_FILE_NAME = "scope.ts";
+export const SCOPE_FILE_NAME = ".scope.ts";
 
 const getFullScopePath = (exportDir: string, scope: string) => {
   if (scope.startsWith(".")) {

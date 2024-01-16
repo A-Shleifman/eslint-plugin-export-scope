@@ -7,7 +7,7 @@ exports.checkIsImportable = exports.SCOPE_FILE_NAME = void 0;
 const path_1 = __importDefault(require("path"));
 const typescript_1 = require("typescript");
 const utils_1 = require("./utils");
-exports.SCOPE_FILE_NAME = "scope.ts";
+exports.SCOPE_FILE_NAME = ".scope.ts";
 const getFullScopePath = (exportDir, scope) => {
     if (scope.startsWith(".")) {
         return path_1.default.resolve(exportDir, scope);

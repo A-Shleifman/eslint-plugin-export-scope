@@ -6,5 +6,6 @@
     "esModuleInterop": true,
     "noEmit": true,
     "baseUrl": "src"
-  }
+  },
+  "include": ["**/.scope.ts"]
 }

@@ -9,6 +9,10 @@
     "lib": ["ES2023"],
     "resolveJsonModule": true
   },
-  "include": ["**/*"],
+  "include": [
+    "**/*",
+    "src/__tests__/project/src/generated/schema/.scope.ts",
+    "src/__tests__/project/src/common/.scope.ts"
+  ],
   "exclude": ["node_modules", "tests", "src/__tests__"]
 }

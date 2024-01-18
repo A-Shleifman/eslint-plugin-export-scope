@@ -1,1 +1,1 @@
-import {} from "generated/schema/schema";
+import { schema } from "generated/schema/schema";

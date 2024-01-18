@@ -30,6 +30,10 @@ export const rule = createRule({
   create(context) {
     const services = ESLintUtils.getParserServices(context);
 
+    if (!services.getSymbolAtLocation) {
+      throw new Error("Please make sure you have the latest version of `@typescript-eslint/parser` installed.");
+    }
+
     const checkIsImportable = (props: Pick<Parameters<typeof _checkIsImportable>[0], "exportPath" | "exportName">) =>
       _checkIsImportable({ tsProgram: services.program, importPath: context.filename, ...props });
 

@@ -30,6 +30,9 @@ exports.rule = createRule({
     defaultOptions: [],
     create(context) {
         const services = utils_1.ESLintUtils.getParserServices(context);
+        if (!services.getSymbolAtLocation) {
+            throw new Error("Please make sure you have the latest version of `@typescript-eslint/parser` installed.");
+        }
         const checkIsImportable = (props) => (0, importabilityChecker_1.checkIsImportable)(Object.assign({ tsProgram: services.program, importPath: context.filename }, props));
         const validateNode = (node, exportName) => {
             var _a, _b;

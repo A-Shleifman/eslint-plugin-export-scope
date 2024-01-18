@@ -111,10 +111,23 @@ export default "";
 Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin and a `TS Language Server` plugin.
 
 ```sh
-npm i -D eslint eslint-plugin-export-scope
+npm i -D eslint @typescript-eslint/parser eslint-plugin-export-scope
+                    # ⬆ v6 or above
 ```
 
 #### ESLint plugin will highlight imports outside the scope
+
+```js
+// .eslintrc.js
+module.exports = {
+  // ...
+  extends: ["plugin:eslint-plugin-export-scope/recommended"],
+  ignorePatterns: ["!.scope.ts"],
+};
+```
+
+<details>
+  <summary>Manual ESLint configuration</summary>
 
 ```js
 // .eslintrc.js
@@ -132,6 +145,8 @@ module.exports = {
   ],
 };
 ```
+
+</details>
 
 #### TS plugin will disable autocompletion for exports outside the scope
 

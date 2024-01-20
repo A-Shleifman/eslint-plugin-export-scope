@@ -133,16 +133,11 @@ module.exports = {
 // .eslintrc.js
 module.exports = {
   // ...
+  parser: "@typescript-eslint/parser",
+  plugins: ["export-scope"],
+  rules: { "export-scope/no-imports-outside-export-scope": "error" },
+  parserOptions: { project: true, tsconfigRootDir: __dirname },
   ignorePatterns: ["!.scope.ts"],
-  overrides: [
-    {
-      files: ["*.js", "*.mjs", "*.jsx", "*.ts", "*.mts", "*.tsx"],
-      parser: "@typescript-eslint/parser",
-      parserOptions: { project: true, tsconfigRootDir: __dirname },
-      plugins: ["export-scope"],
-      rules: { "export-scope/no-imports-outside-export-scope": "error" },
-    },
-  ],
 };
 ```
 

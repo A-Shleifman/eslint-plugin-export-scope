@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-export-scope",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Disallows importing scoped exports outside their scope",
   "keywords": [
     "scope",

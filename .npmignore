@@ -6,3 +6,4 @@ tsconfig.json
 .eslintrc.js
 .prettierrc.json
 jest.config.js
+*.map

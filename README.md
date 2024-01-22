@@ -137,7 +137,7 @@ module.exports = {
 
 #### TS plugin will disable autocompletion for exports outside the scope
 
-```json
+```js
 // tsconfig.json
 "compilerOptions": {
   "plugins": [{ "name": "eslint-plugin-export-scope" }],

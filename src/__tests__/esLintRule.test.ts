@@ -64,3 +64,12 @@ describe("export scope file exception", () => {
   test("✔️", () => expectLintErr("constants/constants.global.ts", []));
   test("🚫", () => expectLintErr("constants/constants.local.ts", ["color"]));
 });
+
+describe("dynamic imports", () => {
+  test("✔️", () => expectLintErr("dynamicImport.ts", []));
+  test("🚫", () =>
+    expect(lint("dynamicImport.control.ts")).resolves.toEqual([
+      "Cannot import module outside its export scope",
+      "Cannot import module outside its export scope",
+    ]));
+});

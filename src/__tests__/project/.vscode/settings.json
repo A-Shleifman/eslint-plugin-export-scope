@@ -2,5 +2,4 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.tsserver.log": "verbose",
   "typescript.enablePromptUseWorkspaceTsdk": true
-  // "editor.snippetSuggestions": "none"
 }

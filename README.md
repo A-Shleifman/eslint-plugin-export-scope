@@ -122,6 +122,8 @@ npm i -D eslint @typescript-eslint/parser eslint-plugin-export-scope
 module.exports = {
   // ...
   extends: ["plugin:eslint-plugin-export-scope/recommended"],
+  parser: "@typescript-eslint/parser",
+  parserOptions: { project: true, tsconfigRootDir: __dirname },
   ignorePatterns: ["!.scope.ts"],
 };
 ```
@@ -133,11 +135,9 @@ module.exports = {
 // .eslintrc.js
 module.exports = {
   // ...
-  parser: "@typescript-eslint/parser",
+  e̶x̶t̶e̶n̶d̶s̶:̶ ̶[̶"̶p̶l̶u̶g̶i̶n̶:̶e̶s̶l̶i̶n̶t̶-̶p̶l̶u̶g̶i̶n̶-̶e̶x̶p̶o̶r̶t̶-̶s̶c̶o̶p̶e̶/̶r̶e̶c̶o̶m̶m̶e̶n̶d̶e̶d̶"̶]̶,̶
   plugins: ["export-scope"],
   rules: { "export-scope/no-imports-outside-export-scope": "error" },
-  parserOptions: { project: true, tsconfigRootDir: __dirname },
-  ignorePatterns: ["!.scope.ts"],
 };
 ```
 
@@ -151,6 +151,7 @@ module.exports = {
   "plugins": [{ "name": "eslint-plugin-export-scope" }],
 },
 "include": ["**/*", "**/.scope.ts"]
+//                  "../../**/.scope.ts" for monorepos
 ```
 
 Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't work.
@@ -164,3 +165,4 @@ Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't 
 - Type `@` above exports for automatic jsDoc generation.
 - Use autocompletion provided within jsDocs and `.scope.ts` files.
 - Creating an `export default '*'` `.scope.ts` file in the root of the project will make all exports global by default if you prefer a less strict approach.
+- When dynamically importing a module `@scopeDefault` must be specified, as individual `@scope` declarations are not respected at the moment for dynamic imports.

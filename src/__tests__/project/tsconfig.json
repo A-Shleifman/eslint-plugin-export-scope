@@ -5,7 +5,8 @@
     "module": "CommonJS",
     "esModuleInterop": true,
     "noEmit": true,
-    "baseUrl": "src"
+    "baseUrl": "src",
+    "resolveJsonModule": true
   },
-  "include": ["**/*", "**/.scope.ts"]
+  "include": ["**/*", "**/.scope.ts", ".eslintrc.js"]
 }

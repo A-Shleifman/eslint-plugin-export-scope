@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "plugins": [{ "name": "eslint-plugin-export-scope" }]
+  },
+  "include": ["**/*", "**/.scope.ts"]
+}

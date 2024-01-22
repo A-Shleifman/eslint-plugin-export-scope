@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
     "target": "es2017",
-    "module": "commonjs",
+    "module": "NodeNext",
     "esModuleInterop": true,
-    "outDir": "./dist",
+    "outDir": "dist",
+    "sourceMap": true,
     "strict": true,
-    "lib": ["ES2021"]
+    "lib": ["ES2023"],
+    "resolveJsonModule": true
   },
   "include": ["**/*"],
   "exclude": ["node_modules", "tests", "src/__tests__"]

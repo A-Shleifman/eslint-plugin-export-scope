@@ -1,40 +1,79 @@
 import { ESLint } from "eslint";
 
-const eslint = new ESLint({
-  overrideConfigFile: "src/__tests__/project/.eslintrc.js",
-  overrideConfig: {
-    parserOptions: {
-      project: "src/__tests__/project/tsconfig.json",
-    },
-  },
+const importError = (name: string) => `Cannot import '${name}' outside its export scope`;
+const DEFAULT_ERROR = "default";
+
+const eslint = new ESLint({ overrideConfigFile: "src/__tests__/project/.eslintrc.js" });
+
+const lint = async (file: string) => {
+  const result = await eslint.lintFiles(`src/__tests__/project/src/${file}`);
+
+  return result.flatMap((x) => x.messages.map((x) => x.message));
+};
+
+const expectLintErr = (path: string, errors: string[]) => expect(lint(path)).resolves.toEqual(errors.map(importError));
+
+test("can import from node_modules", async () => {
+  await expectLintErr("nodeModulesTest.ts", []);
 });
 
-test("cannot import outside export scope", async () => {
-  const result = await eslint.lintFiles("src/__tests__/project/src/index.ts");
-
-  const errors = result.flatMap((x) => x.messages.map((x) => x.message));
-
-  expect(errors).toEqual([
-    "Cannot import 'default' outside its export scope",
-    "Cannot import 'helper2' outside its export scope",
-    "Cannot import 'default' outside its export scope",
-    "Cannot import module outside its export scope",
-    "Cannot import module outside its export scope",
-  ]);
+describe("folder scope default", () => {
+  test("✔️", () => expectLintErr("generated/combinedSchema.ts", []));
+  test("🚫", () => expectLintErr("combinedSchema.control.ts", ["schema", "subSchema"]));
 });
 
-test("cannot import exports outside their folder if `defaultProjectScope` option is specified", async () => {
-  const result = await eslint.lintFiles("src/__tests__/project/src/Component/index.ts");
-
-  const errors = result.flatMap((x) => x.messages.map((x) => x.message));
-
-  expect(errors).toEqual(["Cannot import 'default' outside its export scope"]);
+describe("folder scope file exception", () => {
+  test("✔️", () => expectLintErr("common/schemaParser.ts", []));
+  test("🚫", () => expectLintErr("common/schemaParser.control.ts", ["schema"]));
 });
 
-test("can import within export scope and can import node_modules", async () => {
-  const result = await eslint.lintFiles("src/__tests__/project/src/Component/ChildComponent/index.ts");
+describe("folder scope folder exception", () => {
+  test("✔️", () => expectLintErr("components/SchemaConsumer/schemaContext.ts", []));
+  test("🚫", () => expectLintErr("components/control/schemaContext.control.ts", ["schema"]));
+});
 
-  const errors = result.flatMap((x) => x.messages.map((x) => x.message));
+describe("index files are accessible one dir up", () => {
+  test("✔️", () => expectLintErr("constants/index.ts", []));
+  test("🚫", () => expectLintErr("constants/index.control.ts", ["PRIVATE_CONSTANT"]));
+});
 
-  expect(errors).toHaveLength(0);
+describe("file scope", () => {
+  test("✔️", () => expectLintErr("constantConsumer/consumer.ts", []));
+  test("🚫", () => expectLintErr("constantConsumer/consumer.control.ts", ["CONSTANT2", "CONSTANT1"]));
+});
+
+describe("export scope ..", () => {
+  test("✔️", () => expectLintErr("components/colors.ts", []));
+  test("🚫", () => expectLintErr("colors.control.ts", ["color"]));
+});
+
+describe("export scope *", () => {
+  test("✔️", () => expectLintErr("components/control/globalImport.ts", []));
+});
+
+describe("export scope absolute path", () => {
+  test("✔️", () => expectLintErr("components/control/componentCollection.ts", []));
+  test("🚫", () => expectLintErr("common/componentCollection.control.ts", [DEFAULT_ERROR]));
+});
+
+describe("export scope folder exception", () => {
+  test("✔️", () => expectLintErr("common/commonColors.ts", []));
+});
+
+describe("export scope file exception", () => {
+  test("✔️", () => expectLintErr("constants/constants.global.ts", []));
+  test("🚫", () => expectLintErr("constants/constants.local.ts", ["color"]));
+});
+
+describe("dynamic imports", () => {
+  test("✔️", () => expectLintErr("dynamicImport.ts", []));
+  test("🚫", () =>
+    expect(lint("dynamicImport.control.ts")).resolves.toEqual([
+      "Cannot import module outside its export scope",
+      "Cannot import module outside its export scope",
+    ]));
+});
+
+describe(".scope.js files are respected", () => {
+  test("✔️", () => expectLintErr("scope-dot-js/import.js", []));
 });

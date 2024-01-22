@@ -98,14 +98,6 @@ export default "";
 
 ```
 
-## Issues
-
-⚠️ To re-lint an import in VSCode after updating a `scope` declaration either `touch` this import or restart the ESLint Server [(ESLint limitation)](https://github.com/microsoft/vscode-eslint/issues/1565#event-7958473201).
-
-<p align="center">
-  <img src="readme-src/restart_eslint_server.png" alt="Restart ESLint Server" width="200" />
-</p>
-
 ## Installation
 
 Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin and a `TS Language Server` plugin.
@@ -160,9 +152,25 @@ Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't 
   <img src="readme-src/ts_version.png" alt="Select TS version" width="600" />
 </p>
 
+<details>
+  <summary>Configuration for JS projects</summary>
+
+- `tsconfig.json` file is still required for the plugin to work
+- replace `.scope.ts` in both configs with `.scope.js`
+- set `compilerOptions.allowJs`to `true` in `tsconfig.json`
+</details>
+
 ## Hints
 
 - Type `@` above exports for automatic jsDoc generation.
 - Use autocompletion provided within jsDocs and `.scope.ts` files.
 - Creating an `export default '*'` `.scope.ts` file in the root of the project will make all exports global by default if you prefer a less strict approach.
 - When dynamically importing a module `@scopeDefault` must be specified, as individual `@scope` declarations are not respected at the moment for dynamic imports.
+
+## Issues
+
+⚠️ To re-lint an import in VSCode after updating a `scope` declaration either `touch` this import or restart the ESLint Server [(ESLint limitation)](https://github.com/microsoft/vscode-eslint/issues/1565#event-7958473201).
+
+<p align="center">
+  <img src="readme-src/restart_eslint_server.png" alt="Restart ESLint Server" width="200" />
+</p>

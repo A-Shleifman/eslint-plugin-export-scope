@@ -11,7 +11,7 @@ const getFileTree = (dir, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "m
     const traverse = (dir) => {
         const entries = (0, fs_1.readdirSync)(dir, { withFileTypes: true });
         entries.map((x) => {
-            if (x.name === importabilityChecker_1.SCOPE_FILE_NAME)
+            if ([importabilityChecker_1.SCOPE_TS_FILE_NAME, importabilityChecker_1.SCOPE_JS_FILE_NAME].includes(x.name))
                 return;
             if (x.name === "node_modules" || x.name.startsWith("."))
                 return;
@@ -33,7 +33,8 @@ const getFileTree = (dir, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "m
 exports.getFileTree = getFileTree;
 const nearestConfigMap = new Map();
 const getPathOfTheNearestConfig = (originPath, configFileName) => {
-    const key = [originPath, configFileName].join("_");
+    const configFileNames = Array.isArray(configFileName) ? configFileName : [configFileName];
+    const key = [originPath, configFileNames.join("_")].join("_");
     if (nearestConfigMap.has(key)) {
         return nearestConfigMap.get(key);
     }
@@ -46,9 +47,9 @@ const getPathOfTheNearestConfig = (originPath, configFileName) => {
     let currentDir = originPath;
     while (currentDir !== "/") {
         const fileNames = (0, fs_1.readdirSync)(currentDir);
-        const isFound = fileNames.some((x) => x === configFileName);
-        if (isFound) {
-            return cacheResult((0, path_1.resolve)(currentDir, configFileName));
+        const fileName = fileNames.find((x) => configFileNames.includes(x));
+        if (fileName) {
+            return cacheResult((0, path_1.resolve)(currentDir, fileName));
         }
         if (fileNames.includes("package.json")) {
             return cacheResult(null);

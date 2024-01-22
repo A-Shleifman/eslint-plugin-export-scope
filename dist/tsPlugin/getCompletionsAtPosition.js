@@ -17,7 +17,7 @@ const getCompletionsAtPosition = (ts, info) => (importPath, position, ...args) =
     const fileTextToPosition = file === null || file === void 0 ? void 0 : file.getFullText().slice(0, position);
     if (!fileTextToPosition)
         return original;
-    if ((0, path_1.basename)(importPath) === importabilityChecker_1.SCOPE_FILE_NAME) {
+    if ([importabilityChecker_1.SCOPE_TS_FILE_NAME, importabilityChecker_1.SCOPE_JS_FILE_NAME].includes((0, path_1.basename)(importPath))) {
         return (_a = (0, scopeFileCompletions_1.getScopeFileCompletions)(ts, importDir, fileTextToPosition)) !== null && _a !== void 0 ? _a : original;
     }
     {

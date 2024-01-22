@@ -1,6 +1,6 @@
 import { readdirSync } from "fs";
 import { dirname, extname, relative, resolve } from "path";
-import { SCOPE_FILE_NAME } from "./importabilityChecker";
+import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "./importabilityChecker";
 
 export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
   const extSet = new Set(extensions);
@@ -11,7 +11,7 @@ export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".
     const entries = readdirSync(dir, { withFileTypes: true });
 
     entries.map((x) => {
-      if (x.name === SCOPE_FILE_NAME) return;
+      if ([SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME].includes(x.name)) return;
       if (x.name === "node_modules" || x.name.startsWith(".")) return;
 
       const path = resolve(dir, x.name);
@@ -34,8 +34,10 @@ export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".
 
 const nearestConfigMap = new Map<string, string | null>();
 
-export const getPathOfTheNearestConfig = (originPath: string, configFileName: string) => {
-  const key = [originPath, configFileName].join("_");
+export const getPathOfTheNearestConfig = (originPath: string, configFileName: string | string[]) => {
+  const configFileNames = Array.isArray(configFileName) ? configFileName : [configFileName];
+
+  const key = [originPath, configFileNames.join("_")].join("_");
   if (nearestConfigMap.has(key)) {
     return nearestConfigMap.get(key);
   }
@@ -52,10 +54,10 @@ export const getPathOfTheNearestConfig = (originPath: string, configFileName: st
   let currentDir = originPath;
   while (currentDir !== "/") {
     const fileNames = readdirSync(currentDir);
-    const isFound = fileNames.some((x) => x === configFileName);
+    const fileName = fileNames.find((x) => configFileNames.includes(x));
 
-    if (isFound) {
-      return cacheResult(resolve(currentDir, configFileName));
+    if (fileName) {
+      return cacheResult(resolve(currentDir, fileName));
     }
 
     if (fileNames.includes("package.json")) {

@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIsImportable = exports.SCOPE_FILE_NAME = void 0;
+exports.checkIsImportable = exports.SCOPE_JS_FILE_NAME = exports.SCOPE_TS_FILE_NAME = void 0;
 const path_1 = __importDefault(require("path"));
 const typescript_1 = require("typescript");
 const utils_1 = require("./utils");
-exports.SCOPE_FILE_NAME = ".scope.ts";
+exports.SCOPE_TS_FILE_NAME = ".scope.ts";
+exports.SCOPE_JS_FILE_NAME = ".scope.js";
 const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
     if (!importPath || !exportPath || exportPath.includes("node_modules"))
@@ -49,7 +50,7 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
     getFolderScope: {
         if (scope)
             break getFolderScope;
-        const scopeConfigPath = (0, utils_1.getPathOfTheNearestConfig)(exportDir, exports.SCOPE_FILE_NAME);
+        const scopeConfigPath = (0, utils_1.getPathOfTheNearestConfig)(exportDir, [exports.SCOPE_TS_FILE_NAME, exports.SCOPE_JS_FILE_NAME]);
         const scopeFile = scopeConfigPath && tsProgram.getSourceFile(scopeConfigPath);
         if (!scopeFile)
             break getFolderScope;

@@ -73,3 +73,7 @@ describe("dynamic imports", () => {
       "Cannot import module outside its export scope",
     ]));
 });
+
+describe(".scope.js files are respected", () => {
+  test("✔️", () => expectLintErr("scope-dot-js/import.js", []));
+});

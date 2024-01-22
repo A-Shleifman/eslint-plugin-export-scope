@@ -1,5 +1,9 @@
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
-import { SCOPE_FILE_NAME, checkIsImportable as _checkIsImportable } from "../importabilityChecker";
+import {
+  SCOPE_JS_FILE_NAME,
+  SCOPE_TS_FILE_NAME,
+  checkIsImportable as _checkIsImportable,
+} from "../importabilityChecker";
 import { getFullScopePath } from "../utils";
 import { basename, dirname } from "path";
 import fs from "fs";
@@ -102,7 +106,7 @@ export const rule = createRule({
     };
 
     const validateImportString = (node: TSESTree.Literal) => {
-      if (basename(context.filename) !== SCOPE_FILE_NAME) return;
+      if (![SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME].includes(basename(context.filename))) return;
       const exportDir = dirname(context.filename);
       node.loc.start.column += 1;
       node.loc.end.column -= 1;

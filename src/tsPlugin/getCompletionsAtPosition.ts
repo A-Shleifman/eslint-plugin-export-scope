@@ -1,5 +1,5 @@
 import { ScriptElementKind, type LanguageService, type server } from "typescript";
-import { SCOPE_FILE_NAME, checkIsImportable } from "../importabilityChecker";
+import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME, checkIsImportable } from "../importabilityChecker";
 import { basename, dirname } from "path";
 import { getNewCompletions } from "./tsUtils";
 
@@ -20,7 +20,7 @@ export const getCompletionsAtPosition =
 
     if (!fileTextToPosition) return original;
 
-    if (basename(importPath) === SCOPE_FILE_NAME) {
+    if ([SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME].includes(basename(importPath))) {
       return getScopeFileCompletions(ts, importDir, fileTextToPosition) ?? original;
     }
 

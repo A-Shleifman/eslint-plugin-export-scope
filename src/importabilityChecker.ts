@@ -3,7 +3,8 @@ import { escapeLeadingUnderscores } from "typescript";
 import type { Program } from "typescript";
 import { getFullScopePath, getPathOfTheNearestConfig, isStringArray, isSubPath } from "./utils";
 
-export const SCOPE_FILE_NAME = ".scope.ts";
+export const SCOPE_TS_FILE_NAME = ".scope.ts";
+export const SCOPE_JS_FILE_NAME = ".scope.js";
 
 export const checkIsImportable = ({
   tsProgram,
@@ -58,7 +59,7 @@ export const checkIsImportable = ({
 
   getFolderScope: {
     if (scope) break getFolderScope;
-    const scopeConfigPath = getPathOfTheNearestConfig(exportDir, SCOPE_FILE_NAME);
+    const scopeConfigPath = getPathOfTheNearestConfig(exportDir, [SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME]);
     const scopeFile = scopeConfigPath && tsProgram.getSourceFile(scopeConfigPath);
 
     if (!scopeFile) break getFolderScope;

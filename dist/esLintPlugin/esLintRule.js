@@ -80,7 +80,7 @@ exports.rule = createRule({
             });
         };
         const validateImportString = (node) => {
-            if ((0, path_1.basename)(context.filename) !== importabilityChecker_1.SCOPE_FILE_NAME)
+            if (![importabilityChecker_1.SCOPE_TS_FILE_NAME, importabilityChecker_1.SCOPE_JS_FILE_NAME].includes((0, path_1.basename)(context.filename)))
                 return;
             const exportDir = (0, path_1.dirname)(context.filename);
             node.loc.start.column += 1;

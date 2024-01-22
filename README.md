@@ -160,6 +160,13 @@ Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't 
 - set `compilerOptions.allowJs`to `true` in `tsconfig.json`
 </details>
 
+## Upgrading from v1 to v2
+
+- Replace all `//` comments with jsDocs `/** */`
+- Replace `@scope default` with `@scopeDefault`
+- Relace `@..` file/folder prefixes with `.scope.ts` files.
+- Make sure `.eslintrc.js` and `tsconfig.json` configs are updated
+
 ## Hints
 
 - Type `@` above exports for automatic jsDoc generation.

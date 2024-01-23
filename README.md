@@ -1,6 +1,9 @@
 # eslint-plugin-export-scope
 
-Set export scope (importability) for local utils, states, contexts, components, e.t.c. They should only be visible/accessible within their local scope.
+Don't leak **LOCAL** utils, states, contexts, components into the global scope.
+
+- **Default:** exports are only available within their folder and its children
+- **Export scope:** modify importability as needed
 
 ![Before-after comparison](/readme-src/before_after.jpg "Before-after comparison")
 

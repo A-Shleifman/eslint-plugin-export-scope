@@ -11,4 +11,5 @@ module.exports = {
       },
     ],
   },
+  collectCoverageFrom: ["dist/*.{ts,js}", "!src/dist/tsPlugin/**"],
 };

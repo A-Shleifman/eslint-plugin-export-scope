@@ -2,10 +2,7 @@
 
 Don't leak **LOCAL** utils, states, contexts, components into the global scope.
 
-- **Default:** exports are only available within their folder and its children
-- **Export scope:** modify importability as needed
-
-![Before-after comparison](/readme-src/before_after.jpg "Before-after comparison")
+![Basics](/readme-src/basics.jpg "Basics")
 
 ## Demo
 

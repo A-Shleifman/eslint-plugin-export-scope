@@ -1,12 +1,15 @@
 {
   "name": "eslint-plugin-export-scope",
-  "version": "2.0.3",
-  "description": "Disallows importing scoped exports outside their scope",
+  "version": "2.0.4",
+  "description": "Don't leak LOCAL utils, states, components into the global scope",
   "keywords": [
     "scope",
     "@scope",
     "export",
+    "import",
     "public",
+    "private",
+    "protected",
     "eslint",
     "eslintplugin",
     "eslint-plugin"

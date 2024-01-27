@@ -50,8 +50,15 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
     getFolderScope: {
         if (scope)
             break getFolderScope;
-        const scopeConfigPath = (0, utils_1.getPathOfTheNearestConfig)(exportDir, [exports.SCOPE_TS_FILE_NAME, exports.SCOPE_JS_FILE_NAME]);
-        const scopeFile = scopeConfigPath && tsProgram.getSourceFile(scopeConfigPath);
+        let scopeFile = tsProgram.getSourceFile(path_1.default.join(exportDir, exports.SCOPE_TS_FILE_NAME));
+        scopeFile !== null && scopeFile !== void 0 ? scopeFile : (scopeFile = tsProgram.getSourceFile(path_1.default.join(exportDir, exports.SCOPE_JS_FILE_NAME)));
+        if (!scopeFile) {
+            const rootDir = (0, utils_1.getRootDir)(exportDir);
+            if (rootDir) {
+                scopeFile !== null && scopeFile !== void 0 ? scopeFile : (scopeFile = tsProgram.getSourceFile(path_1.default.join(rootDir, exports.SCOPE_TS_FILE_NAME)));
+                scopeFile !== null && scopeFile !== void 0 ? scopeFile : (scopeFile = tsProgram.getSourceFile(path_1.default.join(rootDir, exports.SCOPE_JS_FILE_NAME)));
+            }
+        }
         if (!scopeFile)
             break getFolderScope;
         const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(scopeFile);

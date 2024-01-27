@@ -1,7 +1,7 @@
 import path from "path";
 import { escapeLeadingUnderscores } from "typescript";
 import type { Program } from "typescript";
-import { getFullScopePath, getPathOfTheNearestConfig, isStringArray, isSubPath } from "./utils";
+import { getFullScopePath, getRootDir, isStringArray, isSubPath } from "./utils";
 
 export const SCOPE_TS_FILE_NAME = ".scope.ts";
 export const SCOPE_JS_FILE_NAME = ".scope.js";
@@ -59,8 +59,16 @@ export const checkIsImportable = ({
 
   getFolderScope: {
     if (scope) break getFolderScope;
-    const scopeConfigPath = getPathOfTheNearestConfig(exportDir, [SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME]);
-    const scopeFile = scopeConfigPath && tsProgram.getSourceFile(scopeConfigPath);
+    let scopeFile = tsProgram.getSourceFile(path.join(exportDir, SCOPE_TS_FILE_NAME));
+    scopeFile ??= tsProgram.getSourceFile(path.join(exportDir, SCOPE_JS_FILE_NAME));
+
+    if (!scopeFile) {
+      const rootDir = getRootDir(exportDir);
+      if (rootDir) {
+        scopeFile ??= tsProgram.getSourceFile(path.join(rootDir, SCOPE_TS_FILE_NAME));
+        scopeFile ??= tsProgram.getSourceFile(path.join(rootDir, SCOPE_JS_FILE_NAME));
+      }
+    }
 
     if (!scopeFile) break getFolderScope;
 

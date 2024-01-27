@@ -77,3 +77,11 @@ describe("dynamic imports", () => {
 describe(".scope.js files are respected", () => {
   test("✔️", () => expectLintErr("scope-dot-js/import.js", []));
 });
+
+describe(".scope.ts files don't affect export scopes of children", () => {
+  test("✔️", () => expectLintErr("commonInternal.ts", ["INTERNAL"]));
+});
+
+describe(".scope.ts in the project root becomes global default", () => {
+  test("✔️", () => expectLintErr("globalPackageTest.ts", []));
+});

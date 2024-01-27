@@ -171,7 +171,7 @@ Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't 
 
 - Type `@` above exports for automatic jsDoc generation.
 - Use autocompletion provided within jsDocs and `.scope.ts` files.
-- Creating an `export default '*'` `.scope.ts` file in the root of the project will make all exports global by default if you prefer a less strict approach.
+- Root `.scope.ts` file (next to package.json) sets the default for the whole project. Having `export default '*'` there will make all exports global by default if you prefer a less strict approach.
 - When dynamically importing a module `@scopeDefault` must be specified, as individual `@scope` declarations are not respected at the moment for dynamic imports.
 
 ## Issues

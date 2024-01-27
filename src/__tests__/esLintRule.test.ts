@@ -85,3 +85,8 @@ describe(".scope.ts files don't affect export scopes of children", () => {
 describe(".scope.ts in the project root becomes global default", () => {
   test("✔️", () => expectLintErr("globalPackageTest.ts", []));
 });
+
+describe("index files inherit scope from parent .scope.ts files", () => {
+  test("✔️", () => expectLintErr("indexInheritsParentScope.ts", []));
+  test("🚫", () => expectLintErr("indexInheritsParentScope.control.ts", ["part"]));
+});

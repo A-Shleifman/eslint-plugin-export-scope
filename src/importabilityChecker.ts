@@ -25,6 +25,8 @@ export const checkIsImportable = ({
 
   if (!exportFile) return true;
 
+  const isIndexFile = path.parse(exportFile.fileName).name === "index";
+
   getLocalScope: {
     if (!exportName) break getLocalScope;
     const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
@@ -62,6 +64,12 @@ export const checkIsImportable = ({
     let scopeFile = tsProgram.getSourceFile(path.join(exportDir, SCOPE_TS_FILE_NAME));
     scopeFile ??= tsProgram.getSourceFile(path.join(exportDir, SCOPE_JS_FILE_NAME));
 
+    if (isIndexFile) {
+      const parentDir = path.dirname(exportDir);
+      scopeFile ??= tsProgram.getSourceFile(path.join(parentDir, SCOPE_TS_FILE_NAME));
+      scopeFile ??= tsProgram.getSourceFile(path.join(parentDir, SCOPE_JS_FILE_NAME));
+    }
+
     if (!scopeFile) {
       const rootDir = getRootDir(exportDir);
       if (rootDir) {
@@ -98,7 +106,7 @@ export const checkIsImportable = ({
   }
 
   // handles index files
-  scope ??= path.parse(exportFile.fileName).name === "index" ? ".." : ".";
+  scope ??= isIndexFile ? ".." : ".";
 
   if (scope === "*") return true;
 

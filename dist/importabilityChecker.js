@@ -18,6 +18,7 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
     let scope;
     if (!exportFile)
         return true;
+    const isIndexFile = path_1.default.parse(exportFile.fileName).name === "index";
     getLocalScope: {
         if (!exportName)
             break getLocalScope;
@@ -52,6 +53,11 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
             break getFolderScope;
         let scopeFile = tsProgram.getSourceFile(path_1.default.join(exportDir, exports.SCOPE_TS_FILE_NAME));
         scopeFile !== null && scopeFile !== void 0 ? scopeFile : (scopeFile = tsProgram.getSourceFile(path_1.default.join(exportDir, exports.SCOPE_JS_FILE_NAME)));
+        if (isIndexFile) {
+            const parentDir = path_1.default.dirname(exportDir);
+            scopeFile !== null && scopeFile !== void 0 ? scopeFile : (scopeFile = tsProgram.getSourceFile(path_1.default.join(parentDir, exports.SCOPE_TS_FILE_NAME)));
+            scopeFile !== null && scopeFile !== void 0 ? scopeFile : (scopeFile = tsProgram.getSourceFile(path_1.default.join(parentDir, exports.SCOPE_JS_FILE_NAME)));
+        }
         if (!scopeFile) {
             const rootDir = (0, utils_1.getRootDir)(exportDir);
             if (rootDir) {
@@ -83,7 +89,7 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
         }
     }
     // handles index files
-    scope !== null && scope !== void 0 ? scope : (scope = path_1.default.parse(exportFile.fileName).name === "index" ? ".." : ".");
+    scope !== null && scope !== void 0 ? scope : (scope = isIndexFile ? ".." : ".");
     if (scope === "*")
         return true;
     const fullScopePath = (0, utils_1.getFullScopePath)(exportDir, scope);

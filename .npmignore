@@ -1,9 +1,9 @@
 src
+test-project
 node_modules
 readme-src
 tsconfig.json
 .vscode
 .eslintrc.js
 .prettierrc.json
-jest.config.js
 *.map

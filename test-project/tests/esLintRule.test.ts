@@ -1,12 +1,13 @@
+import { test, describe, expect } from "vitest";
 import { ESLint } from "eslint";
 
 const importError = (name: string) => `Cannot import '${name}' outside its export scope`;
 const DEFAULT_ERROR = "default";
 
-const eslint = new ESLint({ overrideConfigFile: "src/__tests__/project/.eslintrc.js" });
+const eslint = new ESLint({ overrideConfigFile: ".eslintrc.js" });
 
 const lint = async (file: string) => {
-  const result = await eslint.lintFiles(`src/__tests__/project/src/${file}`);
+  const result = await eslint.lintFiles(`src/${file}`);
 
   return result.flatMap((x) => x.messages.map((x) => x.message));
 };

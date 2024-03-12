@@ -6,6 +6,7 @@ module.exports = {
   env: {
     node: true,
   },
-  ignorePatterns: [".eslintrc.js", "**/node_modules", "src/__tests__/project", "dist"],
+  ignorePatterns: ["**/node_modules", "test-project", "dist"],
   rules: { "@typescript-eslint/ban-types": "off" },
+  overrides: [{ env: { node: true }, files: [".eslintrc.{js,cjs}"], parserOptions: { sourceType: "script" } }],
 };

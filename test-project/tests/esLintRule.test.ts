@@ -57,6 +57,10 @@ describe("export scope absolute path", () => {
   test("🚫", () => expectLintErr("common/componentCollection.control.ts", [DEFAULT_ERROR]));
 });
 
+describe("aliased export", () => {
+  test("✔️", () => expectLintErr("aliasedExport/aliasedExportTest.ts", ["privateSecret"]));
+});
+
 describe("export scope folder exception", () => {
   test("✔️", () => expectLintErr("common/commonColors.ts", []));
 });

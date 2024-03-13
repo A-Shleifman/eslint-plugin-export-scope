@@ -22,8 +22,12 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
     getLocalScope: {
         if (!exportName)
             break getLocalScope;
-        const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
-        const jsDocTags = (_b = (_a = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _a === void 0 ? void 0 : _a.get((0, typescript_1.escapeLeadingUnderscores)(exportName))) === null || _b === void 0 ? void 0 : _b.getJsDocTags();
+        const typeChecker = tsProgram.getTypeChecker();
+        const symbols = typeChecker.getSymbolAtLocation(exportFile);
+        const exportedSymbol = (_a = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _a === void 0 ? void 0 : _a.get(exportName);
+        const isAlias = exportedSymbol && (exportedSymbol === null || exportedSymbol === void 0 ? void 0 : exportedSymbol.flags) & typescript_1.SymbolFlags.Alias;
+        const aliasedSymbol = isAlias && typeChecker.getImmediateAliasedSymbol(exportedSymbol);
+        const jsDocTags = (_b = (aliasedSymbol || exportedSymbol)) === null || _b === void 0 ? void 0 : _b.getJsDocTags();
         if (!jsDocTags)
             break getLocalScope;
         for (const tag of jsDocTags) {
@@ -68,8 +72,8 @@ const checkIsImportable = ({ tsProgram, importPath, exportPath, exportName, }) =
         if (!scopeFile)
             break getFolderScope;
         const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(scopeFile);
-        const defaultExportValDecl = (_j = (_h = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _h === void 0 ? void 0 : _h.get((0, typescript_1.escapeLeadingUnderscores)("default"))) === null || _j === void 0 ? void 0 : _j.valueDeclaration;
-        const exceptionsValDecl = (_l = (_k = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _k === void 0 ? void 0 : _k.get((0, typescript_1.escapeLeadingUnderscores)("exceptions"))) === null || _l === void 0 ? void 0 : _l.valueDeclaration;
+        const defaultExportValDecl = (_j = (_h = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _h === void 0 ? void 0 : _h.get("default")) === null || _j === void 0 ? void 0 : _j.valueDeclaration;
+        const exceptionsValDecl = (_l = (_k = symbols === null || symbols === void 0 ? void 0 : symbols.exports) === null || _k === void 0 ? void 0 : _k.get("exceptions")) === null || _l === void 0 ? void 0 : _l.valueDeclaration;
         // @ts-expect-error: ts.isExportAssignment is missing in ESLint plugin
         const text = (_o = (_m = defaultExportValDecl === null || defaultExportValDecl === void 0 ? void 0 : defaultExportValDecl.expression) === null || _m === void 0 ? void 0 : _m.getText) === null || _o === void 0 ? void 0 : _o.call(_m);
         if (typeof text === "string") {

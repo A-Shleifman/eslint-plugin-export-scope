@@ -51,7 +51,7 @@ const getCompletionsAtPosition = (ts, info) => (importPath, position, ...args) =
         return original;
     const filtered = original.entries.filter((entry) => {
         var _a, _b;
-        if (entry.kindModifiers !== "export")
+        if (entry.kind !== "alias" && entry.kindModifiers !== "export")
             return true;
         let exportPath = (_a = entry.data) === null || _a === void 0 ? void 0 : _a.fileName;
         if (!exportPath) {

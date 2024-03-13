@@ -1,6 +1,5 @@
 import path from "path";
-import { escapeLeadingUnderscores } from "typescript";
-import type { Program } from "typescript";
+import { SymbolFlags, type Program, type __String } from "typescript";
 import { getFullScopePath, getRootDir, isStringArray, isSubPath } from "./utils";
 
 export const SCOPE_TS_FILE_NAME = ".scope.ts";
@@ -29,8 +28,13 @@ export const checkIsImportable = ({
 
   getLocalScope: {
     if (!exportName) break getLocalScope;
-    const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(exportFile);
-    const jsDocTags = symbols?.exports?.get(escapeLeadingUnderscores(exportName))?.getJsDocTags();
+    const typeChecker = tsProgram.getTypeChecker();
+    const symbols = typeChecker.getSymbolAtLocation(exportFile);
+    const exportedSymbol = symbols?.exports?.get(exportName as __String);
+    const isAlias = exportedSymbol && exportedSymbol?.flags & SymbolFlags.Alias;
+    const aliasedSymbol = isAlias && typeChecker.getImmediateAliasedSymbol(exportedSymbol);
+
+    const jsDocTags = (aliasedSymbol || exportedSymbol)?.getJsDocTags();
 
     if (!jsDocTags) break getLocalScope;
 
@@ -81,8 +85,8 @@ export const checkIsImportable = ({
     if (!scopeFile) break getFolderScope;
 
     const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(scopeFile);
-    const defaultExportValDecl = symbols?.exports?.get(escapeLeadingUnderscores("default"))?.valueDeclaration;
-    const exceptionsValDecl = symbols?.exports?.get(escapeLeadingUnderscores("exceptions"))?.valueDeclaration;
+    const defaultExportValDecl = symbols?.exports?.get("default" as __String)?.valueDeclaration;
+    const exceptionsValDecl = symbols?.exports?.get("exceptions" as __String)?.valueDeclaration;
 
     // @ts-expect-error: ts.isExportAssignment is missing in ESLint plugin
     const text = defaultExportValDecl?.expression?.getText?.();

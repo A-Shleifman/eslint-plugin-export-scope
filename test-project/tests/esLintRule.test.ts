@@ -1,8 +1,10 @@
 import { test, describe, expect } from "vitest";
 import { ESLint } from "eslint";
 
-const importError = (name: string) => `Cannot import '${name}' outside its export scope`;
 const DEFAULT_ERROR = "default";
+const MODULE_ERROR = "module";
+const importError = (name: string) =>
+  `Cannot import ${name === MODULE_ERROR ? MODULE_ERROR : `'${name}'`} outside its export scope`;
 
 const eslint = new ESLint({ overrideConfigFile: ".eslintrc.js" });
 
@@ -71,12 +73,11 @@ describe("export scope file exception", () => {
 });
 
 describe("dynamic imports", () => {
-  test("✔️", () => expectLintErr("dynamicImport.ts", []));
-  test("🚫", () =>
-    expect(lint("dynamicImport.control.ts")).resolves.toEqual([
-      "Cannot import module outside its export scope",
-      "Cannot import module outside its export scope",
-    ]));
+  test("✔️", () => expectLintErr("dynamicImport/index.ts", [MODULE_ERROR, MODULE_ERROR, "PRIVATE"]));
+});
+
+describe("star import", () => {
+  test("✔️", () => expectLintErr("starImport/index.ts", ["PRIVATE", "PRIVATE"]));
 });
 
 describe(".scope.js files are respected", () => {

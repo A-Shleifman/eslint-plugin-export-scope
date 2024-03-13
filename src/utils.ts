@@ -1,6 +1,6 @@
 import { readdirSync } from "fs";
 import { dirname, extname, relative, resolve } from "path";
-import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "./importabilityChecker";
+import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "./checkIsImportable";
 
 export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
   const extSet = new Set(extensions);

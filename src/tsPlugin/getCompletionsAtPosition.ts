@@ -1,5 +1,5 @@
 import { ScriptElementKind, type LanguageService, type server } from "typescript";
-import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME, checkIsImportable } from "../importabilityChecker";
+import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME, checkIsImportable } from "../checkIsImportable";
 import { basename, dirname } from "path";
 import { getNewCompletions } from "./tsUtils";
 

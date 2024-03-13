@@ -1,5 +1,5 @@
 import type { LanguageService, server } from "typescript";
-import { checkIsImportable } from "../importabilityChecker";
+import { checkIsImportable } from "../checkIsImportable";
 
 export const getCodeFixesAtPosition =
   (ts: typeof import("typescript"), info: server.PluginCreateInfo): LanguageService["getCodeFixesAtPosition"] =>

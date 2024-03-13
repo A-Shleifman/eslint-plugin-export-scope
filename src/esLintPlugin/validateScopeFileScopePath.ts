@@ -2,7 +2,7 @@ import type { RuleContext } from "@typescript-eslint/utils/ts-eslint";
 import type { MessageIdsType } from "./esLintRule";
 import type { TSESTree } from "@typescript-eslint/utils";
 import { basename, dirname } from "path";
-import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "../importabilityChecker";
+import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "../checkIsImportable";
 import { getFullScopePath } from "../utils";
 import fs from "fs";
 

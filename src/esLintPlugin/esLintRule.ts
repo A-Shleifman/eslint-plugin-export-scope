@@ -1,5 +1,5 @@
 import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
-import { checkIsImportable } from "../importabilityChecker";
+import { checkIsImportable } from "../checkIsImportable";
 import { validateJsDoc } from "./validateJsDoc";
 import { validateScopeFileScopePath } from "./validateScopeFileScopePath";
 
@@ -39,7 +39,8 @@ export const rule = createRule({
         | TSESTree.ImportDeclaration
         | TSESTree.ImportExpression
         | TSESTree.ImportSpecifier
-        | TSESTree.ImportDefaultSpecifier,
+        | TSESTree.ImportDefaultSpecifier
+        | TSESTree.MemberExpression,
       exportName?: string,
     ) => {
       const parseNode =
@@ -49,6 +50,9 @@ export const rule = createRule({
 
       const importSymbol = services.getSymbolAtLocation(parseNode);
       const exportPath = importSymbol?.declarations?.[0]?.getSourceFile().fileName;
+
+      // required for MemberExpressions that are not part of imports (pojo)
+      if (exportPath?.toLowerCase() === context.filename.toLowerCase()) return;
 
       if (!checkIsImportable({ tsProgram: services.program, importPath: context.filename, exportPath, exportName })) {
         context.report({
@@ -61,9 +65,11 @@ export const rule = createRule({
 
     return {
       ImportDeclaration: (node) => !node.specifiers.length && validateNode(node),
-      ImportExpression: (node) => validateNode(node),
+      // 👇 dynamic import of the whole module without accessing exports
+      ImportExpression: (node) => node.parent.parent?.type === "Program" && validateNode(node),
       ImportSpecifier: (node) => validateNode(node, node.imported.name),
       ImportDefaultSpecifier: (node) => validateNode(node, "default"),
+      MemberExpression: (node) => validateNode(node, "name" in node.property ? node.property.name : undefined),
       Program: (node) => validateJsDoc(context, node),
       Literal: (node) => validateScopeFileScopePath(context, node),
     };

@@ -73,7 +73,7 @@ describe("export scope file exception", () => {
 });
 
 describe("dynamic imports", () => {
-  test("✔️", () => expectLintErr("dynamicImport/index.ts", [MODULE_ERROR, MODULE_ERROR, "PRIVATE"]));
+  test("✔️", () => expectLintErr("dynamicImport/index.ts", [MODULE_ERROR, MODULE_ERROR, "PRIVATE", "PRIVATE"]));
 });
 
 describe("star import", () => {

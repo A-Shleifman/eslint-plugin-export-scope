@@ -2,6 +2,7 @@ import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
 import { checkIsImportable } from "../checkIsImportable";
 import { validateJsDoc } from "./validateJsDoc";
 import { validateScopeFileScopePath } from "./validateScopeFileScopePath";
+import { SymbolFlags } from "typescript";
 
 export const ruleName = "no-imports-outside-export-scope";
 
@@ -69,7 +70,24 @@ export const rule = createRule({
       ImportExpression: (node) => node.parent.parent?.type === "Program" && validateNode(node),
       ImportSpecifier: (node) => validateNode(node, node.imported.name),
       ImportDefaultSpecifier: (node) => validateNode(node, "default"),
-      MemberExpression: (node) => validateNode(node, "name" in node.property ? node.property.name : undefined),
+      MemberExpression: (node) => {
+        const symbol = services.getSymbolAtLocation(node);
+
+        if (
+          !(
+            symbol &&
+            "parent" in symbol &&
+            symbol.parent &&
+            typeof symbol.parent === "object" &&
+            "flags" in symbol.parent &&
+            typeof symbol.parent.flags === "number" &&
+            symbol.parent.flags & SymbolFlags.ValueModule
+          )
+        )
+          return;
+
+        validateNode(node, "name" in node.property ? node.property.name : undefined);
+      },
       Program: (node) => validateJsDoc(context, node),
       Literal: (node) => validateScopeFileScopePath(context, node),
     };

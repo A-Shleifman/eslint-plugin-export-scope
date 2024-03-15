@@ -77,7 +77,7 @@ describe("dynamic imports", () => {
 });
 
 describe("star import", () => {
-  test("✔️", () => expectLintErr("starImport/index.ts", ["PRIVATE", "PRIVATE"]));
+  test("✔️", () => expectLintErr("starImport/index.ts", ["PRIVATE", "PRIVATE_TYPE", "PRIVATE"]));
 });
 
 describe(".scope.js files are respected", () => {

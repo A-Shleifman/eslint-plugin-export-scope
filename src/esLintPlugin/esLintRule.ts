@@ -1,4 +1,4 @@
-import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
+import { ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
 import { checkIsImportable } from "../checkIsImportable";
 import { validateJsDoc } from "./validateJsDoc";
 import { validateScopeFileScopePath } from "./validateScopeFileScopePath";
@@ -41,7 +41,8 @@ export const rule = createRule({
         | TSESTree.ImportExpression
         | TSESTree.ImportSpecifier
         | TSESTree.ImportDefaultSpecifier
-        | TSESTree.MemberExpression,
+        | TSESTree.MemberExpression
+        | TSESTree.TSQualifiedName,
       exportName?: string,
     ) => {
       const parseNode =
@@ -51,9 +52,6 @@ export const rule = createRule({
 
       const importSymbol = services.getSymbolAtLocation(parseNode);
       const exportPath = importSymbol?.declarations?.[0]?.getSourceFile().fileName;
-
-      // required for MemberExpressions that are not part of imports (pojo)
-      if (exportPath?.toLowerCase() === context.filename.toLowerCase()) return;
 
       if (!checkIsImportable({ tsProgram: services.program, importPath: context.filename, exportPath, exportName })) {
         context.report({
@@ -88,6 +86,7 @@ export const rule = createRule({
 
         validateNode(node, "name" in node.property ? node.property.name : undefined);
       },
+      TSQualifiedName: (node) => validateNode(node, node.right.name),
       Program: (node) => validateJsDoc(context, node),
       Literal: (node) => validateScopeFileScopePath(context, node),
     };

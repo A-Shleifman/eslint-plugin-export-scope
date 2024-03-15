@@ -31,7 +31,7 @@ export const checkIsImportable = ({
     const typeChecker = tsProgram.getTypeChecker();
     const symbols = typeChecker.getSymbolAtLocation(exportFile);
     const exportedSymbol = symbols?.exports?.get(exportName as __String);
-    const isAlias = exportedSymbol && exportedSymbol?.flags & SymbolFlags.Alias;
+    const isAlias = exportName !== "default" && exportedSymbol && exportedSymbol?.flags & SymbolFlags.Alias;
     const aliasedSymbol = isAlias && typeChecker.getImmediateAliasedSymbol(exportedSymbol);
 
     const jsDocTags = (aliasedSymbol || exportedSymbol)?.getJsDocTags();

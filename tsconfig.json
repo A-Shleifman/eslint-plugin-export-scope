@@ -7,7 +7,9 @@
     "sourceMap": true,
     "strict": true,
     "lib": ["ES2023"],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": true,
+    "strictNullChecks": true
   },
   "include": ["**/*"],
   "exclude": ["node_modules", "test-project"]

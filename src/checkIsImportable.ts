@@ -58,7 +58,7 @@ export const checkIsImportable = ({
 
   getFileScope: {
     if (scope) break getFileScope;
-    const firstStatementEndIndex = exportFile.statements[0].getEnd();
+    const firstStatementEndIndex = exportFile.statements[0]?.getEnd() ?? -1;
     const fileComments = exportFile.getFullText().slice(0, firstStatementEndIndex);
     [, scope] = fileComments.match(/@scopeDefault\s+([^\s]+)/) ?? [];
   }

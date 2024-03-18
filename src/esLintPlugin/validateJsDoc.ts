@@ -15,7 +15,7 @@ export const validateJsDoc = (context: RuleContext<MessageIdsType, never[]>, nod
     scopeDeclarations.length === cachedScopeDeclarations.length &&
     scopeDeclarations.every(({ path, type }, i) => {
       const cached = cachedScopeDeclarations[i];
-      return cached.path === path && cached.type === type;
+      return cached?.path === path && cached.type === type;
     })
   ) {
     return;

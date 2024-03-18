@@ -59,6 +59,10 @@ describe("export scope absolute path", () => {
   test("🚫", () => expectLintErr("common/componentCollection.control.ts", [DEFAULT_ERROR]));
 });
 
+describe("plain import", () => {
+  test("✔️", () => expectLintErr("plainImport/index.ts", [MODULE_ERROR]));
+});
+
 describe("aliased export", () => {
   test("✔️", () => expectLintErr("aliasedExport/aliasedExportTest.ts", ["privateSecret"]));
 });
@@ -72,12 +76,23 @@ describe("export scope file exception", () => {
   test("🚫", () => expectLintErr("constants/constants.local.ts", ["color"]));
 });
 
-describe("dynamic imports", () => {
-  test("✔️", () => expectLintErr("dynamicImport/index.ts", [MODULE_ERROR, MODULE_ERROR, "PRIVATE", "PRIVATE"]));
+describe("dynamic import", () => {
+  test("plain", () => expectLintErr("dynamicImport/plain.ts", [MODULE_ERROR]));
+  test("awaited", () => expectLintErr("dynamicImport/awaited.ts", [MODULE_ERROR]));
+  test("awaited-destruct", () => expectLintErr("dynamicImport/awaited-destruct.ts", ["PRIVATE"]));
+  test("awaited-destruct-aliased", () => expectLintErr("dynamicImport/awaited-destruct-aliased.ts", ["PRIVATE"]));
+  test("const", () => expectLintErr("dynamicImport/const.ts", ["PRIVATE", "PRIVATE", "PRIVATE"]));
+  test("thenned", () => expectLintErr("dynamicImport/thenned.ts", ["PRIVATE"]));
+  test("thenned-destruct", () => expectLintErr("dynamicImport/thenned-destruct.ts", ["PRIVATE"]));
+  test("thenned-aliased", () => expectLintErr("dynamicImport/thenned-aliased.ts", ["PRIVATE", "PRIVATE", "PRIVATE"]));
+  test("thenned-destruct-aliased", () => expectLintErr("dynamicImport/thenned-destruct-aliased.ts", ["PRIVATE"]));
 });
 
 describe("star import", () => {
-  test("✔️", () => expectLintErr("starImport/index.ts", ["PRIVATE", "PRIVATE_TYPE", "PRIVATE"]));
+  test("plain", () => expectLintErr("starImport/plain.ts", ["PRIVATE"]));
+  test("aliased", () => expectLintErr("starImport/aliased.ts", ["PRIVATE", "PRIVATE"]));
+  test("destruct", () => expectLintErr("starImport/destruct.ts", ["PRIVATE", "PRIVATE"]));
+  test("module-type", () => expectLintErr("starImport/module-type.ts", ["PRIVATE_TYPE"]));
 });
 
 describe(".scope.js files are respected", () => {

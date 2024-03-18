@@ -24,7 +24,7 @@ export const getScopeDeclarations = (comments: TSESTree.Comment[]) => {
 export const getPathLoc = (text: string, loc: TSESTree.SourceLocation): TSESTree.SourceLocation => {
   const commentLine = text.split("\n")[loc.start.line - 1];
   const [, prefix, tag, postfix, path] =
-    commentLine.match(/^([^]*@)(scope|scopeDefault|scopeException)(\s+)([^\s]+)/) ?? [];
+    commentLine?.match(/^([^]*@)(scope|scopeDefault|scopeException)(\s+)([^\s]+)/) ?? [];
 
   if (prefix && tag && postfix && path) {
     return {

@@ -1,0 +1,2 @@
+/** @scopeDefault * */
+void 0;

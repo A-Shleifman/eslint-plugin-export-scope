@@ -16,7 +16,7 @@ export const getCodeFixesAtPosition =
       const exportPathRegex = /["]([^"]+?)["]$/;
       // TODO: find a more reliable source of this data
       const [, relativeExportPath] = fix.description.match(exportPathRegex) ?? [];
-      const exportName = fix.changes?.[0].textChanges?.[0].newText.replace(/[{} ]/g, "");
+      const exportName = fix.changes?.[0]?.textChanges?.[0]?.newText.replace(/[{} ]/g, "");
 
       if (!relativeExportPath) return true;
 

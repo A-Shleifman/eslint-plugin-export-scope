@@ -71,7 +71,7 @@ export const getCompletionsAtPosition =
 
       if (!exportPath) {
         const symbol = ls.getCompletionEntrySymbol(importPath, position, entry.name, undefined);
-        exportPath = symbol?.declarations?.[0].getSourceFile().fileName;
+        exportPath = symbol?.declarations?.[0]?.getSourceFile().fileName;
       }
 
       return checkIsImportable({ tsProgram, importPath, exportPath, exportName: entry.name });

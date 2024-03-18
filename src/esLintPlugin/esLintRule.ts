@@ -1,8 +1,8 @@
 import { ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
 import { checkIsImportable } from "../checkIsImportable";
-import { validateJsDoc } from "./validateJsDoc";
 import { validateScopeFileScopePath } from "./validateScopeFileScopePath";
-import { SymbolFlags } from "typescript";
+import { resolveModuleName, sys as tsSys } from "typescript";
+import { validateProgram } from "./validateProgram";
 
 export const ruleName = "no-imports-outside-export-scope";
 
@@ -35,8 +35,13 @@ export const rule = createRule({
       throw new Error("Please make sure you have the latest version of `@typescript-eslint/parser` installed.");
     }
 
-    const validateNode = (
+    const compilerOptions = services.program.getCompilerOptions();
+    const resolvePath = (relativePath: string) =>
+      resolveModuleName(relativePath, context.filename, compilerOptions, tsSys).resolvedModule?.resolvedFileName;
+
+    const checkNode = (
       node:
+        | TSESTree.Identifier
         | TSESTree.ImportDeclaration
         | TSESTree.ImportExpression
         | TSESTree.ImportSpecifier
@@ -50,8 +55,16 @@ export const rule = createRule({
 
       if (!parseNode) return;
 
-      const importSymbol = services.getSymbolAtLocation(parseNode);
-      const exportPath = importSymbol?.declarations?.[0]?.getSourceFile().fileName;
+      const getExportPath = () => {
+        if (node.type === "ImportDeclaration" && node.source.type === "Literal") {
+          return resolvePath(node.source.value);
+        }
+
+        const importSymbol = services.getSymbolAtLocation(parseNode);
+        return importSymbol?.declarations?.[0]?.getSourceFile().fileName;
+      };
+
+      const exportPath = getExportPath();
 
       if (!checkIsImportable({ tsProgram: services.program, importPath: context.filename, exportPath, exportName })) {
         context.report({
@@ -62,32 +75,53 @@ export const rule = createRule({
       }
     };
 
+    const lintNode = (node: TSESTree.Node) => {
+      const isPromise = node.type === "AwaitExpression" && node.parent;
+      node = isPromise ? node.parent! : node;
+      const { type } = node;
+
+      if (type === "MemberExpression" && node.property.type === "Identifier") {
+        checkNode(node.property, node.property.name);
+      }
+
+      const lintObjectPattern = (node: TSESTree.ObjectPattern) => {
+        node.properties.forEach((property) => {
+          if (property.type === "Property" && property.key.type === "Identifier") {
+            checkNode(property.key, property.key.name);
+          }
+        });
+      };
+
+      if (type === "VariableDeclarator" && node.id.type === "ObjectPattern") {
+        lintObjectPattern(node.id);
+      }
+
+      if (type === "ObjectPattern") {
+        lintObjectPattern(node);
+      }
+
+      if (type === "TSQualifiedName") {
+        checkNode(node.right, node.right.name);
+      }
+    };
+
     return {
-      ImportDeclaration: (node) => !node.specifiers.length && validateNode(node),
+      ImportSpecifier: (node) => checkNode(node, node.imported.name),
+      ImportDefaultSpecifier: (node) => checkNode(node, "default"),
+      ImportDeclaration: (node) => !node.specifiers.length && checkNode(node),
       // 👇 dynamic import of the whole module without accessing exports
-      ImportExpression: (node) => node.parent.parent?.type === "Program" && validateNode(node),
-      ImportSpecifier: (node) => validateNode(node, node.imported.name),
-      ImportDefaultSpecifier: (node) => validateNode(node, "default"),
-      MemberExpression: (node) => {
-        const symbol = services.getSymbolAtLocation(node);
+      ImportExpression: (node) => {
+        const parent = node.parent;
+        if (parent.parent?.type === "Program") {
+          return checkNode(node);
+        }
+        if (parent?.type === "AwaitExpression" && parent.parent.parent?.type === "Program") {
+          return checkNode(node);
+        }
 
-        if (
-          !(
-            symbol &&
-            "parent" in symbol &&
-            symbol.parent &&
-            typeof symbol.parent === "object" &&
-            "flags" in symbol.parent &&
-            typeof symbol.parent.flags === "number" &&
-            symbol.parent.flags & SymbolFlags.ValueModule
-          )
-        )
-          return;
-
-        validateNode(node, "name" in node.property ? node.property.name : undefined);
+        lintNode(parent);
       },
-      TSQualifiedName: (node) => validateNode(node, node.right.name),
-      Program: (node) => validateJsDoc(context, node),
+      Program: (node) => validateProgram(context, node, lintNode),
       Literal: (node) => validateScopeFileScopePath(context, node),
     };
   },

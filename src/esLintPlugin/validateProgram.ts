@@ -3,11 +3,12 @@ import { type TSESTree } from "@typescript-eslint/utils";
 import { validateJsDoc } from "./validateJsDoc";
 import { type RuleContext } from "@typescript-eslint/utils/ts-eslint";
 import { type MessageIdsType } from "./esLintRule";
+import { extractPathFromImport } from "./esLintUtils";
 
 export const validateProgram = (
   context: RuleContext<MessageIdsType, never[]>,
   node: TSESTree.Program,
-  lintNode: (node: TSESTree.Node) => void,
+  lintNode: (node: TSESTree.Node, elExportPath?: string) => void,
 ) => {
   validateJsDoc(context, node);
 
@@ -41,44 +42,61 @@ export const validateProgram = (
 
   if (!globalVariables) return;
 
-  const lintVariables = (moduleVariables: Variable[], scopeVariables: Variable[]) => {
+  const lintVariable = (variable: Variable, scopeVariables: Variable[], relExportPath?: string) => {
     const variableNameToVariableMap = new Map(scopeVariables.map((variable) => [variable.name, variable]));
 
-    moduleVariables.forEach((variable) => {
-      const moduleNames = getModuleNames(variable, scopeVariables);
-      const variables = Array.from(moduleNames)
-        .map((name) => variableNameToVariableMap.get(name))
-        .filter(Boolean) as Variable[];
+    const moduleNames = getModuleNames(variable, scopeVariables);
+    const variables = Array.from(moduleNames)
+      .map((name) => variableNameToVariableMap.get(name))
+      .filter(Boolean) as Variable[];
 
-      variables.forEach((variable) => variable.references.forEach((ref) => lintNode(ref.identifier.parent)));
-    });
+    variables.forEach((variable) =>
+      variable.references.forEach((ref) => lintNode(ref.identifier.parent, relExportPath)),
+    );
   };
 
   // global scope variables
-  lintVariables(
-    globalVariables.filter((variable) => {
-      const parent = variable.identifiers?.[0]?.parent;
-      if (parent?.type === "ImportNamespaceSpecifier") return true;
+  globalVariables.forEach((variable) => {
+    const parent = variable.identifiers?.[0]?.parent;
 
-      if (parent?.type === "VariableDeclarator") {
-        const { init } = parent;
-        if (init?.type === "ImportExpression") return true;
-        if (init?.type === "AwaitExpression" && init.argument.type === "ImportExpression") return true;
+    if (parent?.type === "ImportNamespaceSpecifier") {
+      lintVariable(variable, globalVariables, extractPathFromImport(parent.parent));
+    }
+
+    const extractPathFromVariableDeclarator = ({ init: node }: TSESTree.VariableDeclarator) => {
+      if (node?.type === "AwaitExpression") node = node.argument;
+      if (node?.type === "ImportExpression") return extractPathFromImport(node);
+    };
+
+    if (parent?.type === "VariableDeclarator") {
+      const relExportPath = extractPathFromVariableDeclarator(parent);
+      if (relExportPath) {
+        lintVariable(variable, globalVariables, relExportPath);
       }
-    }),
-    globalVariables,
-  );
+    }
 
-  // dynamic imports
-  scopeTree.scopes.filter((scope) => {
+    if (
+      parent?.type === "Property" &&
+      parent.parent.type === "ObjectPattern" &&
+      parent.parent.parent.type === "VariableDeclarator"
+    ) {
+      const relExportPath = extractPathFromVariableDeclarator(parent.parent.parent);
+
+      if (relExportPath) {
+        lintNode(parent.key, relExportPath);
+      }
+    }
+  });
+
+  // thenned dynamic imports
+  scopeTree.scopes.forEach((scope) => {
     const blockParent = scope.block.parent;
 
     if (blockParent?.type !== "CallExpression") return;
-
     if (blockParent.callee.type !== "MemberExpression") return;
-
     if (blockParent.callee.object.type !== "ImportExpression") return;
 
+    const relExportPath = extractPathFromImport(blockParent.callee.object);
     const moduleVariable = scope.variables?.[0];
 
     if (!moduleVariable) return;
@@ -88,9 +106,9 @@ export const validateProgram = (
       moduleVariable.identifiers?.[0]?.parent.parent.type === "ObjectPattern"
     ) {
       const objectPattern = moduleVariable.identifiers?.[0]?.parent.parent;
-      lintNode(objectPattern);
+      lintNode(objectPattern, relExportPath);
+    } else {
+      lintVariable(moduleVariable, scope.variables, relExportPath);
     }
-
-    lintVariables([moduleVariable], scope.variables);
   });
 };

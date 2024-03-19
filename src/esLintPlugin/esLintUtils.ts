@@ -38,3 +38,9 @@ export const getPathLoc = (text: string, loc: TSESTree.SourceLocation): TSESTree
 
   return loc;
 };
+
+export const extractPathFromImport = (node: TSESTree.Node) => {
+  if (node.type === "ImportDeclaration") return node.source.value;
+  if (node.type === "ImportExpression" && node.source.type === "Literal" && typeof node.source.value === "string")
+    return node.source.value;
+};

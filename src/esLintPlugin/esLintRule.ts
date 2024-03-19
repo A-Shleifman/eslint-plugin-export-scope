@@ -3,6 +3,7 @@ import { checkIsImportable } from "../checkIsImportable";
 import { validateScopeFileScopePath } from "./validateScopeFileScopePath";
 import { resolveModuleName, sys as tsSys } from "typescript";
 import { validateProgram } from "./validateProgram";
+import { extractPathFromImport } from "./esLintUtils";
 
 export const ruleName = "no-imports-outside-export-scope";
 
@@ -49,22 +50,11 @@ export const rule = createRule({
         | TSESTree.MemberExpression
         | TSESTree.TSQualifiedName,
       exportName?: string,
+      relExportPath?: string,
     ) => {
-      const parseNode =
-        "source" in node ? node.source : node.parent && "source" in node.parent ? node.parent.source : node;
+      if (!relExportPath) return;
 
-      if (!parseNode) return;
-
-      const getExportPath = () => {
-        if (node.type === "ImportDeclaration" && node.source.type === "Literal") {
-          return resolvePath(node.source.value);
-        }
-
-        const importSymbol = services.getSymbolAtLocation(parseNode);
-        return importSymbol?.declarations?.[0]?.getSourceFile().fileName;
-      };
-
-      const exportPath = getExportPath();
+      const exportPath = resolvePath(relExportPath);
 
       if (!checkIsImportable({ tsProgram: services.program, importPath: context.filename, exportPath, exportName })) {
         context.report({
@@ -75,19 +65,23 @@ export const rule = createRule({
       }
     };
 
-    const lintNode = (node: TSESTree.Node) => {
+    const lintNode = (node: TSESTree.Node, relExportPath?: string) => {
       const isPromise = node.type === "AwaitExpression" && node.parent;
       node = isPromise ? node.parent! : node;
       const { type } = node;
 
+      if (type === "Identifier") {
+        checkNode(node, node.name, relExportPath);
+      }
+
       if (type === "MemberExpression" && node.property.type === "Identifier") {
-        checkNode(node.property, node.property.name);
+        checkNode(node.property, node.property.name, relExportPath);
       }
 
       const lintObjectPattern = (node: TSESTree.ObjectPattern) => {
         node.properties.forEach((property) => {
           if (property.type === "Property" && property.key.type === "Identifier") {
-            checkNode(property.key, property.key.name);
+            checkNode(property.key, property.key.name, relExportPath);
           }
         });
       };
@@ -101,25 +95,24 @@ export const rule = createRule({
       }
 
       if (type === "TSQualifiedName") {
-        checkNode(node.right, node.right.name);
+        checkNode(node.right, node.right.name, relExportPath);
       }
     };
 
     return {
-      ImportSpecifier: (node) => checkNode(node, node.imported.name),
-      ImportDefaultSpecifier: (node) => checkNode(node, "default"),
-      ImportDeclaration: (node) => !node.specifiers.length && checkNode(node),
+      ImportSpecifier: (node) => checkNode(node, node.imported.name, extractPathFromImport(node.parent)),
+      ImportDefaultSpecifier: (node) => checkNode(node, "default", extractPathFromImport(node.parent)),
+      ImportDeclaration: (node) => !node.specifiers.length && checkNode(node, undefined, extractPathFromImport(node)),
       // 👇 dynamic import of the whole module without accessing exports
       ImportExpression: (node) => {
+        const relExportPath = extractPathFromImport(node);
         const parent = node.parent;
-        if (parent.parent?.type === "Program") {
-          return checkNode(node);
+        if (
+          parent.parent?.type === "Program" ||
+          (parent?.type === "AwaitExpression" && parent.parent.parent?.type === "Program")
+        ) {
+          return checkNode(node, undefined, relExportPath);
         }
-        if (parent?.type === "AwaitExpression" && parent.parent.parent?.type === "Program") {
-          return checkNode(node);
-        }
-
-        lintNode(parent);
       },
       Program: (node) => validateProgram(context, node, lintNode),
       Literal: (node) => validateScopeFileScopePath(context, node),

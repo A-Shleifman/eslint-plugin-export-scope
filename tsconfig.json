@@ -12,5 +12,5 @@
     "strictNullChecks": true
   },
   "include": ["**/*"],
-  "exclude": ["node_modules", "test-project"]
+  "exclude": ["node_modules", "test-project", "flat-config-test-project"]
 }

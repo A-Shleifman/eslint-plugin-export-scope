@@ -1,16 +1,17 @@
 {
-  "name": "test-project",
+  "name": "flat-config-test-project",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "lint": "eslint .",
     "test": "vitest"
   },
-  "devDependencies": {
-    "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.56.0",
+  "dependencies": {
+    "eslint": "^8.57.0",
     "eslint-plugin-export-scope": "file:..",
-    "typescript": "^4.9.3",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.10.0",
     "vitest": "^1.6.0"
   }
 }

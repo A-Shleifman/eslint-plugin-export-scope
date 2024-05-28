@@ -20,6 +20,11 @@ test("can import from node_modules", async () => {
   await expectLintErr("nodeModulesTest.ts", []);
 });
 
+test("lints scope files", async () => {
+  const errors = await lint("invalidScopeFile/.scope.ts");
+  expect(errors[0]).toMatch(/^Invalid scope path: /);
+});
+
 describe("folder scope default", () => {
   test("✔️", () => expectLintErr("generated/combinedSchema.ts", []));
   test("🚫", () => expectLintErr("combinedSchema.control.ts", ["schema", "subSchema"]));

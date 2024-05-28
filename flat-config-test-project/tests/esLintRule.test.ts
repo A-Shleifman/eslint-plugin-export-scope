@@ -1,7 +1,7 @@
 import { test, describe, expect } from "vitest";
 import { ESLint } from "eslint";
 
-const eslint = new ESLint({ overrideConfigFile: "eslint.config.js" });
+const eslint = new ESLint();
 
 const MODULE_ERROR = "module";
 const importError = (name: string) =>

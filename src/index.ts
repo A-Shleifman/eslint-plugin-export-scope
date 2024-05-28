@@ -2,12 +2,16 @@ import type { FlatConfig } from "@typescript-eslint/utils/ts-eslint";
 import { rule, ruleName } from "./esLintPlugin/esLintRule";
 import { tsLanguageServicePlugin } from "./tsPlugin";
 
+const esLintPluginName = "export-scope";
+
 const plugin: FlatConfig.Plugin = {
+  meta: {
+    name: `eslint-plugin-${esLintPluginName}`,
+    version: "2.4.0",
+  },
   rules: { [ruleName]: rule },
   configs: {},
 };
-
-const esLintPluginName = "export-scope";
 
 plugin.configs = {
   recommended: {
@@ -20,10 +24,10 @@ plugin.configs = {
   },
 };
 
-Object.assign(tsLanguageServicePlugin, { plugin });
+const combinedExport = Object.assign(tsLanguageServicePlugin, { plugin }, plugin);
 
 // for ESM
-export default tsLanguageServicePlugin as unknown as { plugin: FlatConfig.Plugin };
+export default combinedExport;
 
 // for CommonJS
-module.exports = tsLanguageServicePlugin;
+module.exports = combinedExport;

@@ -6,7 +6,7 @@ const MODULE_ERROR = "module";
 const importError = (name: string) =>
   `Cannot import ${name === MODULE_ERROR ? MODULE_ERROR : `'${name}'`} outside its export scope`;
 
-const eslint = new ESLint({ overrideConfigFile: ".eslintrc.js" });
+const eslint = new ESLint();
 
 const lint = async (file: string) => {
   const result = await eslint.lintFiles(`src/${file}`);

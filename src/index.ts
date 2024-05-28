@@ -1,6 +1,7 @@
 import type { FlatConfig } from "@typescript-eslint/utils/ts-eslint";
 import { rule, ruleName } from "./esLintPlugin/esLintRule";
 import { tsLanguageServicePlugin } from "./tsPlugin";
+import tseslint from "typescript-eslint";
 
 const esLintPluginName = "export-scope";
 
@@ -18,9 +19,11 @@ plugin.configs = {
     plugins: [esLintPluginName] as unknown as FlatConfig.Plugins, // <-- legacy config
     rules: { [`${esLintPluginName}/${ruleName}`]: "error" },
   },
-  "flat-recommended": {
+  flatConfigRecommended: {
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
     plugins: { [esLintPluginName]: plugin },
     rules: { [`${esLintPluginName}/${ruleName}`]: "error" },
+    languageOptions: { parser: tseslint.parser, parserOptions: { project: true } },
   },
 };
 

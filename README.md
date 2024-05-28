@@ -102,12 +102,69 @@ export default "";
 
 Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin and a `TS Language Server` plugin.
 
+#### ESLint plugin will highlight imports outside the scope
+
+<details>
+  <summary>Using ESLint Flat Config (ESLint v8 if enabled, ESLint v9)</summary>
+
+```sh
+npm i -D eslint typescript-eslint eslint-plugin-export-scope
+```
+
+```json
+// package.json
+
+{
+  "type": "module"
+}
+```
+
+```js
+// eslint.config.js
+
+// @ts-check
+
+import tseslint from "typescript-eslint";
+import exportScope from "eslint-plugin-export-scope";
+
+export default tseslint.config(
+  // other configs,
+  exportScope.configs.flatConfigRecommended,
+);
+```
+
+<details>
+  <summary>Manual Flat Config</summary>
+
+```js
+// eslint.config.js
+
+// @ts-check
+
+import tseslint from "typescript-eslint";
+import exportScope from "eslint-plugin-export-scope";
+
+export default tseslint.config(
+  // other configs,
+  {
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
+    plugins: { "export-scope": exportScope.plugin },
+    rules: { "export-scope/no-imports-outside-export-scope": "error" },
+    languageOptions: { parser: tseslint.parser, parserOptions: { project: true } },
+  },
+);
+```
+
+</details>
+</details>
+
+<details>
+  <summary>Using Legacy Config</summary>
+
 ```sh
 npm i -D eslint @typescript-eslint/parser eslint-plugin-export-scope
                     # ⬆ v6 or above
 ```
-
-#### ESLint plugin will highlight imports outside the scope
 
 ```js
 // .eslintrc.js
@@ -121,18 +178,21 @@ module.exports = {
 ```
 
 <details>
-  <summary>Manual ESLint configuration</summary>
+  <summary>Manual Legacy Config</summary>
 
 ```js
 // .eslintrc.js
 module.exports = {
   // ...
-  e̶x̶t̶e̶n̶d̶s̶:̶ ̶[̶"̶p̶l̶u̶g̶i̶n̶:̶e̶s̶l̶i̶n̶t̶-̶p̶l̶u̶g̶i̶n̶-̶e̶x̶p̶o̶r̶t̶-̶s̶c̶o̶p̶e̶/̶r̶e̶c̶o̶m̶m̶e̶n̶d̶e̶d̶"̶]̶,̶
+  parser: "@typescript-eslint/parser",
+  parserOptions: { project: true, tsconfigRootDir: __dirname },
   plugins: ["export-scope"],
   rules: { "export-scope/no-imports-outside-export-scope": "error" },
+  ignorePatterns: ["!.scope.ts"],
 };
 ```
 
+</details>
 </details>
 
 #### TS plugin will disable autocompletion for exports outside the scope

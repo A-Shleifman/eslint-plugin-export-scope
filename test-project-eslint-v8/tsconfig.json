@@ -9,5 +9,5 @@
     "resolveJsonModule": true,
     "allowJs": true
   },
-  "include": ["**/*", "**/.scope.js", "**/.scope.ts", "eslint.config.js"]
+  "include": ["**/*", "**/.scope.js", "**/.scope.ts", ".eslintrc.js"]
 }

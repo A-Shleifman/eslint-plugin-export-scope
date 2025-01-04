@@ -1,6 +1,7 @@
 import path from "path";
 import { SymbolFlags, type Program, type __String } from "typescript";
-import { getFullScopePath, getRootDir, isStringArray, isSubPath } from "./utils";
+import { getFullScopePath, getRootDir, isSubPath } from "./utils";
+import { isArrayLiteralExpression, isExportAssignment, isVariableDeclaration } from "./tsPlugin/tsUtils";
 
 export const SCOPE_TS_FILE_NAME = ".scope.ts";
 export const SCOPE_JS_FILE_NAME = ".scope.js";
@@ -88,16 +89,13 @@ export const checkIsImportable = ({
     const defaultExportValDecl = symbols?.exports?.get("default" as __String)?.valueDeclaration;
     const exceptionsValDecl = symbols?.exports?.get("exceptions" as __String)?.valueDeclaration;
 
-    // @ts-expect-error: ts.isExportAssignment is missing in ESLint plugin
-    const text = defaultExportValDecl?.expression?.getText?.();
-    if (typeof text === "string") {
-      scope = text.slice(1, -1);
+    if (isExportAssignment(defaultExportValDecl)) {
+      scope = defaultExportValDecl.expression.getText().slice(1, -1);
     }
 
-    // @ts-expect-error: ts.isVariableDeclaration is missing in ESLint plugin
-    const exceptions = exceptionsValDecl?.initializer?.elements?.map((x) => x?.getText());
+    if (isVariableDeclaration(exceptionsValDecl) && isArrayLiteralExpression(exceptionsValDecl.initializer)) {
+      const exceptions = exceptionsValDecl.initializer.elements.map((x) => x.getText());
 
-    if (isStringArray(exceptions)) {
       for (const exception of exceptions) {
         const exceptionFullPath = getFullScopePath(exportDir, exception.slice(1, -1));
         if (!exceptionFullPath) continue;

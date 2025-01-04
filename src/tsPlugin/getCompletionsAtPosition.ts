@@ -65,7 +65,7 @@ export const getCompletionsAtPosition =
     if (!original || !tsProgram) return original;
 
     const filtered = original.entries.filter((entry) => {
-      if (entry.kind !== "alias" && entry.kindModifiers !== "export") return true;
+      if (entry.kind !== ScriptElementKind.alias && entry.kindModifiers !== "export") return true;
 
       let exportPath = entry.data?.fileName;
 

@@ -1,4 +1,4 @@
-import { ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
+import { AST_NODE_TYPES, ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
 import { checkIsImportable } from "../checkIsImportable";
 import { validateScopeFileScopePath } from "./validateScopeFileScopePath";
 import { resolveModuleName, sys as tsSys } from "typescript";
@@ -66,41 +66,42 @@ export const rule = createRule({
     };
 
     const lintNode = (node: TSESTree.Node, relExportPath?: string) => {
-      const isPromise = node.type === "AwaitExpression" && node.parent;
+      const isPromise = node.type === AST_NODE_TYPES.AwaitExpression && node.parent;
       node = isPromise ? node.parent! : node;
       const { type } = node;
 
-      if (type === "Identifier") {
+      if (type === AST_NODE_TYPES.Identifier) {
         checkNode(node, node.name, relExportPath);
       }
 
-      if (type === "MemberExpression" && node.property.type === "Identifier") {
+      if (type === AST_NODE_TYPES.MemberExpression && node.property.type === AST_NODE_TYPES.Identifier) {
         checkNode(node.property, node.property.name, relExportPath);
       }
 
       const lintObjectPattern = (node: TSESTree.ObjectPattern) => {
         node.properties.forEach((property) => {
-          if (property.type === "Property" && property.key.type === "Identifier") {
+          if (property.type === AST_NODE_TYPES.Property && property.key.type === AST_NODE_TYPES.Identifier) {
             checkNode(property.key, property.key.name, relExportPath);
           }
         });
       };
 
-      if (type === "VariableDeclarator" && node.id.type === "ObjectPattern") {
+      if (type === AST_NODE_TYPES.VariableDeclarator && node.id.type === AST_NODE_TYPES.ObjectPattern) {
         lintObjectPattern(node.id);
       }
 
-      if (type === "ObjectPattern") {
+      if (type === AST_NODE_TYPES.ObjectPattern) {
         lintObjectPattern(node);
       }
 
-      if (type === "TSQualifiedName") {
+      if (type === AST_NODE_TYPES.TSQualifiedName) {
         checkNode(node.right, node.right.name, relExportPath);
       }
     };
 
     return {
-      ImportSpecifier: (node) => checkNode(node, node.imported.name, extractPathFromImport(node.parent)),
+      ImportSpecifier: (node) =>
+        "name" in node.imported && checkNode(node, node.imported.name, extractPathFromImport(node.parent)),
       ImportDefaultSpecifier: (node) => checkNode(node, "default", extractPathFromImport(node.parent)),
       ImportDeclaration: (node) => !node.specifiers.length && checkNode(node, undefined, extractPathFromImport(node)),
       // 👇 dynamic import of the whole module without accessing exports
@@ -108,8 +109,8 @@ export const rule = createRule({
         const relExportPath = extractPathFromImport(node);
         const parent = node.parent;
         if (
-          parent.parent?.type === "Program" ||
-          (parent?.type === "AwaitExpression" && parent.parent.parent?.type === "Program")
+          parent.parent?.type === AST_NODE_TYPES.Program ||
+          (parent?.type === AST_NODE_TYPES.AwaitExpression && parent.parent.parent?.type === AST_NODE_TYPES.Program)
         ) {
           return checkNode(node, undefined, relExportPath);
         }

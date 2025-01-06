@@ -3,34 +3,41 @@ import { rule, ruleName } from "./esLintPlugin/esLintRule";
 import { tsLanguageServicePlugin } from "./tsPlugin";
 import tseslint from "typescript-eslint";
 
-const esLintPluginName = "export-scope";
+const { name, version } =
+  // `import`ing here would bypass the TSConfig's `"rootDir": "src"`
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require("../package.json") as typeof import("../package.json");
+
+const esLintPluginName = name.replace("eslint-plugin-", "");
 
 const plugin: FlatConfig.Plugin = {
-  meta: {
-    name: `eslint-plugin-${esLintPluginName}`,
-    version: "2.4.0",
-  },
+  meta: { name, version },
   rules: { [ruleName]: rule },
-  configs: {},
+  configs: {
+    get recommended() {
+      return configs.recommended;
+    },
+    get flatConfigRecommended() {
+      return configs.flatConfigRecommended;
+    },
+  },
 };
 
-plugin.configs = {
+const configs = {
   recommended: {
     plugins: [esLintPluginName] as unknown as FlatConfig.Plugins, // <-- legacy config
     rules: { [`${esLintPluginName}/${ruleName}`]: "error" },
   },
   flatConfigRecommended: {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
     plugins: { [esLintPluginName]: plugin },
     rules: { [`${esLintPluginName}/${ruleName}`]: "error" },
-    languageOptions: { parser: tseslint.parser, parserOptions: { project: true } },
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
+    languageOptions: { parser: tseslint.parser, parserOptions: { projectService: true } },
   },
+} satisfies FlatConfig.SharedConfigs;
+
+const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, { plugin }, plugin);
+
+export = combinedEslintTsPlugin as unknown as {
+  configs: { flatConfigRecommended: FlatConfig.SharedConfigs };
 };
-
-const combinedExport = Object.assign(tsLanguageServicePlugin, { plugin }, plugin);
-
-// for ESM
-export default combinedExport;
-
-// for CommonJS
-module.exports = combinedExport;

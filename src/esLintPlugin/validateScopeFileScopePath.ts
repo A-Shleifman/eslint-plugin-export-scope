@@ -1,6 +1,6 @@
 import type { RuleContext } from "@typescript-eslint/utils/ts-eslint";
 import type { MessageIdsType } from "./esLintRule";
-import type { TSESTree } from "@typescript-eslint/utils";
+import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
 import { basename, dirname } from "path";
 import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "../checkIsImportable";
 import { getFullScopePath } from "../utils";
@@ -19,7 +19,7 @@ export const validateScopeFileScopePath = (context: RuleContext<MessageIdsType, 
   const fullPath = getFullScopePath(exportDir, node.value);
   if (!fullPath || node.value === "*") return;
 
-  if (node.parent.type === "ExportDefaultDeclaration") {
+  if (node.parent.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
     if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {
       return context.report({ node, messageId: "onlyParents", loc: node.loc });
     }

@@ -76,8 +76,6 @@ export const getRootDir = (originPath: string) => {
   return configPath ? dirname(configPath) : null;
 };
 
-export const isStringArray = (x: unknown): x is string[] => Array.isArray(x) && x.every((x) => typeof x === "string");
-
 export const getFullScopePath = (exportDir: string, scope: string) => {
   if (scope.startsWith(".")) {
     return resolve(exportDir, scope);

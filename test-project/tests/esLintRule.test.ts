@@ -6,7 +6,11 @@ const MODULE_ERROR = "module";
 const importError = (name: string) =>
   `Cannot import ${name === MODULE_ERROR ? MODULE_ERROR : `'${name}'`} outside its export scope`;
 
-const eslint = new ESLint({ overrideConfigFile: ".eslintrc.js" });
+console.log("ESLint version: ", ESLint.version);
+
+const isV8 = ESLint.version.startsWith("8");
+
+const eslint = new ESLint({ overrideConfigFile: isV8 ? ".eslintrc.js" : "eslint.config.js" });
 
 const lint = async (file: string) => {
   const result = await eslint.lintFiles(`src/${file}`);

@@ -1,5 +1,15 @@
 import { dirname, relative } from "path";
-import { type WithMetadata, type CompletionInfo, type CompletionEntry, ScriptElementKind } from "typescript";
+import type {
+  WithMetadata,
+  CompletionInfo,
+  CompletionEntry,
+  Declaration,
+  ExportAssignment,
+  VariableDeclaration,
+  Expression,
+  ArrayLiteralExpression,
+} from "typescript";
+import { ScriptElementKind } from "typescript";
 
 export const entry = (name: string, kind: CompletionEntry["kind"]): CompletionEntry => ({
   name,
@@ -34,4 +44,28 @@ export const getParentCompletions = (rootDir: string, importDir: string) => {
   }
 
   return completions;
+};
+
+/**
+ * This function should us isExportAssignment from 'typescript',
+ * but it relies on SyntaxKind which differs based on the urser's ts version
+ */
+export const isExportAssignment = (declaration: Declaration | undefined): declaration is ExportAssignment => {
+  return !!declaration && "expression" in declaration;
+};
+
+/**
+ * This function should us isVariableDeclaration from 'typescript',
+ * but it relies on SyntaxKind which differs based on the urser's ts version
+ */
+export const isVariableDeclaration = (declaration: Declaration | undefined): declaration is VariableDeclaration => {
+  return !!declaration && "initializer" in declaration;
+};
+
+/**
+ * This function should us isArrayLiteralExpression from 'typescript',
+ * but it relies on SyntaxKind which differs based on the urser's ts version
+ */
+export const isArrayLiteralExpression = (expression: Expression | undefined): expression is ArrayLiteralExpression => {
+  return !!expression && "elements" in expression && Array.isArray(expression.elements);
 };

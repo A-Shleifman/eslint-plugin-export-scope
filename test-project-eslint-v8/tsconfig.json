@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "plugins": [{ "name": "eslint-plugin-export-scope" }],
-    "target": "ESNext",
-    "module": "NodeNext",
+    "target": "ES2017",
+    "module": "CommonJS",
     "esModuleInterop": true,
     "noEmit": true,
     "baseUrl": "src",
+    "resolveJsonModule": true,
     "allowJs": true
   },
-  "include": ["**/*", "**/.scope.js", "**/.scope.ts"]
+  "include": ["**/*", "**/.scope.js", "**/.scope.ts", ".eslintrc.js"]
 }

@@ -1,4 +1,4 @@
-import type { TSESTree } from "@typescript-eslint/utils";
+import { AST_NODE_TYPES, AST_TOKEN_TYPES, type TSESTree } from "@typescript-eslint/utils";
 
 type ScopeDeclaration = {
   type: "scope" | "scopeDefault" | "scopeException";
@@ -8,7 +8,7 @@ type ScopeDeclaration = {
 
 export const getScopeDeclarations = (comments: TSESTree.Comment[]) => {
   return comments.reduce((acc, { type, value, loc }) => {
-    if (type !== "Block") return acc;
+    if (type !== AST_TOKEN_TYPES.Block) return acc;
 
     const [, prefix, scopeType, path] = value.match(/(\s*\*\s*@)(scope|scopeDefault|scopeException)\s+([^\s]+)/) ?? [];
 
@@ -40,7 +40,11 @@ export const getPathLoc = (text: string, loc: TSESTree.SourceLocation): TSESTree
 };
 
 export const extractPathFromImport = (node: TSESTree.Node) => {
-  if (node.type === "ImportDeclaration") return node.source.value;
-  if (node.type === "ImportExpression" && node.source.type === "Literal" && typeof node.source.value === "string")
+  if (node.type === AST_NODE_TYPES.ImportDeclaration) return node.source.value;
+  if (
+    node.type === AST_NODE_TYPES.ImportExpression &&
+    node.source.type === AST_NODE_TYPES.Literal &&
+    typeof node.source.value === "string"
+  )
     return node.source.value;
 };

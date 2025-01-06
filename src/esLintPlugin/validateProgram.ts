@@ -1,5 +1,5 @@
 import { analyze, type Variable } from "@typescript-eslint/scope-manager";
-import { type TSESTree } from "@typescript-eslint/utils";
+import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
 import { validateJsDoc } from "./validateJsDoc";
 import { type RuleContext } from "@typescript-eslint/utils/ts-eslint";
 import { type MessageIdsType } from "./esLintRule";
@@ -20,13 +20,13 @@ export const validateProgram = (
     const iterateRefs = (variable: Variable) => {
       variable.references.forEach((ref) => {
         const decl = ref.identifier.parent;
-        if (decl.type === "VariableDeclarator" && decl.id.type === "Identifier") {
+        if (decl.type === AST_NODE_TYPES.VariableDeclarator && decl.id.type === AST_NODE_TYPES.Identifier) {
           const isAlreadyAdded = moduleNames.has(decl.id.name);
           moduleNames.add(decl.id.name);
 
           if (!isAlreadyAdded) {
             const variable = variableNameToVariableMap.get(decl.id.name);
-            variable && iterateRefs(variable);
+            if (variable) iterateRefs(variable);
           }
         }
       });
@@ -59,16 +59,16 @@ export const validateProgram = (
   globalVariables.forEach((variable) => {
     const parent = variable.identifiers?.[0]?.parent;
 
-    if (parent?.type === "ImportNamespaceSpecifier") {
+    if (parent?.type === AST_NODE_TYPES.ImportNamespaceSpecifier) {
       lintVariable(variable, globalVariables, extractPathFromImport(parent.parent));
     }
 
     const extractPathFromVariableDeclarator = ({ init: node }: TSESTree.VariableDeclarator) => {
-      if (node?.type === "AwaitExpression") node = node.argument;
-      if (node?.type === "ImportExpression") return extractPathFromImport(node);
+      if (node?.type === AST_NODE_TYPES.AwaitExpression) node = node.argument;
+      if (node?.type === AST_NODE_TYPES.ImportExpression) return extractPathFromImport(node);
     };
 
-    if (parent?.type === "VariableDeclarator") {
+    if (parent?.type === AST_NODE_TYPES.VariableDeclarator) {
       const relExportPath = extractPathFromVariableDeclarator(parent);
       if (relExportPath) {
         lintVariable(variable, globalVariables, relExportPath);
@@ -76,9 +76,9 @@ export const validateProgram = (
     }
 
     if (
-      parent?.type === "Property" &&
-      parent.parent.type === "ObjectPattern" &&
-      parent.parent.parent.type === "VariableDeclarator"
+      parent?.type === AST_NODE_TYPES.Property &&
+      parent.parent.type === AST_NODE_TYPES.ObjectPattern &&
+      parent.parent.parent.type === AST_NODE_TYPES.VariableDeclarator
     ) {
       const relExportPath = extractPathFromVariableDeclarator(parent.parent.parent);
 
@@ -92,9 +92,9 @@ export const validateProgram = (
   scopeTree.scopes.forEach((scope) => {
     const blockParent = scope.block.parent;
 
-    if (blockParent?.type !== "CallExpression") return;
-    if (blockParent.callee.type !== "MemberExpression") return;
-    if (blockParent.callee.object.type !== "ImportExpression") return;
+    if (blockParent?.type !== AST_NODE_TYPES.CallExpression) return;
+    if (blockParent.callee.type !== AST_NODE_TYPES.MemberExpression) return;
+    if (blockParent.callee.object.type !== AST_NODE_TYPES.ImportExpression) return;
 
     const relExportPath = extractPathFromImport(blockParent.callee.object);
     const moduleVariable = scope.variables?.[0];
@@ -102,8 +102,8 @@ export const validateProgram = (
     if (!moduleVariable) return;
 
     if (
-      moduleVariable.identifiers?.[0]?.parent.type === "Property" &&
-      moduleVariable.identifiers?.[0]?.parent.parent.type === "ObjectPattern"
+      moduleVariable.identifiers?.[0]?.parent.type === AST_NODE_TYPES.Property &&
+      moduleVariable.identifiers?.[0]?.parent.parent.type === AST_NODE_TYPES.ObjectPattern
     ) {
       const objectPattern = moduleVariable.identifiers?.[0]?.parent.parent;
       lintNode(objectPattern, relExportPath);

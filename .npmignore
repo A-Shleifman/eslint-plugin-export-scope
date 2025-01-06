@@ -1,9 +1,10 @@
 src
 test-project
+test-project-eslint-v8
 node_modules
 readme-src
 tsconfig.json
 .vscode
-.eslintrc.js
+eslint.config.mjs
 .prettierrc.json
 *.map

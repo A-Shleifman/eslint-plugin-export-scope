@@ -38,4 +38,6 @@ const configs = {
 
 const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, { plugin }, plugin);
 
-export = combinedEslintTsPlugin;
+export = combinedEslintTsPlugin as unknown as {
+  configs: { flatConfigRecommended: FlatConfig.SharedConfigs };
+};

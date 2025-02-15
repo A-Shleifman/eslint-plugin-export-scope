@@ -42,6 +42,7 @@ export const validateProgram = (
   try {
     scopeTree = analyze(node, { sourceType: "module" });
   } catch {
+    console.error("🚨 Please upgrade all @typescript-eslint/* packages to the latest mojor version 🚨");
     return;
   }
 

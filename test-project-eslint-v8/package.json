@@ -7,10 +7,10 @@
     "test": "vitest"
   },
   "devDependencies": {
-    "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.56.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^8.57.0",
     "eslint-plugin-export-scope": "file:..",
     "typescript": "^4.9.3",
-    "vitest": "^2.1.8"
+    "vitest": "^3.0.5"
   }
 }

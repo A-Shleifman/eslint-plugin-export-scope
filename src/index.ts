@@ -1,43 +1,40 @@
 import type { FlatConfig } from "@typescript-eslint/utils/ts-eslint";
 import { rule, ruleName } from "./esLintPlugin/esLintRule";
 import { tsLanguageServicePlugin } from "./tsPlugin";
-import tseslint from "typescript-eslint";
+import recommendedLegacy from "./configs/recommended-legacy";
+
+import * as parserBase from "@typescript-eslint/parser";
 
 const { name, version } =
   // `import`ing here would bypass the TSConfig's `"rootDir": "src"`
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("../package.json") as typeof import("../package.json");
 
-const esLintPluginName = name.replace("eslint-plugin-", "");
+const parser: FlatConfig.Parser = {
+  meta: parserBase.meta,
+  parseForESLint: parserBase.parseForESLint,
+};
 
-const plugin: FlatConfig.Plugin = {
+const plugin = {
   meta: { name, version },
   rules: { [ruleName]: rule },
   configs: {
-    get recommended() {
-      return configs.recommended;
+    recommended: {
+      files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
+      languageOptions: {
+        parser,
+        sourceType: "module",
+      },
+      plugins: { "export-scope": undefined as unknown as FlatConfig.Plugin },
+      rules: { "export-scope/no-imports-outside-export-scope": "error" },
     },
-    get flatConfigRecommended() {
-      return configs.flatConfigRecommended;
-    },
+    "recommended-legacy": recommendedLegacy as unknown as FlatConfig.Config,
   },
-};
+} satisfies FlatConfig.Plugin;
 
-const configs = {
-  recommended: {
-    plugins: [esLintPluginName] as unknown as FlatConfig.Plugins, // <-- legacy config
-    rules: { [`${esLintPluginName}/${ruleName}`]: "error" },
-  },
-  flatConfigRecommended: {
-    plugins: { [esLintPluginName]: plugin },
-    rules: { [`${esLintPluginName}/${ruleName}`]: "error" },
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
-    languageOptions: { parser: tseslint.parser, parserOptions: { projectService: true } },
-  },
-} satisfies FlatConfig.SharedConfigs;
+plugin.configs.recommended.plugins["export-scope"] = plugin;
 
-const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, { plugin }, plugin);
+const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, plugin);
 
-export = combinedEslintTsPlugin as unknown as {
-  configs: { flatConfigRecommended: FlatConfig.SharedConfigs };
-};
+export default combinedEslintTsPlugin as typeof plugin;
+module.exports = combinedEslintTsPlugin as typeof plugin;

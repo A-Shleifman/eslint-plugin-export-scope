@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-export-scope",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Don't leak LOCAL utils, states, components into the global scope",
   "type": "commonjs",
   "license": "MIT",

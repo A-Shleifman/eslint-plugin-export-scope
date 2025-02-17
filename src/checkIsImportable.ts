@@ -30,12 +30,17 @@ export const checkIsImportable = ({
   getLocalScope: {
     if (!exportName) break getLocalScope;
     const typeChecker = tsProgram.getTypeChecker();
-    const symbols = typeChecker.getSymbolAtLocation(exportFile);
-    const exportedSymbol = symbols?.exports?.get(exportName as __String);
-    const isAlias = exportName !== "default" && exportedSymbol && exportedSymbol?.flags & SymbolFlags.Alias;
-    const aliasedSymbol = isAlias && typeChecker.getImmediateAliasedSymbol(exportedSymbol);
+    const fileSymbol = typeChecker.getSymbolAtLocation(exportFile);
+    const exports = fileSymbol && typeChecker.getExportsOfModule(fileSymbol);
+    let exportSymbol = exports?.find((x) => x.name === exportName);
 
-    const jsDocTags = (aliasedSymbol || exportedSymbol)?.getJsDocTags();
+    if (!exportSymbol) break getLocalScope;
+
+    if (exportName !== "default" && exportSymbol.flags & SymbolFlags.Alias) {
+      exportSymbol = typeChecker.getImmediateAliasedSymbol(exportSymbol);
+    }
+
+    const jsDocTags = exportSymbol?.getJsDocTags();
 
     if (!jsDocTags) break getLocalScope;
 

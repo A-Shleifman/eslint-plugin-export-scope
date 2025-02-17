@@ -38,6 +38,13 @@ export const helper2 = ""; // 👈 inherits scope `../..` from `@scopeDefault`
 export default "";
 ```
 
+```ts
+/** @scope .. */
+const helper3 = "";
+
+export { helper3 }; // 👈 inherits the scope from the variable declaration
+```
+
 ## Default folder scope with `.scope.ts` files
 
 <p align="center">
@@ -150,7 +157,7 @@ export default tseslint.config(
     files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
     plugins: { "export-scope": exportScope.plugin },
     rules: { "export-scope/no-imports-outside-export-scope": "error" },
-    languageOptions: { parser: tseslint.parser, parserOptions: { projectService: true } },
+    languageOptions: { parser: tseslint.parser, parserOptions: { projectService: true }, sourceType: "module" },
   },
 );
 ```
@@ -163,7 +170,7 @@ export default tseslint.config(
 
 ```sh
 npm i -D eslint @typescript-eslint/parser eslint-plugin-export-scope
-                    # ⬆ v6 or above
+                    # ⬆ ^8.0.0
 ```
 
 ```js

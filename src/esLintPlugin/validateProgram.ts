@@ -1,4 +1,4 @@
-import { analyze, type Variable } from "@typescript-eslint/scope-manager";
+import { analyze, type ScopeManager, type Variable } from "@typescript-eslint/scope-manager";
 import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
 import { validateJsDoc } from "./validateJsDoc";
 import { type RuleContext } from "@typescript-eslint/utils/ts-eslint";
@@ -37,7 +37,15 @@ export const validateProgram = (
     return moduleNames;
   };
 
-  const scopeTree = analyze(node, { sourceType: "module" });
+  let scopeTree: ScopeManager;
+
+  try {
+    scopeTree = analyze(node, { sourceType: "module" });
+  } catch {
+    console.error("🚨 Please upgrade all @typescript-eslint/* packages to the latest mojor version 🚨");
+    return;
+  }
+
   const globalVariables = scopeTree.globalScope?.childScopes[0]?.variables;
 
   if (!globalVariables) return;

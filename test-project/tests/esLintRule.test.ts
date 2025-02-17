@@ -120,3 +120,7 @@ describe("index files inherit scope from parent .scope.ts files", () => {
   test("✔️", () => expectLintErr("indexInheritsParentScope.ts", []));
   test("🚫", () => expectLintErr("indexInheritsParentScope.control.ts", ["part"]));
 });
+
+describe("monorepo test", () => {
+  test("✔️", () => expectLintErr("monorepo/monorepoTest.ts", []));
+});

@@ -24,6 +24,7 @@ const plugin = {
       languageOptions: {
         parser,
         sourceType: "module",
+        parserOptions: { projectService: true },
       },
       plugins: { "export-scope": undefined as unknown as FlatConfig.Plugin },
       rules: { "export-scope/no-imports-outside-export-scope": "error" },

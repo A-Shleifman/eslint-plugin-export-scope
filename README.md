@@ -38,6 +38,13 @@ export const helper2 = ""; // 👈 inherits scope `../..` from `@scopeDefault`
 export default "";
 ```
 
+```ts
+/** @scope .. */
+const helper3 = "";
+
+export { helper3 }; // 👈 inherits the scope from the variable declaration
+```
+
 ## Default folder scope with `.scope.ts` files
 
 <p align="center">

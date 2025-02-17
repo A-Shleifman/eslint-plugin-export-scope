@@ -19,7 +19,7 @@ const plugin = {
   meta: { name, version },
   rules: { [ruleName]: rule },
   configs: {
-    recommended: {
+    flatConfigRecommended: {
       files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
       languageOptions: {
         parser,
@@ -29,13 +29,15 @@ const plugin = {
       plugins: { "export-scope": undefined as unknown as FlatConfig.Plugin },
       rules: { "export-scope/no-imports-outside-export-scope": "error" },
     },
-    "recommended-legacy": recommendedLegacy as unknown as FlatConfig.Config,
+    recommended: recommendedLegacy as unknown as FlatConfig.Config,
   },
 } satisfies FlatConfig.Plugin;
 
-plugin.configs.recommended.plugins["export-scope"] = plugin;
+plugin.configs.flatConfigRecommended.plugins["export-scope"] = plugin;
 
-const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, plugin);
+const pluginForManualConfigs = { plugin };
 
-export default combinedEslintTsPlugin as typeof plugin;
-module.exports = combinedEslintTsPlugin as typeof plugin;
+const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, plugin, pluginForManualConfigs);
+
+export default combinedEslintTsPlugin as typeof plugin & typeof pluginForManualConfigs;
+module.exports = combinedEslintTsPlugin as typeof plugin & typeof pluginForManualConfigs;

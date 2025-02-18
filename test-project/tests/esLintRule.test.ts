@@ -1,5 +1,6 @@
 import { test, describe, expect } from "vitest";
 import { ESLint } from "eslint";
+import path from "path";
 
 const DEFAULT_ERROR = "default";
 const MODULE_ERROR = "module";
@@ -10,10 +11,12 @@ console.log("ESLint version: ", ESLint.version);
 
 const isV8 = ESLint.version.startsWith("8");
 
-const eslint = new ESLint({ overrideConfigFile: isV8 ? ".eslintrc.js" : "eslint.config.js" });
+const eslint = new ESLint({
+  overrideConfigFile: path.join(__dirname, "../", isV8 ? ".eslintrc.js" : "eslint.config.js"),
+});
 
 const lint = async (file: string) => {
-  const result = await eslint.lintFiles(`src/${file}`);
+  const result = await eslint.lintFiles(path.join(__dirname, "../src", file));
 
   return result.flatMap((x) => x.messages.map((x) => x.message));
 };
@@ -122,5 +125,6 @@ describe("index files inherit scope from parent .scope.ts files", () => {
 });
 
 describe("monorepo test", () => {
+  test("✔️", () => expectLintErr("monorepo/apps/app2/nested/module.ts", []));
   test("✔️", () => expectLintErr("monorepo/monorepoTest.ts", []));
 });

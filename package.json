@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-export-scope",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Don't leak LOCAL utils, states, components into the global scope",
   "type": "commonjs",
   "license": "MIT",
@@ -38,22 +38,22 @@
     "open-debug-project": "TSS_DEBUG=5667 code test-project"
   },
   "dependencies": {
-    "@typescript-eslint/parser": "^8.23.0",
-    "@typescript-eslint/scope-manager": "^8.23.0",
-    "@typescript-eslint/utils": "^8.23.0"
+    "@typescript-eslint/parser": "^8.37.0",
+    "@typescript-eslint/scope-manager": "^8.37.0",
+    "@typescript-eslint/utils": "^8.37.0"
   },
   "devDependencies": {
     "@types/eslint": "^9.6.1",
     "@types/node": "^22.13.1",
-    "@typescript-eslint/eslint-plugin": "^8.23.0",
-    "@typescript-eslint/rule-tester": "^8.23.0",
-    "eslint": "^9.20.0",
-    "eslint-plugin-eslint-plugin": "^6.3.2",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
+    "@typescript-eslint/rule-tester": "^8.37.0",
+    "eslint": "^9.31.0",
+    "eslint-plugin-eslint-plugin": "^6.5.0",
     "eslint-plugin-node": "^11.1.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.23.0",
-    "vitest": "^3.0.5"
+    "prettier": "^3.6.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.37.0",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">= 18.0.0"

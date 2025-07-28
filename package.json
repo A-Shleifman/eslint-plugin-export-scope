@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-export-scope",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Don't leak LOCAL utils, states, components into the global scope",
   "type": "commonjs",
   "license": "MIT",
@@ -60,6 +60,6 @@
   },
   "peerDependencies": {
     "eslint": "^8.57.0 || ^9.0.0",
-    "typescript": ">=4.8.4 <5.8.0"
+    "typescript": ">=4.8.4 <6"
   }
 }

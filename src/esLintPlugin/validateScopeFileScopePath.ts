@@ -3,7 +3,7 @@ import type { MessageIdsType } from "./esLintRule";
 import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
 import { basename, dirname } from "path";
 import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "../checkIsImportable";
-import { getFullScopePath } from "../utils";
+import { getFullScopePath, isSubPath } from "../utils";
 import fs from "fs";
 
 export const validateScopeFileScopePath = (context: RuleContext<MessageIdsType, never[]>, node: TSESTree.Literal) => {
@@ -20,7 +20,7 @@ export const validateScopeFileScopePath = (context: RuleContext<MessageIdsType, 
   if (!fullPath || node.value === "*") return;
 
   if (node.parent.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
-    if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {
+    if (!isSubPath(fullPath, exportDir)) {
       return context.report({ node, messageId: "onlyParents", loc: node.loc });
     }
   }

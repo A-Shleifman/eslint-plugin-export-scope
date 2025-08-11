@@ -1,5 +1,5 @@
 import { readdirSync } from "fs";
-import { dirname, extname, relative, resolve } from "path";
+import { dirname, extname, resolve } from "path";
 import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "./checkIsImportable";
 
 export const getFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
@@ -87,5 +87,4 @@ export const getFullScopePath = (exportDir: string, scope: string) => {
   return resolve(rootDir, scope);
 };
 
-export const isSubPath = (path1: string, path2: string) =>
-  !relative(path1.toLowerCase(), path2.toLowerCase()).startsWith(".");
+export { sameOrSubPath as isSubPath } from "./paths";

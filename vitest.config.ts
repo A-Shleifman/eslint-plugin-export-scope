@@ -6,7 +6,7 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: "local",
+          name: "dynamic",
           include: ["tests/**/*.test.ts"],
         },
       },

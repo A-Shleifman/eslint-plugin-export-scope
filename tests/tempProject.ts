@@ -25,16 +25,23 @@ const tsParserPath = require.resolve("@typescript-eslint/parser");
 
 type Tree = Record<string, string>;
 
-// branded, type-safe project-relative paths restricted to src/
-export type InSrc<T extends string = string> = T & { readonly __inSrc: unique symbol };
-export function inSrc<T extends `src/${string}`>(p: T): InSrc<T> {
-  if (path.isAbsolute(p) || p.startsWith("../") || p.includes(".." + path.sep)) {
-    throw new Error(`Path must be within src/: ${p}`);
-  }
-  if (!p.startsWith("src/")) throw new Error(`Path must start with "src/": ${p}`);
-  return p as InSrc<T>;
-}
-export const joinSrc = (...segs: [string, ...string[]]) => inSrc(`src/${segs.join("/")}` as `src/${string}`);
+// Extract file paths from the tree type for type safety
+export type FileInTree<T extends Tree> = keyof T & string;
+
+// Helper type for the context passed to test functions
+export type TempProjectContext<T extends Tree> = {
+  major: 8 | 9;
+  root: string;
+  add: (files: Tree) => Promise<void>;
+  lint: (file: FileInTree<T>) => Promise<string[]>;
+  expectLintErr: (file: FileInTree<T>, errors: string[]) => Promise<void>;
+};
+
+// Helper function to create the importError message like in test-project
+const importError = (name: string) => {
+  const MODULE_ERROR = "module";
+  return `Cannot import ${name === MODULE_ERROR ? MODULE_ERROR : `'${name}'`} outside its export scope`;
+};
 
 async function writeTree(root: string, tree: Tree) {
   await Promise.all(
@@ -50,14 +57,9 @@ async function writeTree(root: string, tree: Tree) {
  * Run the supplied test body once with ESLint 8 and once with ESLint 9.
  * Crashes if either alias (eslint8 or eslint9) is missing.
  */
-export async function withTempProject(
-  tree: Tree,
-  fn: (ctx: {
-    major: 8 | 9;
-    root: string;
-    add: (files: Tree) => Promise<void>;
-    lint: (globs: InSrc<string> | InSrc<string>[]) => Promise<string[]>;
-  }) => Promise<void>,
+export async function withTempProject<T extends Tree>(
+  tree: T,
+  fn: (ctx: TempProjectContext<T>) => Promise<void>,
   { keep = false }: { keep?: boolean } = {},
 ) {
   // helper to run once per ESLint ctor
@@ -116,15 +118,21 @@ export async function withTempProject(
       } as any);
 
       const add = async (files: Tree) => writeTree(root, files);
-      const lint = async (globs: InSrc<string> | InSrc<string>[]) => {
-        const arr = Array.isArray(globs) ? globs : [globs];
-        const absGlobs = arr.map((g) => path.join(root, g));
-        const results = await eslint.lintFiles(absGlobs);
+      const lint = async (file: FileInTree<T>) => {
+        const absPath = path.join(root, file);
+        const results = await eslint.lintFiles([absPath]);
         return results.flatMap((r) => r.messages.map((m) => m.message));
+      };
+      const expectLintErr = async (file: FileInTree<T>, errors: string[]) => {
+        const messages = await lint(file);
+        const expectedMessages = errors.map(importError);
+        if (JSON.stringify(messages) !== JSON.stringify(expectedMessages)) {
+          throw new Error(`Expected ${JSON.stringify(expectedMessages)} but got ${JSON.stringify(messages)} for file ${file}`);
+        }
       };
 
       try {
-        await fn({ major, root, add, lint });
+        await fn({ major, root, add, lint, expectLintErr });
       } finally {
         if (!keep) fs.rmSync(root, { recursive: true, force: true });
       }
@@ -147,15 +155,21 @@ export async function withTempProject(
     });
 
     const add = async (files: Tree) => writeTree(root, files);
-    const lint = async (globs: InSrc<string> | InSrc<string>[]) => {
-      const arr = Array.isArray(globs) ? globs : [globs];
-      const absGlobs = arr.map((g) => path.join(root, g));
-      const results = await eslint.lintFiles(absGlobs);
+    const lint = async (file: FileInTree<T>) => {
+      const absPath = path.join(root, file);
+      const results = await eslint.lintFiles([absPath]);
       return results.flatMap((r) => r.messages.map((m) => m.message));
+    };
+    const expectLintErr = async (file: FileInTree<T>, errors: string[]) => {
+      const messages = await lint(file);
+      const expectedMessages = errors.map(importError);
+      if (JSON.stringify(messages) !== JSON.stringify(expectedMessages)) {
+        throw new Error(`Expected ${JSON.stringify(expectedMessages)} but got ${JSON.stringify(messages)} for file ${file}`);
+      }
     };
 
     try {
-      await fn({ major, root, add, lint });
+      await fn({ major, root, add, lint, expectLintErr });
     } finally {
       // Remove process listeners and cleanup
       process.removeListener("exit", cleanupOnExit);

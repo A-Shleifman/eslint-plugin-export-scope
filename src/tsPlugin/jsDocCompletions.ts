@@ -1,47 +1,60 @@
-import { relative } from "path";
 import { getRootDir } from "../utils";
-import { getParentCompletions, entry, getNewCompletions, getAutocompletionFileTree } from "./tsUtils";
 import { ScriptElementKind, type WithMetadata, type CompletionInfo } from "typescript";
+import {
+  REGEXES,
+  DIRECTIVE_NAMES,
+  createCompletionEntry,
+  parseDirectiveFromJSDoc,
+  generateParentCompletions,
+  generateFileSystemCompletions,
+  getPartialDirectiveCompletions,
+} from "./completionUtils";
 
-export const jsDocCompletions = (importDir: string, completions: WithMetadata<CompletionInfo>, jsDoc: string) => {
+export const jsDocCompletions = (
+  importDir: string,
+  completions: WithMetadata<CompletionInfo>,
+  jsDoc: string,
+  jsDocStartPos: number = 0
+): WithMetadata<CompletionInfo> => {
+  // Helper to add JSDoc properties if not already present
   const addJsDocProp = (name: string) => {
-    if (completions.entries.every((x) => x.name !== name)) {
-      completions.entries.push(entry(name, ScriptElementKind.keyword));
+    if (completions.entries.every(entry => entry.name !== name)) {
+      completions.entries.push(createCompletionEntry(name, ScriptElementKind.keyword));
     }
   };
 
-  const isEmpty = /(\/\*\*|\s\*)\s*$/.test(jsDoc);
-  if (isEmpty) {
-    addJsDocProp("@scope");
-    addJsDocProp("@scopeDefault");
-    addJsDocProp("@scopeException");
+  // Handle empty JSDoc or after @ symbol
+  if (REGEXES.JSDOC_EMPTY.test(jsDoc)) {
+    DIRECTIVE_NAMES.forEach(directive => addJsDocProp(directive));
+    return completions;
   }
 
-  const isAfterAtSymbol = /(\/\*\*|\s\*)\s*@$/.test(jsDoc);
-  if (isAfterAtSymbol) {
-    addJsDocProp("scope");
-    addJsDocProp("scopeDefault");
-    addJsDocProp("scopeException");
+  if (REGEXES.JSDOC_AFTER_AT.test(jsDoc)) {
+    ["scope", "scopeDefault", "scopeException"].forEach(name => addJsDocProp(name));
+    return completions;
   }
 
+  // Handle partial directive completion like "@scop"
+  const partialDirectiveResult = getPartialDirectiveCompletions(jsDoc, jsDocStartPos, completions);
+  if (partialDirectiveResult) {
+    return partialDirectiveResult;
+  }
+
+  // Get root directory for path operations
   const rootDir = getRootDir(importDir);
   if (!rootDir) return completions;
 
-  if (/(@scope|@scopeDefault)\s+([^\s]*)$/.test(jsDoc)) {
-    return getParentCompletions(rootDir, importDir);
+  // Parse directive with partial path
+  const directiveMatch = parseDirectiveFromJSDoc(jsDoc, jsDocStartPos);
+  if (!directiveMatch) return completions;
+
+  const { partialPath, startPos, directive } = directiveMatch;
+  const config = { rootDir, importDir, partialPath, startPos };
+
+  // Return appropriate completions based on directive type
+  if (directive === "@scopeException") {
+    return generateFileSystemCompletions(config);
+  } else {
+    return generateParentCompletions(config);
   }
-
-  if (/@scopeException\s+([^\s]*)$/.test(jsDoc)) {
-    const { filePaths, dirPaths } = getAutocompletionFileTree(rootDir);
-
-    return {
-      ...getNewCompletions(),
-      entries: [
-        ...dirPaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.string)),
-        ...filePaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.string)),
-      ],
-    };
-  }
-
-  return completions;
 };

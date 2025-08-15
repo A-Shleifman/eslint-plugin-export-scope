@@ -66,7 +66,7 @@ test("ancestor .scope.default.ts", async () => {
       `,
 
       "src/common/overriden/private.ts": `
-        /** @scope . **/
+        /** @scope . */
         export const private = "";
       `,
       "src/outside/control.ts": `import { private } from "../common/overriden/private";`,

@@ -1,9 +1,12 @@
-import { getParentCompletions, getNewCompletions, entry, getAutocompletionFileTree } from "./tsUtils";
-import { ScriptElementKind } from "typescript";
 import { getRootDir } from "../utils";
-import { relative } from "path";
+import {
+  parsePartialPathFromQuotes,
+  calculateAbsolutePosition,
+  generateParentCompletions,
+  generateFileSystemCompletions,
+} from "./completionUtils";
 
-const hasOpenQuote = (string: string) => {
+const hasOpenQuote = (string: string): boolean => {
   const stack: string[] = [];
   string.split("").forEach((c) => {
     if (c === `'` || c === `"` || c === "`") {
@@ -19,7 +22,6 @@ const hasOpenQuote = (string: string) => {
 };
 
 export const getScopeFileCompletions = (
-  ts: typeof import("typescript"),
   importDir: string,
   fileTextToPosition: string,
 ) => {
@@ -27,23 +29,28 @@ export const getScopeFileCompletions = (
   if (!hasOpenQuote(lastLine)) return;
 
   const rootDir = getRootDir(importDir);
-
   if (!rootDir) return;
 
+  // Extract partial path from the current line
+  const partialInfo = parsePartialPathFromQuotes(lastLine, 0);
+  if (!partialInfo) return;
+  
+  const { partialPath, startPos: lineStartPos } = partialInfo;
+  const absoluteStartPos = calculateAbsolutePosition(fileTextToPosition, lineStartPos);
+
+  // Check if this is a default export (which uses parent completions)
   const lastExportDefaultPos = fileTextToPosition.lastIndexOf("export default");
   const lastExportPos = fileTextToPosition.lastIndexOf("export");
   const isDefaultExport = lastExportDefaultPos === lastExportPos;
-  if (isDefaultExport) {
-    return getParentCompletions(rootDir, importDir);
-  }
-
-  const { filePaths, dirPaths } = getAutocompletionFileTree(rootDir);
-
-  return {
-    ...getNewCompletions(),
-    entries: [
-      ...dirPaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.string)),
-      ...filePaths.map((x) => entry(relative(rootDir, x), ScriptElementKind.string)),
-    ],
+  
+  const config = {
+    rootDir,
+    importDir,
+    partialPath,
+    startPos: absoluteStartPos,
   };
+
+  return isDefaultExport
+    ? generateParentCompletions(config)
+    : generateFileSystemCompletions(config);
 };

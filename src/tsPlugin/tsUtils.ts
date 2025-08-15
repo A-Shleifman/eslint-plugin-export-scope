@@ -1,5 +1,5 @@
 import { readdirSync } from "fs";
-import { dirname, extname, relative, resolve } from "path";
+import { extname, resolve } from "path";
 import type {
   WithMetadata,
   CompletionInfo,
@@ -10,7 +10,6 @@ import type {
   Expression,
   ArrayLiteralExpression,
 } from "typescript";
-import { ScriptElementKind } from "typescript";
 import { SCOPE_FILE_NAMES } from "../constants";
 
 export const entry = (name: string, kind: CompletionEntry["kind"]): CompletionEntry => ({
@@ -27,26 +26,6 @@ export const getNewCompletions = (): WithMetadata<CompletionInfo> => ({
   entries: [],
 });
 
-export const getParentCompletions = (rootDir: string, importDir: string) => {
-  const completions = getNewCompletions();
-
-  let currentDir = importDir;
-  while (currentDir !== rootDir) {
-    completions.entries.push(entry(relative(rootDir, currentDir), ScriptElementKind.string));
-    currentDir = dirname(currentDir);
-  }
-
-  const levelsUp = Math.min(3, completions.entries.length);
-
-  completions.entries.push(entry(".", ScriptElementKind.string));
-  completions.entries.push(entry("*", ScriptElementKind.string));
-
-  for (let i = 1; i <= levelsUp; i++) {
-    completions.entries.push(entry(Array(i).fill("..").join("/"), ScriptElementKind.string));
-  }
-
-  return completions;
-};
 
 /**
  * This function should us isExportAssignment from 'typescript',
@@ -72,7 +51,7 @@ export const isArrayLiteralExpression = (expression: Expression | undefined): ex
   return !!expression && "elements" in expression && Array.isArray(expression.elements);
 };
 
-export const getAutocompletionFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
+export const getAutocompletionFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", ".mjs"]) => {
   const extSet = new Set(extensions);
   const filePaths: string[] = [];
   const dirPaths: string[] = [];

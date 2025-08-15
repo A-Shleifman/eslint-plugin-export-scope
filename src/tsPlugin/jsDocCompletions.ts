@@ -1,6 +1,6 @@
 import { relative } from "path";
-import { getFileTree, getRootDir } from "../utils";
-import { getParentCompletions, entry, getNewCompletions } from "./tsUtils";
+import { getRootDir } from "../utils";
+import { getParentCompletions, entry, getNewCompletions, getAutocompletionFileTree } from "./tsUtils";
 import { ScriptElementKind, type WithMetadata, type CompletionInfo } from "typescript";
 
 export const jsDocCompletions = (importDir: string, completions: WithMetadata<CompletionInfo>, jsDoc: string) => {
@@ -32,7 +32,7 @@ export const jsDocCompletions = (importDir: string, completions: WithMetadata<Co
   }
 
   if (/@scopeException\s+([^\s]*)$/.test(jsDoc)) {
-    const { filePaths, dirPaths } = getFileTree(rootDir);
+    const { filePaths, dirPaths } = getAutocompletionFileTree(rootDir);
 
     return {
       ...getNewCompletions(),

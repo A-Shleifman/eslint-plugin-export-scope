@@ -5,4 +5,5 @@ export = {
   parserOptions: { sourceType: "module" },
   plugins: ["export-scope"],
   rules: { "export-scope/no-imports-outside-export-scope": "error" },
+  ignorePatterns: ["!.scope.*", "!.scope.default.*"],
 } satisfies ClassicConfig.Config;

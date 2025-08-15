@@ -1,4 +1,5 @@
-import { dirname, relative } from "path";
+import { readdirSync } from "fs";
+import { dirname, extname, relative, resolve } from "path";
 import type {
   WithMetadata,
   CompletionInfo,
@@ -10,6 +11,7 @@ import type {
   ArrayLiteralExpression,
 } from "typescript";
 import { ScriptElementKind } from "typescript";
+import { SCOPE_FILE_NAMES } from "../constants";
 
 export const entry = (name: string, kind: CompletionEntry["kind"]): CompletionEntry => ({
   name,
@@ -68,4 +70,34 @@ export const isVariableDeclaration = (declaration: Declaration | undefined): dec
  */
 export const isArrayLiteralExpression = (expression: Expression | undefined): expression is ArrayLiteralExpression => {
   return !!expression && "elements" in expression && Array.isArray(expression.elements);
+};
+
+export const getAutocompletionFileTree = (dir: string, extensions = [".ts", ".tsx", ".mts", ".js", ".jsx", "mjs"]) => {
+  const extSet = new Set(extensions);
+  const filePaths: string[] = [];
+  const dirPaths: string[] = [];
+
+  const traverse = (dir: string) => {
+    const entries = readdirSync(dir, { withFileTypes: true });
+
+    entries.map((x) => {
+      if (SCOPE_FILE_NAMES.includes(x.name)) return;
+      if (x.name === "node_modules" || x.name.startsWith(".")) return;
+
+      const path = resolve(dir, x.name);
+
+      if (x.isDirectory()) {
+        dirPaths.push(path);
+        return traverse(path);
+      } else {
+        if (extSet.has(extname(x.name))) {
+          filePaths.push(path);
+        }
+      }
+    });
+  };
+
+  traverse(dir);
+
+  return { filePaths, dirPaths };
 };

@@ -2,12 +2,13 @@ import type { RuleContext } from "@typescript-eslint/utils/ts-eslint";
 import type { MessageIdsType } from "./esLintRule";
 import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
 import { basename, dirname } from "path";
-import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME } from "../checkIsImportable";
 import { getFullScopePath, isSubPath } from "../utils";
 import fs from "fs";
+import { SCOPE_FILE_NAMES } from "../constants";
 
 export const validateScopeFileScopePath = (context: RuleContext<MessageIdsType, never[]>, node: TSESTree.Literal) => {
-  if (![SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME].includes(basename(context.filename))) return;
+  if (!SCOPE_FILE_NAMES.includes(basename(context.filename))) return;
+
   const exportDir = dirname(context.filename);
   node.loc.start.column += 1;
   node.loc.end.column -= 1;

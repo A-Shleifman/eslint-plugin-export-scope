@@ -2,9 +2,35 @@ import path from "path";
 import { SymbolFlags, type Program, type __String } from "typescript";
 import { getFullScopePath, getRootDir, isSubPath } from "./utils";
 import { isArrayLiteralExpression, isExportAssignment, isVariableDeclaration } from "./tsPlugin/tsUtils";
+import {
+  SCOPE_DEFAULT_JS_FILE_NAME,
+  SCOPE_DEFAULT_TS_FILE_NAME,
+  SCOPE_JS_FILE_NAME,
+  SCOPE_TS_FILE_NAME,
+} from "./constants";
 
-export const SCOPE_TS_FILE_NAME = ".scope.ts";
-export const SCOPE_JS_FILE_NAME = ".scope.js";
+const findDefaultScopeFileInAncestors = (tsProgram: Program, startDir: string) => {
+  const rootDir = getRootDir(startDir);
+  if (!rootDir) return null;
+
+  // Start from the current directory and go up to ancestors
+  let currentDir = startDir;
+
+  while (currentDir !== path.dirname(currentDir)) {
+    const scopeFile =
+      tsProgram.getSourceFile(path.join(currentDir, SCOPE_DEFAULT_TS_FILE_NAME)) ||
+      tsProgram.getSourceFile(path.join(currentDir, SCOPE_DEFAULT_JS_FILE_NAME));
+
+    if (scopeFile) return scopeFile;
+
+    // Stop when we reach or go beyond the root directory
+    if (currentDir === rootDir) break;
+
+    currentDir = path.dirname(currentDir);
+  }
+
+  return null;
+};
 
 export const checkIsImportable = ({
   tsProgram,
@@ -80,12 +106,9 @@ export const checkIsImportable = ({
       scopeFile ??= tsProgram.getSourceFile(path.join(parentDir, SCOPE_JS_FILE_NAME));
     }
 
+    // If no regular scope file found, look for default scope files in ancestors
     if (!scopeFile) {
-      const rootDir = getRootDir(exportDir);
-      if (rootDir) {
-        scopeFile ??= tsProgram.getSourceFile(path.join(rootDir, SCOPE_TS_FILE_NAME));
-        scopeFile ??= tsProgram.getSourceFile(path.join(rootDir, SCOPE_JS_FILE_NAME));
-      }
+      scopeFile = findDefaultScopeFileInAncestors(tsProgram, exportDir) ?? undefined;
     }
 
     if (!scopeFile) break getFolderScope;

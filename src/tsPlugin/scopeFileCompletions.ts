@@ -1,6 +1,6 @@
-import { getParentCompletions, getNewCompletions, entry } from "./tsUtils";
+import { getParentCompletions, getNewCompletions, entry, getAutocompletionFileTree } from "./tsUtils";
 import { ScriptElementKind } from "typescript";
-import { getFileTree, getRootDir } from "../utils";
+import { getRootDir } from "../utils";
 import { relative } from "path";
 
 const hasOpenQuote = (string: string) => {
@@ -37,7 +37,7 @@ export const getScopeFileCompletions = (
     return getParentCompletions(rootDir, importDir);
   }
 
-  const { filePaths, dirPaths } = getFileTree(rootDir);
+  const { filePaths, dirPaths } = getAutocompletionFileTree(rootDir);
 
   return {
     ...getNewCompletions(),

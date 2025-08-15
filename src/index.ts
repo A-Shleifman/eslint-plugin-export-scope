@@ -19,21 +19,33 @@ const plugin = {
   meta: { name, version },
   rules: { [ruleName]: rule },
   configs: {
-    flatConfigRecommended: {
-      files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
-      languageOptions: {
-        parser,
-        sourceType: "module",
-        parserOptions: { projectService: true },
+    flatConfigRecommended: [
+      {
+        files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
+        languageOptions: {
+          parser,
+          sourceType: "module",
+          parserOptions: { projectService: true },
+        },
+        plugins: { "export-scope": undefined as unknown as FlatConfig.Plugin },
+        rules: { "export-scope/no-imports-outside-export-scope": "error" },
       },
-      plugins: { "export-scope": undefined as unknown as FlatConfig.Plugin },
-      rules: { "export-scope/no-imports-outside-export-scope": "error" },
-    },
+      {
+        files: ["**/.scope.*", "**/.scope.default.*"],
+        languageOptions: {
+          parser,
+          sourceType: "module",
+          parserOptions: { projectService: false },
+        },
+      },
+    ],
     recommended: recommendedLegacy as unknown as FlatConfig.Config,
   },
 } satisfies FlatConfig.Plugin;
 
-plugin.configs.flatConfigRecommended.plugins["export-scope"] = plugin;
+for (const cfg of plugin.configs.flatConfigRecommended) {
+  if (cfg.plugins) cfg.plugins["export-scope"] = plugin;
+}
 
 const pluginForManualConfigs = { plugin };
 

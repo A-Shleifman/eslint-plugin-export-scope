@@ -4,5 +4,5 @@
     "plugins": [{ "name": "eslint-plugin-export-scope" }],
     "noEmit": true
   },
-  "include": ["**/*", "**/.scope.ts"]
+  "include": ["**/*", "**/.scope.ts", "**/.scope.js", "**/.scope.default.ts", "**/.scope.default.js"]
 }

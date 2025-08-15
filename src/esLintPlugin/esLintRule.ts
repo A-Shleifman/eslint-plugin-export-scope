@@ -4,6 +4,7 @@ import { validateScopeFileScopePath } from "./validateScopeFileScopePath";
 import { resolveModuleName, sys as tsSys } from "typescript";
 import { validateProgram } from "./validateProgram";
 import { extractPathFromImport } from "./esLintUtils";
+import { basename } from "path";
 
 export const ruleName = "no-imports-outside-export-scope";
 
@@ -30,6 +31,16 @@ export const rule = createRule({
   defaultOptions: [],
 
   create(context) {
+    const fileName = basename(context.filename);
+    const isScopeFile = /\.scope\.(default\.)?(ts|js)$/.test(fileName);
+    
+    if (isScopeFile) {
+      // Return minimal visitor for scope files - no parser services needed
+      return {
+        Literal: (node) => validateScopeFileScopePath(context, node),
+      };
+    }
+
     const services = ESLintUtils.getParserServices(context);
 
     if (!services.getSymbolAtLocation) {
@@ -116,7 +127,6 @@ export const rule = createRule({
         }
       },
       Program: (node) => validateProgram(context, node, lintNode),
-      Literal: (node) => validateScopeFileScopePath(context, node),
     };
   },
 });

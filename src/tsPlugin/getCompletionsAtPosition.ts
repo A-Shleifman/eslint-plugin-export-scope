@@ -1,11 +1,12 @@
 import { ScriptElementKind, type LanguageService, type server } from "typescript";
-import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME, checkIsImportable } from "../checkIsImportable";
+import { checkIsImportable } from "../checkIsImportable";
 import { basename, dirname } from "path";
 import { getNewCompletions } from "./tsUtils";
 
 import type { WithMetadata, CompletionInfo, CompletionEntry } from "typescript";
 import { getScopeFileCompletions } from "./scopeFileCompletions";
 import { jsDocCompletions } from "./jsDocCompletions";
+import { SCOPE_FILE_NAMES } from "../constants";
 
 export const getCompletionsAtPosition =
   (ts: typeof import("typescript"), info: server.PluginCreateInfo): LanguageService["getCompletionsAtPosition"] =>
@@ -20,7 +21,7 @@ export const getCompletionsAtPosition =
 
     if (!fileTextToPosition) return original;
 
-    if ([SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME].includes(basename(importPath))) {
+    if (SCOPE_FILE_NAMES.includes(basename(importPath))) {
       return getScopeFileCompletions(ts, importDir, fileTextToPosition) ?? original;
     }
 

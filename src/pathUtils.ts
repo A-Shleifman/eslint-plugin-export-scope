@@ -1,7 +1,75 @@
-import { dirname, relative } from "path";
-import { getRootDir, getFullScopePath } from "./utils";
-import { sameOrSubPath } from "./paths";
+import { readdirSync } from "fs";
+import { dirname, resolve, relative, isAbsolute } from "path";
 
+// Platform-aware path operations
+const isWin = process.platform === "win32";
+const fold = (s: string) => (isWin ? s.toLowerCase() : s);
+
+/** child is same as base or inside base (logical tree only). */
+export const sameOrSubPath = (base: string, child: string) => {
+  const a = fold(resolve(base));
+  const b = fold(resolve(child));
+  if (a === b) return true;
+  const rel = relative(a, b);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+};
+
+export const toPosix = (p: string) => p.replace(/\\/g, "/");
+
+// Config and root directory utilities
+const nearestConfigMap = new Map<string, string | null>();
+
+export const getPathOfTheNearestConfig = (originPath: string, configFileName: string | string[]) => {
+  const configFileNames = Array.isArray(configFileName) ? configFileName : [configFileName];
+
+  const key = [originPath, configFileNames.join("_")].join("_");
+  if (nearestConfigMap.has(key)) {
+    return nearestConfigMap.get(key);
+  }
+
+  const cacheResult = (result: string | null) => {
+    nearestConfigMap.set(key, result);
+    // clear cache after 1 second
+    setTimeout(() => nearestConfigMap.delete(key), 1000);
+    return result;
+  };
+
+  let currentDir = originPath;
+  while (currentDir !== "/") {
+    const fileNames = readdirSync(currentDir);
+    const fileName = fileNames.find((x) => configFileNames.includes(x));
+
+    if (fileName) {
+      return cacheResult(resolve(currentDir, fileName));
+    }
+
+    if (fileNames.includes("package.json")) {
+      return cacheResult(null);
+    }
+
+    currentDir = dirname(currentDir);
+  }
+
+  return cacheResult(null);
+};
+
+export const getRootDir = (originPath: string) => {
+  const configPath = getPathOfTheNearestConfig(originPath, "package.json");
+  return configPath ? dirname(configPath) : null;
+};
+
+export const getFullScopePath = (exportDir: string, scope: string) => {
+  if (scope.startsWith(".")) {
+    return resolve(exportDir, scope);
+  }
+
+  const rootDir = getRootDir(exportDir);
+  if (!rootDir) return null;
+
+  return resolve(rootDir, scope);
+};
+
+// Path validation types and utilities
 export interface PathValidationResult {
   isValid: boolean;
   resolvedPath?: string;
@@ -10,10 +78,9 @@ export interface PathValidationResult {
 
 /**
  * Check if a path is an ancestor of the current directory (or is the current directory)
- * Works without TypeScript program dependency
  */
 export const isAncestorPath = (currentDir: string, targetPath: string): boolean => {
-  // Use existing utility: target is ancestor if current is same or sub path of target
+  // Use sameOrSubPath: target is ancestor if current is same or sub path of target
   return sameOrSubPath(targetPath, currentDir);
 };
 
@@ -138,3 +205,6 @@ export const getPathContext = (text: string, position: number): PathContextType 
   
   return null;
 };
+
+// Re-export for backward compatibility
+export { sameOrSubPath as isSubPath };

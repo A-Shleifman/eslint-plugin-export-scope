@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { SymbolFlags, type Program } from "typescript";
-import { getFullScopePath, getRootDir, isSubPath } from "./utils";
+import { getFullScopePath, getRootDir, isSubPath } from "./pathUtils";
 import {
   SCOPE_DEFAULT_JS_FILE_NAME,
   SCOPE_DEFAULT_TS_FILE_NAME,

@@ -1,8 +1,7 @@
 import type { TSESTree } from "@typescript-eslint/utils";
 import { getScopeDeclarations } from "./esLintUtils";
 import { dirname } from "path";
-import { getFullScopePath } from "../utils";
-import { validateScopePath, validateExceptionPath } from "../pathValidation";
+import { getFullScopePath, validateScopePath, validateExceptionPath } from "../pathUtils";
 import fs from "fs";
 import { RuleContext } from "@typescript-eslint/utils/ts-eslint";
 import type { MessageIdsType } from "./esLintRule";

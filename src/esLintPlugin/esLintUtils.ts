@@ -24,7 +24,7 @@ export const getScopeDeclarations = (comments: TSESTree.Comment[]) => {
         
         // Calculate column position of path start
         const columnOffset = pathLineOffset > 0 
-          ? linesBeforePath[linesBeforePath.length - 1].length // Column in the current line
+          ? (linesBeforePath[linesBeforePath.length - 1]?.length ?? 0) // Column in the current line
           : loc.start.column + 2 + beforePath.length; // +2 for /*
         
         acc.push({ 

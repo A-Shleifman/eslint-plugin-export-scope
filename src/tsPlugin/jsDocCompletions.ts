@@ -1,4 +1,4 @@
-import { getRootDir } from "../utils";
+import { getRootDir } from "../pathUtils";
 import { ScriptElementKind, type WithMetadata, type CompletionInfo } from "typescript";
 import {
   REGEXES,

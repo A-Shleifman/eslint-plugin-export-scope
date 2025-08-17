@@ -43,6 +43,13 @@ export const getScopeFileCompletions = (
   const lastExportPos = fileTextToPosition.lastIndexOf("export");
   const isDefaultExport = lastExportDefaultPos === lastExportPos;
   
+  // Check if this is inside an exceptions array
+  const lastExceptionsPos = fileTextToPosition.lastIndexOf("export const exceptions");
+  const isInExceptionsArray = lastExceptionsPos > -1 && 
+    lastExceptionsPos > lastExportDefaultPos &&
+    fileTextToPosition.substring(lastExceptionsPos).includes("[") &&
+    !fileTextToPosition.substring(lastExceptionsPos).includes("];");
+  
   const config = {
     rootDir,
     importDir,
@@ -50,7 +57,11 @@ export const getScopeFileCompletions = (
     startPos: absoluteStartPos,
   };
 
-  return isDefaultExport
-    ? generateParentCompletions(config)
-    : generateFileSystemCompletions(config);
+  if (isInExceptionsArray) {
+    return generateFileSystemCompletions(config);
+  } else if (isDefaultExport) {
+    return generateParentCompletions(config);
+  } else {
+    return generateFileSystemCompletions(config);
+  }
 };

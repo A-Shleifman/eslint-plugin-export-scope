@@ -1,7 +1,8 @@
 import type { TSESTree } from "@typescript-eslint/utils";
-import { getPathLoc, getScopeDeclarations } from "./esLintUtils";
+import { getScopeDeclarations } from "./esLintUtils";
 import { dirname } from "path";
 import { getFullScopePath } from "../utils";
+import { validateScopePath, validateExceptionPath } from "../pathValidation";
 import fs from "fs";
 import { RuleContext } from "@typescript-eslint/utils/ts-eslint";
 import type { MessageIdsType } from "./esLintRule";
@@ -26,23 +27,50 @@ export const validateJsDoc = (context: RuleContext<MessageIdsType, never[]>, nod
   const exportDir = dirname(context.filename);
 
   scopeDeclarations.forEach(({ type, path, loc }) => {
-    const fullPath = getFullScopePath(exportDir, path);
-
-    if (!fullPath || path === "*") return;
+    // Skip validation for wildcard
+    if (path === "*") return;
 
     if (type === "scope" || type === "scopeDefault") {
-      if (!exportDir.toLowerCase().startsWith(fullPath.toLowerCase())) {
-        return context.report({ node, messageId: "onlyParents", loc: getPathLoc(context.sourceCode.text, loc) });
+      // Validate scope paths - only ancestors allowed
+      const validation = validateScopePath(exportDir, path);
+      if (!validation.isValid) {
+        return context.report({ 
+          node, 
+          messageId: "onlyParents", 
+          loc
+        });
       }
-    }
-
-    if (!fs.existsSync(fullPath)) {
-      context.report({
-        node,
-        messageId: "invalidPath",
-        data: { identifier: fullPath },
-        loc: getPathLoc(context.sourceCode.text, loc),
-      });
+      
+      // Check if path exists
+      if (validation.resolvedPath && !fs.existsSync(validation.resolvedPath)) {
+        context.report({
+          node,
+          messageId: "invalidPath",
+          data: { identifier: validation.resolvedPath },
+          loc,
+        });
+      }
+    } else if (type === "scopeException") {
+      // Validate exception paths - can be any path within project
+      const validation = validateExceptionPath(exportDir, path);
+      if (!validation.isValid) {
+        const fullPath = getFullScopePath(exportDir, path);
+        if (fullPath) {
+          context.report({
+            node,
+            messageId: "invalidPath",
+            data: { identifier: fullPath },
+            loc,
+          });
+        }
+      } else if (validation.resolvedPath && !fs.existsSync(validation.resolvedPath)) {
+        context.report({
+          node,
+          messageId: "invalidPath",
+          data: { identifier: validation.resolvedPath },
+          loc,
+        });
+      }
     }
   });
 };

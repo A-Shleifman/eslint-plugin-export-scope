@@ -1,6 +1,7 @@
 import { relative, dirname } from "path";
 import { ScriptElementKind, type CompletionEntry, type WithMetadata, type CompletionInfo } from "typescript";
 import { getNewCompletions, getAutocompletionFileTree } from "./tsUtils";
+import { generateAncestorPaths } from "../pathValidation";
 
 // Constants
 export const COMPLETION_SORT_TEXT = "10";
@@ -128,60 +129,126 @@ export const generateParentCompletions = (config: CompletionConfig): WithMetadat
   const { rootDir, importDir, partialPath, startPos } = config;
   const completions = getNewCompletions();
 
-  // Add parent directories
-  let currentDir = importDir;
-  while (currentDir !== rootDir) {
-    const relativePath = toPosix(relative(rootDir, currentDir));
-    if (relativePath.startsWith(partialPath)) {
-      completions.entries.push(
-        createCompletionEntry(relativePath, ScriptElementKind.string, {
-          start: startPos,
-          length: partialPath.length,
-        })
-      );
-    }
-    currentDir = dirname(currentDir);
-  }
-
-  // Add special entries
-  const specialEntries = ["."];
-  const levelsUp = Math.min(3, Math.floor((importDir.length - rootDir.length) / 2));
+  // Add all ancestor paths (both relative and absolute)
+  const ancestorPaths = generateAncestorPaths(importDir, rootDir);
   
-  for (let i = 1; i <= levelsUp; i++) {
-    specialEntries.push(Array(i).fill("..").join("/"));
-  }
-  specialEntries.push("*");
-
-  // Filter and add special entries
-  specialEntries
-    .filter(name => name.startsWith(partialPath))
-    .forEach(name => {
+  ancestorPaths
+    .filter(path => path.startsWith(partialPath))
+    .forEach(path => {
       completions.entries.push(
-        createCompletionEntry(name, ScriptElementKind.string, {
+        createCompletionEntry(path, ScriptElementKind.string, {
           start: startPos,
           length: partialPath.length,
         })
       );
     });
 
+  // Add wildcard for global access
+  if ("*".startsWith(partialPath)) {
+    completions.entries.push(
+      createCompletionEntry("*", ScriptElementKind.string, {
+        start: startPos,
+        length: partialPath.length,
+      })
+    );
+  }
+
   return completions;
 };
 
-// Generate file system completions
-export const generateFileSystemCompletions = (config: CompletionConfig): WithMetadata<CompletionInfo> => {
-  const { rootDir, partialPath, startPos } = config;
-  const { filePaths, dirPaths } = getAutocompletionFileTree(rootDir);
+// Parse relative path to extract relative jumps and remaining path
+const parseRelativePath = (partialPath: string) => {
+  const parts = partialPath.split('/');
+  let relativeJumps = 0;
+  let remainingPath = '';
   
-  const filteredDirs = filterPathsByPartial(dirPaths, partialPath, rootDir);
-  const filteredFiles = filterPathsByPartial(filePaths, partialPath, rootDir);
+  let i = 0;
+  while (i < parts.length && parts[i] === '..') {
+    relativeJumps++;
+    i++;
+  }
+  
+  if (i < parts.length) {
+    remainingPath = parts.slice(i).join('/');
+  }
+  
+  return { relativeJumps, remainingPath };
+};
 
-  return {
-    ...getNewCompletions(),
-    entries: [
-      ...filteredDirs.map(path => createPathCompletion(path, rootDir, { partialPath, startPos })),
-      ...filteredFiles.map(path => createPathCompletion(path, rootDir, { partialPath, startPos })),
-    ],
-  };
+// Calculate effective directory based on relative jumps
+const calculateEffectiveDir = (importDir: string, relativeJumps: number): string => {
+  let effectiveDir = importDir;
+  for (let i = 0; i < relativeJumps; i++) {
+    effectiveDir = dirname(effectiveDir);
+  }
+  return effectiveDir;
+};
+
+// Generate file system completions with relative path support
+export const generateFileSystemCompletions = (config: CompletionConfig): WithMetadata<CompletionInfo> => {
+  const { rootDir, importDir, partialPath, startPos } = config;
+  
+  // Parse relative path to handle ../../../packages/index.ts style paths
+  const { relativeJumps, remainingPath } = parseRelativePath(partialPath);
+  
+  if (relativeJumps > 0) {
+    // Calculate the effective directory based on relative jumps
+    const effectiveDir = calculateEffectiveDir(importDir, relativeJumps);
+    
+    // Get file tree from the effective directory
+    const { filePaths, dirPaths } = getAutocompletionFileTree(effectiveDir);
+    
+    // Filter by remaining path part
+    const filteredDirs = filterPathsByPartial(dirPaths, remainingPath, effectiveDir);
+    const filteredFiles = filterPathsByPartial(filePaths, remainingPath, effectiveDir);
+    
+    const completions = getNewCompletions();
+    
+    // Add completions with proper relative path prefixes
+    const relativePrefix = Array(relativeJumps).fill('..').join('/') + '/';
+    
+    filteredDirs.forEach(path => {
+      const relativePath = toPosix(relative(effectiveDir, path));
+      const completionPath = relativePrefix + relativePath;
+      if (completionPath.startsWith(partialPath)) {
+        completions.entries.push(
+          createCompletionEntry(completionPath, ScriptElementKind.string, {
+            start: startPos,
+            length: partialPath.length,
+          })
+        );
+      }
+    });
+    
+    filteredFiles.forEach(path => {
+      const relativePath = toPosix(relative(effectiveDir, path));
+      const completionPath = relativePrefix + relativePath;
+      if (completionPath.startsWith(partialPath)) {
+        completions.entries.push(
+          createCompletionEntry(completionPath, ScriptElementKind.string, {
+            start: startPos,
+            length: partialPath.length,
+          })
+        );
+      }
+    });
+    
+    return completions;
+  } else {
+    // Original logic for non-relative paths
+    const { filePaths, dirPaths } = getAutocompletionFileTree(rootDir);
+    
+    const filteredDirs = filterPathsByPartial(dirPaths, partialPath, rootDir);
+    const filteredFiles = filterPathsByPartial(filePaths, partialPath, rootDir);
+
+    return {
+      ...getNewCompletions(),
+      entries: [
+        ...filteredDirs.map(path => createPathCompletion(path, rootDir, { partialPath, startPos })),
+        ...filteredFiles.map(path => createPathCompletion(path, rootDir, { partialPath, startPos })),
+      ],
+    };
+  }
 };
 
 // Check for partial directive completion (like "@scop")

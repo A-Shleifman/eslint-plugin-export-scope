@@ -21,10 +21,7 @@ const hasOpenQuote = (string: string): boolean => {
   return !!stack.at(-1);
 };
 
-export const getScopeFileCompletions = (
-  importDir: string,
-  fileTextToPosition: string,
-) => {
+export const getScopeFileCompletions = (importDir: string, fileTextToPosition: string) => {
   const lastLine = fileTextToPosition.split("\n").pop() ?? "";
   if (!hasOpenQuote(lastLine)) return;
 
@@ -34,22 +31,17 @@ export const getScopeFileCompletions = (
   // Extract partial path from the current line
   const partialInfo = parsePartialPathFromQuotes(lastLine, 0);
   if (!partialInfo) return;
-  
+
   const { partialPath, startPos: lineStartPos } = partialInfo;
   const absoluteStartPos = calculateAbsolutePosition(fileTextToPosition, lineStartPos);
 
-  // Check if this is a default export (which uses parent completions)
-  const lastExportDefaultPos = fileTextToPosition.lastIndexOf("export default");
-  const lastExportPos = fileTextToPosition.lastIndexOf("export");
-  const isDefaultExport = lastExportDefaultPos === lastExportPos;
-  
   // Check if this is inside an exceptions array
   const lastExceptionsPos = fileTextToPosition.lastIndexOf("export const exceptions");
-  const isInExceptionsArray = lastExceptionsPos > -1 && 
-    lastExceptionsPos > lastExportDefaultPos &&
+  const isInExceptionsArray =
+    lastExceptionsPos > -1 &&
     fileTextToPosition.substring(lastExceptionsPos).includes("[") &&
     !fileTextToPosition.substring(lastExceptionsPos).includes("];");
-  
+
   const config = {
     rootDir,
     importDir,
@@ -58,10 +50,15 @@ export const getScopeFileCompletions = (
   };
 
   if (isInExceptionsArray) {
-    return generateFileSystemCompletions(config);
-  } else if (isDefaultExport) {
-    return generateParentCompletions(config);
+    // For exceptions array, combine both filesystem and parent completions
+    const filesystemCompletions = generateFileSystemCompletions(config);
+    const parentCompletions = generateParentCompletions(config);
+
+    return {
+      ...filesystemCompletions,
+      entries: [...filesystemCompletions.entries, ...parentCompletions.entries],
+    };
   } else {
-    return generateFileSystemCompletions(config);
+    return generateParentCompletions(config);
   }
 };

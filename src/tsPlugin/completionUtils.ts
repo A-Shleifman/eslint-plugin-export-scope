@@ -55,10 +55,11 @@ export const createCompletionEntry = (
 export const createPathCompletion = (
   path: string,
   rootDir: string,
-  config: { partialPath: string; startPos: number },
+  config: { partialPath: string; startPos: number; pathPrefix?: string },
 ): CompletionEntry => {
   const relativePath = toPosix(relative(rootDir, path));
-  return createCompletionEntry(relativePath, ScriptElementKind.string, {
+  const finalPath = config.pathPrefix ? `${config.pathPrefix}${relativePath}` : relativePath;
+  return createCompletionEntry(finalPath, ScriptElementKind.string, {
     start: config.startPos,
     length: config.partialPath.length,
   });
@@ -158,12 +159,17 @@ const resolveRelativePath = (
     return { effectiveDir: importDir, remainingPath: partialPath };
   }
 
-  // handle complex relative paths like ../../../packages/
   const resolvedBase = resolve(importDir, partialPath);
-  const effectiveDir = dirname(resolvedBase);
-  const remainingPath = relative(effectiveDir, resolvedBase);
 
-  return { effectiveDir, remainingPath: remainingPath || "" };
+  // if the path ends with "/" or the resolved path would be a directory,
+  // search in that directory. Otherwise, search in the parent with the basename as remaining.
+  if (partialPath.endsWith("/")) {
+    return { effectiveDir: resolvedBase, remainingPath: "" };
+  } else {
+    const effectiveDir = dirname(resolvedBase);
+    const remainingPath = relative(effectiveDir, resolvedBase);
+    return { effectiveDir, remainingPath: remainingPath || "" };
+  }
 };
 
 export const generateFileSystemCompletions = (config: CompletionConfig): WithMetadata<CompletionInfo> => {
@@ -178,6 +184,18 @@ export const generateFileSystemCompletions = (config: CompletionConfig): WithMet
   const filteredDirs = filterPathsByPartial(dirPaths, isRelative ? remainingPath : partialPath, searchDir);
   const filteredFiles = filterPathsByPartial(filePaths, isRelative ? remainingPath : partialPath, searchDir);
 
+  // Extract the relative path prefix for all relative paths
+  let pathPrefix: string | undefined;
+  if (isRelative) {
+    if (remainingPath === "") {
+      // Complete navigation like "../" or "../folder/" - use the full partialPath
+      pathPrefix = partialPath;
+    } else {
+      // Partial match like "../folder" - extract just the relative navigation part
+      pathPrefix = partialPath.substring(0, partialPath.length - remainingPath.length);
+    }
+  }
+
   return {
     ...getNewCompletions(),
     entries: [
@@ -185,12 +203,14 @@ export const generateFileSystemCompletions = (config: CompletionConfig): WithMet
         createPathCompletion(path, searchDir, {
           partialPath: isRelative ? remainingPath : partialPath,
           startPos,
+          pathPrefix,
         }),
       ),
       ...filteredFiles.map((path) =>
         createPathCompletion(path, searchDir, {
           partialPath: isRelative ? remainingPath : partialPath,
           startPos,
+          pathPrefix,
         }),
       ),
     ],

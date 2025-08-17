@@ -53,7 +53,14 @@ export const jsDocCompletions = (
 
   // Return appropriate completions based on directive type
   if (directive === "@scopeException") {
-    return generateFileSystemCompletions(config);
+    // For @scopeException, combine both filesystem and parent completions
+    const filesystemCompletions = generateFileSystemCompletions(config);
+    const parentCompletions = generateParentCompletions(config);
+    
+    return {
+      ...filesystemCompletions,
+      entries: [...filesystemCompletions.entries, ...parentCompletions.entries],
+    };
   } else {
     return generateParentCompletions(config);
   }

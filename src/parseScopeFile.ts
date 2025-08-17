@@ -137,8 +137,7 @@ export function parseScopeSource(text: string, fileName: string): ScopeFile {
     }
   }
 
-  if (scope == null) throw new Error("`.scope.*` must `export default` a string-like expression");
-  return { scope, exceptions: exceptions ?? [] };
+  return { scope: scope ?? ".", exceptions: exceptions ?? [] };
 }
 
 export function parseScopeFile(absPath: string): ScopeFile {

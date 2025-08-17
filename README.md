@@ -105,14 +105,16 @@ export default "";
 
 ```
 
+## Default scope with `.scope.default.ts` files
+
+- `.scope.ts` sets a default scope for all exports from the current directory
+- `.scope.default.ts` sets a default scope for the current directory **AND** all subdirectories
+
 ## Installation
 
-Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin and a `TS Language Server` plugin.
+Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin (validates imports) and a `TS Language Server` plugin (manages autocompletion).
 
-#### ESLint plugin will highlight imports outside the scope
-
-<details>
-  <summary>Using ESLint Flat Config (ESLint v8 if enabled, ESLint v9)</summary>
+### ESLint plugin (ESLint 9, Flat Config)
 
 ```sh
 npm i -D eslint typescript-eslint eslint-plugin-export-scope
@@ -128,9 +130,6 @@ npm i -D eslint typescript-eslint eslint-plugin-export-scope
 
 ```js
 // eslint.config.js
-
-// @ts-check
-
 import tseslint from "typescript-eslint";
 import exportScope from "eslint-plugin-export-scope";
 
@@ -140,33 +139,10 @@ export default tseslint.config(
 );
 ```
 
-<details>
-  <summary>Manual Flat Config</summary>
-
-```js
-// eslint.config.js
-
-// @ts-check
-
-import tseslint from "typescript-eslint";
-import exportScope from "eslint-plugin-export-scope";
-
-export default tseslint.config(
-  // other configs,
-  {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
-    plugins: { "export-scope": exportScope.plugin },
-    rules: { "export-scope/no-imports-outside-export-scope": "error" },
-    languageOptions: { parser: tseslint.parser, parserOptions: { projectService: true }, sourceType: "module" },
-  },
-);
-```
-
-</details>
-</details>
+### ESLint plugin (ESLint 8, Legacy Config)
 
 <details>
-  <summary>Using Legacy Config</summary>
+  <summary>Instructions</summary>
 
 ```sh
 npm i -D eslint @typescript-eslint/parser eslint-plugin-export-scope
@@ -177,62 +153,60 @@ npm i -D eslint @typescript-eslint/parser eslint-plugin-export-scope
 // .eslintrc.js
 module.exports = {
   // ...
-  extends: ["plugin:eslint-plugin-export-scope/recommended"],
-  parser: "@typescript-eslint/parser",
+  extends: ["plugin:export-scope/recommended"],
   parserOptions: { project: true, tsconfigRootDir: __dirname },
-  ignorePatterns: ["!.scope.ts"],
-};
-```
-
-<details>
-  <summary>Manual Legacy Config</summary>
-
-```js
-// .eslintrc.js
-module.exports = {
-  // ...
-  parser: "@typescript-eslint/parser",
-  parserOptions: { project: true, tsconfigRootDir: __dirname },
-  plugins: ["export-scope"],
-  rules: { "export-scope/no-imports-outside-export-scope": "error" },
-  ignorePatterns: ["!.scope.ts"],
+  overrides: [
+    {
+      files: ["**/.scope.*", "**/.scope.default.*"],
+      extends: ["plugin:@typescript-eslint/disable-type-checked"],
+    },
+    {
+      files: [".eslintrc.{js,cjs}"],
+      env: { node: true },
+      parserOptions: { sourceType: "script" },
+    },
+  ],
 };
 ```
 
 </details>
-</details>
 
-#### TS plugin will disable autocompletion for exports outside the scope
+### TS plugin
 
 ```js
 // tsconfig.json
 "compilerOptions": {
   "plugins": [{ "name": "eslint-plugin-export-scope" }],
 },
-"include": ["**/*", "**/.scope.ts"]
-//                  "../../**/.scope.ts" for monorepos
 ```
 
-Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't work.
+⚠️ Tell VSCode to `Use Workspace Version` of TypeScript. Otherwise TS plugin won't work.
 
 <p align="center">
   <img src="readme-src/ts_version.png" alt="Select TS version" width="600" />
 </p>
 
-<details>
-  <summary>Configuration for JS projects</summary>
+## Pure JS projects
 
-- `tsconfig.json` file is still required for the plugin to work
-- replace `.scope.ts` in both configs with `.scope.js`
-- set `compilerOptions.allowJs`to `true` in `tsconfig.json`
+`tsconfig.json` with `compilerOptions.allowJs` set to `true` is required
+
+## Upgrading
+
+<details>
+  <summary>v2 => v3</summary>
+
+- If you're using ESLint 8 with `.eslintrc`, follow the new [installation instructions](#eslint-plugin-eslint-8-legacy-config)
+- Feel free to remove `"**/.scope.js", "**/.scope.ts"` from `tsconfig.js`; this is no longer required
 </details>
 
-## Upgrading from v1 to v2
+<details>
+  <summary>v1 => v2</summary>
 
 - Replace all `//` comments with jsDocs `/** */`
 - Replace `@scope default` with `@scopeDefault`
 - Relace `@..` file/folder prefixes with `.scope.ts` files.
 - Make sure `.eslintrc.js` and `tsconfig.json` configs are updated
+</details>
 
 ## Hints
 

@@ -1,55 +1,117 @@
 import type { Linter } from "eslint";
+import { basename, dirname } from "path";
+import { parse } from "@typescript-eslint/typescript-estree";
+import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
+import { SCOPE_FILE_NAMES } from "../constants";
+import {
+  validateScopeDeclarations,
+  validateExportDefault,
+  validateExceptionsArray,
+  type ValidationError
+} from "./scopeValidation";
 
-const HEADER = "/* eslint-disable */ /* eslint-enable export-scope/no-imports-outside-export-scope */\n";
-const HEADER_LINES = 1;
-const HEADER_CHARS = HEADER.length;
-const UNUSED_RULE_ID = "report-unused-disable-directive";
+const RULE_ID = "export-scope/no-imports-outside-export-scope";
 
-// Back-compat processor: works in ESLint 8 and 9
-export const exportScopeProcessor: Linter.Processor = {
-  meta: { name: "export-scope/processor", version: "1" },
+// Cache for storing in-memory file content during processing
+const fileContentCache = new Map<string, string>();
 
-  // Return string[] for both ESLint 8 and 9
-  preprocess(text: string /*, filename: string */) {
-    return [HEADER + text];
-  },
-
-  postprocess(blockMessageLists) {
-    let msgs = (blockMessageLists[0] ?? []) as Linter.LintMessage[];
-
-    // Drop “unused eslint-disable” noise for scope files
-    msgs = msgs.filter((m) => m.ruleId !== UNUSED_RULE_ID);
-
-    // Map offsets caused by the injected header
-    for (const m of msgs) {
-      if (typeof m.line === "number") m.line = Math.max(1, m.line - HEADER_LINES);
-      if (typeof m.endLine === "number") m.endLine = Math.max(1, m.endLine - HEADER_LINES);
-
-      if (m.fix?.range) {
-        m.fix.range = [Math.max(0, m.fix.range[0] - HEADER_CHARS), Math.max(0, m.fix.range[1] - HEADER_CHARS)];
-      }
-
-      if (Array.isArray(m.suggestions)) {
-        for (const s of m.suggestions) {
-          const anyS = s as any;
-
-          if (anyS.fix?.range) {
-            const [a, b] = anyS.fix.range as [number, number];
-            anyS.fix.range = [Math.max(0, a - HEADER_CHARS), Math.max(0, b - HEADER_CHARS)];
+const validateScopeFileContent = (text: string, filename: string): Linter.LintMessage[] => {
+  const messages: Linter.LintMessage[] = [];
+  const exportDir = dirname(filename);
+  
+  const createLintMessage = (error: ValidationError): Linter.LintMessage => ({
+    ruleId: RULE_ID,
+    message: error.message,
+    line: error.line,
+    column: error.column,
+    endLine: error.endLine,
+    endColumn: error.endColumn,
+    severity: 2
+  });
+  
+  try {
+    const ast = parse(text, { loc: true, range: true });
+    
+    if (ast.type === AST_NODE_TYPES.Program && ast.body) {
+      for (const statement of ast.body) {
+        if (statement.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
+          const declaration = statement.declaration;
+          if (declaration.type === AST_NODE_TYPES.ArrayExpression || declaration.type === AST_NODE_TYPES.Literal) {
+            validateExportDefault(declaration, exportDir, (error) => {
+              messages.push(createLintMessage(error));
+            });
           }
-
-          if (Array.isArray(anyS.fixes)) {
-            for (const f of anyS.fixes) {
-              if (Array.isArray(f.range)) {
-                f.range = [Math.max(0, f.range[0] - HEADER_CHARS), Math.max(0, f.range[1] - HEADER_CHARS)];
+        }
+        else if (statement.type === AST_NODE_TYPES.ExportNamedDeclaration && statement.declaration) {
+          const declaration = statement.declaration;
+          if (declaration.type === AST_NODE_TYPES.VariableDeclaration) {
+            for (const declarator of declaration.declarations) {
+              if (declarator.id.type === AST_NODE_TYPES.Identifier && 
+                  declarator.id.name === "exceptions" &&
+                  declarator.init?.type === AST_NODE_TYPES.ArrayExpression) {
+                validateExceptionsArray(declarator.init, exportDir, (error) => {
+                  messages.push(createLintMessage(error));
+                });
               }
             }
           }
         }
       }
     }
-    return msgs;
+    
+    const comments = ast.comments || [];
+    validateScopeDeclarations(comments as TSESTree.Comment[], exportDir, (error) => {
+      messages.push(createLintMessage(error));
+    });
+    
+  } catch (error) {
+    messages.push({
+      ruleId: RULE_ID,
+      message: `Failed to parse scope file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      line: 1,
+      column: 0,
+      endLine: 1,
+      endColumn: 1,
+      severity: 2
+    });
+  }
+  
+  return messages;
+};
+
+
+// Processor that bypasses ESLint rules for scope files
+export const exportScopeProcessor: Linter.Processor = {
+  meta: { name: "export-scope/processor", version: "1" },
+
+  // Return [] for scope files (no ESLint rules run), [text] for others
+  preprocess(text: string, filename: string) {
+    if (SCOPE_FILE_NAMES.includes(basename(filename))) {
+      // Cache the in-memory content for validation in postprocess
+      // This ensures we validate live/unsaved editor content, not disk content
+      fileContentCache.set(filename, text);
+      return []; // ESLint runs no rules on this file
+    }
+    return [text]; // Pass through for regular files
   },
 
-  supportsAutofix: true,
+  // For scope files: validate independently; for others: pass through ESLint messages
+  postprocess(blockMessageLists, filename: string) {
+    if (SCOPE_FILE_NAMES.includes(basename(filename))) {
+      // Scope file: get cached content and validate it
+      const cachedText = fileContentCache.get(filename);
+      if (cachedText !== undefined) {
+        const messages = validateScopeFileContent(cachedText, filename);
+        // Clean up cache immediately after use
+        fileContentCache.delete(filename);
+        return messages;
+      }
+      // Fallback to empty array if no cached content (shouldn't happen)
+      return [];
+    }
+    // Regular file: pass through ESLint's messages
+    return blockMessageLists[0] ?? [];
+  },
+
+  supportsAutofix: false, // Scope files don't support autofix
 };

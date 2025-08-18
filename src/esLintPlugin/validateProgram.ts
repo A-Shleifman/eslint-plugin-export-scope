@@ -1,17 +1,16 @@
 import { analyze, type ScopeManager, type Variable } from "@typescript-eslint/scope-manager";
 import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
-import { validateJsDoc } from "./validateJsDoc";
-import { type RuleContext } from "@typescript-eslint/utils/ts-eslint";
-import { type MessageIdsType } from "./esLintRule";
 import { extractPathFromImport } from "./esLintUtils";
 
+export interface ProgramValidationContext {
+  filename: string;
+}
+
 export const validateProgram = (
-  context: RuleContext<MessageIdsType, never[]>,
+  context: ProgramValidationContext,
   node: TSESTree.Program,
   lintNode: (node: TSESTree.Node, elExportPath?: string) => void,
 ) => {
-  validateJsDoc(context, node);
-
   const getModuleNames = (rootVariable: Variable, variables: Variable[]) => {
     const moduleNames = new Set([rootVariable.name]);
 

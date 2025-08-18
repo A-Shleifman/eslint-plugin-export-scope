@@ -60,17 +60,6 @@ plugin.configs.flatConfigRecommended = [
   {
     files: ["**/*.scope.{ts,js}", "**/*.scope.default.{ts,js}"],
     processor: "export-scope/export-scope",
-    linterOptions: { reportUnusedDisableDirectives: "off" },
-    languageOptions: {
-      parser,
-      parserOptions: { projectService: false },
-      sourceType: "module",
-    },
-    plugins: { "export-scope": plugin },
-    rules: {
-      ...typedTsEsRulesOff(),
-      [`export-scope/${ruleName}`]: "error",
-    },
   },
 ];
 

@@ -2,6 +2,7 @@ import type { FlatConfig } from "@typescript-eslint/utils/ts-eslint";
 import { rule, ruleName } from "./esLintPlugin/esLintRule";
 import { tsLanguageServicePlugin } from "./tsPlugin";
 import recommendedLegacy from "./configs/recommended-legacy";
+import tseslint from "typescript-eslint";
 
 import * as parserBase from "@typescript-eslint/parser";
 
@@ -21,7 +22,7 @@ const plugin = {
   configs: {
     flatConfigRecommended: [
       {
-        files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.mjs", "**/*.cjs"],
+        files: ["**/*.{ts,tsx,js,jsx,mts,mjs,cjs}"],
         languageOptions: {
           parser,
           sourceType: "module",
@@ -33,10 +34,9 @@ const plugin = {
       {
         files: ["**/.scope.*", "**/.scope.default.*"],
         languageOptions: {
-          parser,
-          sourceType: "module",
           parserOptions: { projectService: false },
         },
+        ...tseslint.configs.disableTypeChecked,
       },
     ],
     recommended: recommendedLegacy as unknown as FlatConfig.Config,

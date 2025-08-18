@@ -1,4 +1,4 @@
-import { test } from "vitest";
+import { describe, test } from "vitest";
 import { withTempProject } from "./tempProject";
 
 test("folder scope default", async () => {
@@ -106,4 +106,52 @@ test("abstract class with direct export should respect @scope annotation", async
       await expectLintErr("src/outside/consumer.ts", ["AbstractClass", "PrivateClass"]);
     },
   );
+});
+
+describe("exceptions in .scope.default.ts are respected regardless of the presence of the default export", () => {
+  test("consumer in another directory", async () => {
+    await withTempProject(
+      {
+        "src/common/.scope.default.ts": `export const exceptions = ['src/outside1/consumer.ts'];`,
+        "src/common/restricted.ts": `export const restricted = "";`,
+        "src/outside1/consumer.ts": `import { restricted } from "../common/restricted";`,
+        "src/outside2/control.ts": `import { restricted } from "../common/restricted";`,
+      },
+      async ({ expectLintErr }) => {
+        await expectLintErr("src/outside1/consumer.ts", []);
+        await expectLintErr("src/outside2/control.ts", ["restricted"]);
+      },
+    );
+  });
+
+  test("consumer in the same directory", async () => {
+    await withTempProject(
+      {
+        "src/common/.scope.default.ts": `export const exceptions = ['src/common/consumer.ts'];`,
+        "src/common/sub/restricted.ts": `export const restricted = "";`,
+        "src/common/consumer.ts": `import { restricted } from "./sub/restricted";`,
+        "src/outside2/control.ts": `import { restricted } from "../common/sub/restricted";`,
+      },
+      async ({ expectLintErr }) => {
+        await expectLintErr("src/common/consumer.ts", []);
+        await expectLintErr("src/outside2/control.ts", ["restricted"]);
+      },
+    );
+  });
+
+  test("cross-package exception (monorepo scenario)", async () => {
+    await withTempProject(
+      {
+        "src/package-a/.scope.default.ts": `export const exceptions = ['../package-b/consumer.ts'];`,
+        "src/package-a/restricted.ts": `export const restricted = "";`,
+
+        "src/package-b/consumer.ts": `import { restricted } from "../package-a/restricted";`,
+        "src/package-c/control.ts": `import { restricted } from "../package-a/restricted";`,
+      },
+      async ({ expectLintErr }) => {
+        await expectLintErr("src/package-b/consumer.ts", []);
+        await expectLintErr("src/package-c/control.ts", ["restricted"]);
+      },
+    );
+  });
 });

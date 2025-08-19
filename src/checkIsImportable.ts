@@ -1,10 +1,14 @@
 import path from "path";
-import { SymbolFlags, type Program, type __String } from "typescript";
-import { getFullScopePath, getRootDir, isSubPath } from "./utils";
-import { isArrayLiteralExpression, isExportAssignment, isVariableDeclaration } from "./tsPlugin/tsUtils";
-
-export const SCOPE_TS_FILE_NAME = ".scope.ts";
-export const SCOPE_JS_FILE_NAME = ".scope.js";
+import fs from "fs";
+import { SymbolFlags, type Program } from "typescript";
+import { getFullScopePath, getRootDir, isSubPath } from "./pathUtils";
+import {
+  SCOPE_DEFAULT_JS_FILE_NAME,
+  SCOPE_DEFAULT_TS_FILE_NAME,
+  SCOPE_JS_FILE_NAME,
+  SCOPE_TS_FILE_NAME,
+} from "./constants";
+import { parseScopeFile } from "./parseScopeFile";
 
 export const checkIsImportable = ({
   tsProgram,
@@ -71,44 +75,68 @@ export const checkIsImportable = ({
 
   getFolderScope: {
     if (scope) break getFolderScope;
-    let scopeFile = tsProgram.getSourceFile(path.join(exportDir, SCOPE_TS_FILE_NAME));
-    scopeFile ??= tsProgram.getSourceFile(path.join(exportDir, SCOPE_JS_FILE_NAME));
 
-    if (isIndexFile) {
-      const parentDir = path.dirname(exportDir);
-      scopeFile ??= tsProgram.getSourceFile(path.join(parentDir, SCOPE_TS_FILE_NAME));
-      scopeFile ??= tsProgram.getSourceFile(path.join(parentDir, SCOPE_JS_FILE_NAME));
-    }
+    let scopeFilePath: string | null = null;
+    const rootDir = getRootDir(exportDir);
 
-    if (!scopeFile) {
-      const rootDir = getRootDir(exportDir);
-      if (rootDir) {
-        scopeFile ??= tsProgram.getSourceFile(path.join(rootDir, SCOPE_TS_FILE_NAME));
-        scopeFile ??= tsProgram.getSourceFile(path.join(rootDir, SCOPE_JS_FILE_NAME));
+    // First, try regular scope files in current directory only
+    for (const fileName of [SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME]) {
+      const filePath = path.join(exportDir, fileName);
+      if (fs.existsSync(filePath)) {
+        scopeFilePath = filePath;
+        break;
       }
     }
 
-    if (!scopeFile) break getFolderScope;
-
-    const symbols = tsProgram.getTypeChecker().getSymbolAtLocation(scopeFile);
-    const defaultExportValDecl = symbols?.exports?.get("default" as __String)?.valueDeclaration;
-    const exceptionsValDecl = symbols?.exports?.get("exceptions" as __String)?.valueDeclaration;
-
-    if (isExportAssignment(defaultExportValDecl)) {
-      scope = defaultExportValDecl.expression.getText().slice(1, -1);
+    // If index file, also check parent directory for regular scope files
+    if (!scopeFilePath && isIndexFile) {
+      const parentDir = path.dirname(exportDir);
+      for (const fileName of [SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME]) {
+        const filePath = path.join(parentDir, fileName);
+        if (fs.existsSync(filePath)) {
+          scopeFilePath = filePath;
+          break;
+        }
+      }
     }
 
-    if (isVariableDeclaration(exceptionsValDecl) && isArrayLiteralExpression(exceptionsValDecl.initializer)) {
-      const exceptions = exceptionsValDecl.initializer.elements.map((x) => x.getText());
+    // Then, recursively look for default scope files in current directory and ancestors
+    if (!scopeFilePath) {
+      let currentDir = exportDir;
+      while (currentDir !== path.dirname(currentDir)) {
+        for (const fileName of [SCOPE_DEFAULT_TS_FILE_NAME, SCOPE_DEFAULT_JS_FILE_NAME]) {
+          const filePath = path.join(currentDir, fileName);
+          if (fs.existsSync(filePath)) {
+            scopeFilePath = filePath;
+            break;
+          }
+        }
 
-      for (const exception of exceptions) {
-        const exceptionFullPath = getFullScopePath(exportDir, exception.slice(1, -1));
+        if (scopeFilePath) break;
+
+        // Stop when we reach or go beyond the root directory
+        if (rootDir && currentDir === rootDir) break;
+        currentDir = path.dirname(currentDir);
+      }
+    }
+
+    // Parse the found scope file
+    if (!scopeFilePath) break getFolderScope;
+
+    try {
+      const exports = parseScopeFile(scopeFilePath);
+      scope = exports.scope;
+
+      for (const exception of exports.exceptions) {
+        const exceptionFullPath = getFullScopePath(exportDir, exception);
         if (!exceptionFullPath) continue;
 
         if (isSubPath(exceptionFullPath, importPath)) {
           return true;
         }
       }
+    } catch {
+      break getFolderScope;
     }
   }
 

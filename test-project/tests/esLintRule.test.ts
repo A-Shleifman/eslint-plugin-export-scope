@@ -29,7 +29,7 @@ test("can import from node_modules", async () => {
 
 test("lints scope files", async () => {
   const errors = await lint("invalidScopeFile/.scope.ts");
-  expect(errors[0]).toMatch(/^Invalid scope path: /);
+  expect(errors[0]).toMatch(/^Only parent dirs are allowed/);
 });
 
 describe("folder scope default", () => {
@@ -113,10 +113,6 @@ describe(".scope.js files are respected", () => {
 
 describe(".scope.ts files don't affect export scopes of children", () => {
   test("✔️", () => expectLintErr("commonInternal.ts", ["INTERNAL"]));
-});
-
-describe(".scope.ts in the project root becomes global default", () => {
-  test("✔️", () => expectLintErr("globalPackageTest.ts", []));
 });
 
 describe("index files inherit scope from parent .scope.ts files", () => {

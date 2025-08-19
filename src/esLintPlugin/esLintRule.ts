@@ -1,13 +1,13 @@
-import { AST_NODE_TYPES, ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
-import { checkIsImportable } from "../checkIsImportable";
-import { validateScopeFileScopePath } from "./validateScopeFileScopePath";
-import { resolveModuleName, sys as tsSys } from "typescript";
-import { validateProgram } from "./validateProgram";
-import { extractPathFromImport } from "./esLintUtils";
+import { ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
+import { createImportValidator } from "./importValidation";
+import { basename, dirname } from "path";
+import { SCOPE_FILE_NAMES } from "../constants";
+import { validateScopeDeclarations, validateLiteralInScope, type ValidationError } from "./scopeValidation";
 
 export const ruleName = "no-imports-outside-export-scope";
 
 const createRule = ESLintUtils.RuleCreator(() => "https://github.com/A-Shleifman/eslint-plugin-export-scope");
+
 
 const errorMessages = {
   exportScope: "Cannot import {{ identifier }} outside its export scope",
@@ -30,33 +30,52 @@ export const rule = createRule({
   defaultOptions: [],
 
   create(context) {
-    const services = ESLintUtils.getParserServices(context);
+    const fileName = basename(context.filename);
+    const isScopeFile = SCOPE_FILE_NAMES.includes(fileName);
+    
+    if (isScopeFile) {
+      // Handle scope files for ESLint 8 compatibility (ESLint 9 uses processor)
+      const exportDir = dirname(context.filename);
+      
+      const reportError = (error: ValidationError) => {
+        context.report({
+          node: context.sourceCode.ast,
+          messageId: error.message.includes("Only parent dirs") ? "onlyParents" : "invalidPath",
+          data: { identifier: error.message.replace(/^Invalid scope path: "(.+)"$/, "$1") },
+          loc: {
+            start: { line: error.line, column: error.column },
+            end: { line: error.endLine, column: error.endColumn }
+          }
+        });
+      };
+      
+      return {
+        Literal: (node: TSESTree.Literal) => {
+          validateLiteralInScope(node, exportDir, reportError);
+        },
+        Program: (node: TSESTree.Program) => {
+          const comments = context.sourceCode.getAllComments();
+          validateScopeDeclarations(comments as TSESTree.Comment[], exportDir, reportError);
+        }
+      };
+    }
+
+    let services;
+    try {
+      services = ESLintUtils.getParserServices(context);
+    } catch {
+      // No parser services available - can't validate imports
+      return {};
+    }
 
     if (!services.getSymbolAtLocation) {
       throw new Error("Please make sure you have the latest version of `@typescript-eslint/parser` installed.");
     }
 
-    const compilerOptions = services.program.getCompilerOptions();
-    const resolvePath = (relativePath: string) =>
-      resolveModuleName(relativePath, context.filename, compilerOptions, tsSys).resolvedModule?.resolvedFileName;
-
-    const checkNode = (
-      node:
-        | TSESTree.Identifier
-        | TSESTree.ImportDeclaration
-        | TSESTree.ImportExpression
-        | TSESTree.ImportSpecifier
-        | TSESTree.ImportDefaultSpecifier
-        | TSESTree.MemberExpression
-        | TSESTree.TSQualifiedName,
-      exportName?: string,
-      relExportPath?: string,
-    ) => {
-      if (!relExportPath) return;
-
-      const exportPath = resolvePath(relExportPath);
-
-      if (!checkIsImportable({ tsProgram: services.program, importPath: context.filename, exportPath, exportName })) {
+    const validationContext = {
+      filename: context.filename,
+      program: services.program,
+      report: (node: TSESTree.Node, exportName?: string) => {
         context.report({
           node,
           messageId: "exportScope",
@@ -65,58 +84,31 @@ export const rule = createRule({
       }
     };
 
-    const lintNode = (node: TSESTree.Node, relExportPath?: string) => {
-      const isPromise = node.type === AST_NODE_TYPES.AwaitExpression && node.parent;
-      node = isPromise ? node.parent! : node;
-      const { type } = node;
-
-      if (type === AST_NODE_TYPES.Identifier) {
-        checkNode(node, node.name, relExportPath);
-      }
-
-      if (type === AST_NODE_TYPES.MemberExpression && node.property.type === AST_NODE_TYPES.Identifier) {
-        checkNode(node.property, node.property.name, relExportPath);
-      }
-
-      const lintObjectPattern = (node: TSESTree.ObjectPattern) => {
-        node.properties.forEach((property) => {
-          if (property.type === AST_NODE_TYPES.Property && property.key.type === AST_NODE_TYPES.Identifier) {
-            checkNode(property.key, property.key.name, relExportPath);
-          }
-        });
-      };
-
-      if (type === AST_NODE_TYPES.VariableDeclarator && node.id.type === AST_NODE_TYPES.ObjectPattern) {
-        lintObjectPattern(node.id);
-      }
-
-      if (type === AST_NODE_TYPES.ObjectPattern) {
-        lintObjectPattern(node);
-      }
-
-      if (type === AST_NODE_TYPES.TSQualifiedName) {
-        checkNode(node.right, node.right.name, relExportPath);
-      }
-    };
-
+    const importValidator = createImportValidator(validationContext);
+    
     return {
-      ImportSpecifier: (node) =>
-        "name" in node.imported && checkNode(node, node.imported.name, extractPathFromImport(node.parent)),
-      ImportDefaultSpecifier: (node) => checkNode(node, "default", extractPathFromImport(node.parent)),
-      ImportDeclaration: (node) => !node.specifiers.length && checkNode(node, undefined, extractPathFromImport(node)),
-      // 👇 dynamic import of the whole module without accessing exports
-      ImportExpression: (node) => {
-        const relExportPath = extractPathFromImport(node);
-        const parent = node.parent;
-        if (
-          parent.parent?.type === AST_NODE_TYPES.Program ||
-          (parent?.type === AST_NODE_TYPES.AwaitExpression && parent.parent.parent?.type === AST_NODE_TYPES.Program)
-        ) {
-          return checkNode(node, undefined, relExportPath);
+      ...importValidator,
+      Program: (node: TSESTree.Program) => {
+        // First run the original Program visitor for import validation
+        if (importValidator.Program) {
+          importValidator.Program(node);
         }
-      },
-      Program: (node) => validateProgram(context, node, lintNode),
-      Literal: (node) => validateScopeFileScopePath(context, node),
+        
+        // Then run JSDoc validation
+        const comments = context.sourceCode.getAllComments();
+        const exportDir = dirname(context.filename);
+        validateScopeDeclarations(comments as TSESTree.Comment[], exportDir, (error: ValidationError) => {
+          context.report({
+            node,
+            messageId: error.message.includes("Only parent dirs") ? "onlyParents" : "invalidPath",
+            data: { identifier: error.message.replace(/^Invalid scope path: "(.+)"$/, "$1") },
+            loc: {
+              start: { line: error.line, column: error.column },
+              end: { line: error.endLine, column: error.endColumn }
+            }
+          });
+        });
+      }
     };
   },
 });

@@ -16,5 +16,5 @@ export default tseslint.config(
       },
     },
   },
-  { ignores: ["**/node_modules", "dist", "test-project", "test-project-eslint-v8", "eslint.config.mjs"] },
+  { ignores: ["**/node_modules", "dist", "test-project", "test-project-eslint-v8"] },
 );

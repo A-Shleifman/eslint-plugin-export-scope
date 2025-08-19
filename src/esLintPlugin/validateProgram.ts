@@ -1,23 +1,24 @@
 import { analyze, type ScopeManager, type Variable } from "@typescript-eslint/scope-manager";
 import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
-import { validateJsDoc } from "./validateJsDoc";
-import { type RuleContext } from "@typescript-eslint/utils/ts-eslint";
-import { type MessageIdsType } from "./esLintRule";
 import { extractPathFromImport } from "./esLintUtils";
 
+export interface ProgramValidationContext {
+  filename: string;
+}
+
 export const validateProgram = (
-  context: RuleContext<MessageIdsType, never[]>,
+  context: ProgramValidationContext,
   node: TSESTree.Program,
   lintNode: (node: TSESTree.Node, elExportPath?: string) => void,
 ) => {
-  validateJsDoc(context, node);
-
-  const getModuleNames = (rootVariable: Variable, variables: Variable[]) => {
+  const getModuleNames = (rootVariable: Variable, variableNameToVariableMap: Map<string, Variable>) => {
     const moduleNames = new Set([rootVariable.name]);
-
-    const variableNameToVariableMap = new Map(variables.map((variable) => [variable.name, variable]));
+    const visited = new Set<Variable>();
 
     const iterateRefs = (variable: Variable) => {
+      if (visited.has(variable)) return;
+      visited.add(variable);
+      
       variable.references.forEach((ref) => {
         const decl = ref.identifier.parent;
         if (decl.type === AST_NODE_TYPES.VariableDeclarator && decl.id.type === AST_NODE_TYPES.Identifier) {
@@ -33,7 +34,6 @@ export const validateProgram = (
     };
 
     iterateRefs(rootVariable);
-
     return moduleNames;
   };
 
@@ -47,13 +47,12 @@ export const validateProgram = (
   }
 
   const globalVariables = scopeTree.globalScope?.childScopes[0]?.variables;
-
   if (!globalVariables) return;
 
-  const lintVariable = (variable: Variable, scopeVariables: Variable[], relExportPath?: string) => {
-    const variableNameToVariableMap = new Map(scopeVariables.map((variable) => [variable.name, variable]));
+  const globalVariableMap = new Map(globalVariables.map((variable) => [variable.name, variable]));
 
-    const moduleNames = getModuleNames(variable, scopeVariables);
+  const lintVariable = (variable: Variable, variableNameToVariableMap: Map<string, Variable>, relExportPath?: string) => {
+    const moduleNames = getModuleNames(variable, variableNameToVariableMap);
     const variables = Array.from(moduleNames)
       .map((name) => variableNameToVariableMap.get(name))
       .filter(Boolean) as Variable[];
@@ -63,60 +62,60 @@ export const validateProgram = (
     );
   };
 
-  // global scope variables
+  const extractPathFromVariableDeclarator = ({ init: node }: TSESTree.VariableDeclarator) => {
+    if (node?.type === AST_NODE_TYPES.AwaitExpression) node = node.argument;
+    if (node?.type === AST_NODE_TYPES.ImportExpression) return extractPathFromImport(node);
+  };
   globalVariables.forEach((variable) => {
     const parent = variable.identifiers?.[0]?.parent;
+    if (!parent) return;
 
-    if (parent?.type === AST_NODE_TYPES.ImportNamespaceSpecifier) {
-      lintVariable(variable, globalVariables, extractPathFromImport(parent.parent));
+    if (parent.type === AST_NODE_TYPES.ImportNamespaceSpecifier) {
+      lintVariable(variable, globalVariableMap, extractPathFromImport(parent.parent));
+      return;
     }
 
-    const extractPathFromVariableDeclarator = ({ init: node }: TSESTree.VariableDeclarator) => {
-      if (node?.type === AST_NODE_TYPES.AwaitExpression) node = node.argument;
-      if (node?.type === AST_NODE_TYPES.ImportExpression) return extractPathFromImport(node);
-    };
-
-    if (parent?.type === AST_NODE_TYPES.VariableDeclarator) {
+    if (parent.type === AST_NODE_TYPES.VariableDeclarator) {
       const relExportPath = extractPathFromVariableDeclarator(parent);
       if (relExportPath) {
-        lintVariable(variable, globalVariables, relExportPath);
+        lintVariable(variable, globalVariableMap, relExportPath);
       }
+      return;
     }
 
     if (
-      parent?.type === AST_NODE_TYPES.Property &&
+      parent.type === AST_NODE_TYPES.Property &&
       parent.parent.type === AST_NODE_TYPES.ObjectPattern &&
       parent.parent.parent.type === AST_NODE_TYPES.VariableDeclarator
     ) {
       const relExportPath = extractPathFromVariableDeclarator(parent.parent.parent);
-
       if (relExportPath) {
         lintNode(parent.key, relExportPath);
       }
     }
   });
 
-  // thenned dynamic imports
   scopeTree.scopes.forEach((scope) => {
     const blockParent = scope.block.parent;
 
-    if (blockParent?.type !== AST_NODE_TYPES.CallExpression) return;
+    if (!blockParent || blockParent.type !== AST_NODE_TYPES.CallExpression) return;
     if (blockParent.callee.type !== AST_NODE_TYPES.MemberExpression) return;
     if (blockParent.callee.object.type !== AST_NODE_TYPES.ImportExpression) return;
 
     const relExportPath = extractPathFromImport(blockParent.callee.object);
     const moduleVariable = scope.variables?.[0];
-
     if (!moduleVariable) return;
 
+    const firstIdentifierParent = moduleVariable.identifiers?.[0]?.parent;
+    
     if (
-      moduleVariable.identifiers?.[0]?.parent.type === AST_NODE_TYPES.Property &&
-      moduleVariable.identifiers?.[0]?.parent.parent.type === AST_NODE_TYPES.ObjectPattern
+      firstIdentifierParent?.type === AST_NODE_TYPES.Property &&
+      firstIdentifierParent.parent.type === AST_NODE_TYPES.ObjectPattern
     ) {
-      const objectPattern = moduleVariable.identifiers?.[0]?.parent.parent;
-      lintNode(objectPattern, relExportPath);
+      lintNode(firstIdentifierParent.parent, relExportPath);
     } else {
-      lintVariable(moduleVariable, scope.variables, relExportPath);
+      const scopeVariableMap = new Map(scope.variables.map((variable) => [variable.name, variable]));
+      lintVariable(moduleVariable, scopeVariableMap, relExportPath);
     }
   });
 };

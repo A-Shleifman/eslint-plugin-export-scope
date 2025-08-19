@@ -1,11 +1,13 @@
 import { ScriptElementKind, type LanguageService, type server } from "typescript";
-import { SCOPE_JS_FILE_NAME, SCOPE_TS_FILE_NAME, checkIsImportable } from "../checkIsImportable";
+import { checkIsImportable } from "../checkIsImportable";
 import { basename, dirname } from "path";
 import { getNewCompletions } from "./tsUtils";
 
 import type { WithMetadata, CompletionInfo, CompletionEntry } from "typescript";
 import { getScopeFileCompletions } from "./scopeFileCompletions";
 import { jsDocCompletions } from "./jsDocCompletions";
+import { SCOPE_FILE_NAMES } from "../constants";
+import { DIRECTIVE_NAMES, COMPLETION_SORT_TEXT } from "./completionUtils";
 
 export const getCompletionsAtPosition =
   (ts: typeof import("typescript"), info: server.PluginCreateInfo): LanguageService["getCompletionsAtPosition"] =>
@@ -20,28 +22,33 @@ export const getCompletionsAtPosition =
 
     if (!fileTextToPosition) return original;
 
-    if ([SCOPE_TS_FILE_NAME, SCOPE_JS_FILE_NAME].includes(basename(importPath))) {
-      return getScopeFileCompletions(ts, importDir, fileTextToPosition) ?? original;
+    if (SCOPE_FILE_NAMES.includes(basename(importPath))) {
+      return getScopeFileCompletions(importDir, fileTextToPosition) ?? original;
     }
 
     {
       // -------------- snippets --------------
       const lastLine = fileTextToPosition.split("\n").at(-1)?.trimStart();
       // autocompletion in VSCode only triggers direcly after @ symbol
-      const snippetTriggerFound = ["@scope", "@scopeDefault", "@scopeException"].some(
-        (x) => lastLine && x.startsWith(lastLine),
-      );
+      const snippetTriggerFound = lastLine && lastLine.startsWith("@") && 
+        DIRECTIVE_NAMES.some((x) => x.startsWith(lastLine));
 
       if (snippetTriggerFound) {
-        const atSnippet = (name: string): CompletionEntry => ({
-          name: `@${name}`,
-          kind: ScriptElementKind.unknown,
-          kindModifiers: "",
-          sortText: "10",
-          isSnippet: true,
-          insertText: `/** @${name} ${"${0}"} */`,
-          replacementSpan: { start: position - 1, length: 1 },
-        });
+        const atSnippet = (name: string): CompletionEntry => {
+          // Calculate correct replacement span for the entire typed directive
+          const match = lastLine?.match(/@[\w]*$/);
+          const length = match ? match[0].length : 1;
+          
+          return {
+            name: `@${name}`,
+            kind: ScriptElementKind.unknown,
+            kindModifiers: "",
+            sortText: COMPLETION_SORT_TEXT,
+            isSnippet: true,
+            insertText: `/** @${name} ${"${0}"} */`,
+            replacementSpan: { start: position - length, length },
+          };
+        };
 
         return {
           ...getNewCompletions(),
@@ -56,7 +63,7 @@ export const getCompletionsAtPosition =
       const lastJSDocPos = fileTextToPosition.lastIndexOf("/**");
       const lastClosingJSDocPos = fileTextToPosition.lastIndexOf("*/");
       if (lastClosingJSDocPos < lastJSDocPos) {
-        return jsDocCompletions(importDir, original ?? getNewCompletions(), fileTextToPosition.slice(lastJSDocPos));
+        return jsDocCompletions(importDir, original ?? getNewCompletions(), fileTextToPosition.slice(lastJSDocPos), lastJSDocPos);
       }
     }
 
@@ -65,7 +72,8 @@ export const getCompletionsAtPosition =
     if (!original || !tsProgram) return original;
 
     const filtered = original.entries.filter((entry) => {
-      if (entry.kind !== ScriptElementKind.alias && entry.kindModifiers !== "export") return true;
+      const isExport = entry.kindModifiers?.includes?.("export") ?? false;
+      if (!(entry.kind === ScriptElementKind.alias || isExport)) return true;
 
       let exportPath = entry.data?.fileName;
 

@@ -38,9 +38,10 @@ const plugin = {
   processors: { "export-scope": exportScopeProcessor },
   configs: {
     flatConfigRecommended: [] as FlatConfig.Config[],
-    recommended: recommendedLegacy as unknown as FlatConfig.Config,
   },
 } satisfies FlatConfig.Plugin;
+
+Object.assign(plugin.configs, { recommended: recommendedLegacy });
 
 plugin.configs.flatConfigRecommended = [
   {

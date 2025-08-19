@@ -35,6 +35,7 @@ export type TempProjectContext<T extends Tree> = {
   add: (files: Tree) => Promise<void>;
   lint: (file: FileInTree<T>) => Promise<string[]>;
   expectLintErr: (file: FileInTree<T>, errors: string[]) => Promise<void>;
+  expectLintFullErr: (file: FileInTree<T>, errors: string[]) => Promise<void>;
 };
 
 // Helper function to create the importError message like in test-project
@@ -42,6 +43,36 @@ const importError = (name: string) => {
   const MODULE_ERROR = "module";
   return `Cannot import ${name === MODULE_ERROR ? MODULE_ERROR : `'${name}'`} outside its export scope`;
 };
+
+// Factory function to create shared helper functions
+function createHelpers<T extends Tree>(eslint: ESLint8 | ESLint9, root: string, major: 8 | 9) {
+  const add = async (files: Tree) => writeTree(root, files);
+  
+  const lint = async (file: FileInTree<T>) => {
+    const absPath = path.join(root, file);
+    const results = await eslint.lintFiles([absPath]);
+    return results.flatMap((r) => r.messages.map((m) => m.message));
+  };
+  
+  const expectLintErr = async (file: FileInTree<T>, errors: string[]) => {
+    const messages = await lint(file);
+    const expectedMessages = errors.map(importError);
+    if (JSON.stringify(messages) !== JSON.stringify(expectedMessages)) {
+      const versionIndicator = `\n╔═══════════════════════════════════╗\n║  🚨 ESLint ${major} FAILURE 🚨           ║\n╚═══════════════════════════════════╝`;
+      throw new Error(`${versionIndicator}\nExpected ${JSON.stringify(expectedMessages)} but got ${JSON.stringify(messages)} for file ${file}`);
+    }
+  };
+  
+  const expectLintFullErr = async (file: FileInTree<T>, errors: string[]) => {
+    const messages = await lint(file);
+    if (JSON.stringify(messages) !== JSON.stringify(errors)) {
+      const versionIndicator = `\n╔═══════════════════════════════════╗\n║  🚨 ESLint ${major} FAILURE 🚨           ║\n╚═══════════════════════════════════╝`;
+      throw new Error(`${versionIndicator}\nExpected ${JSON.stringify(errors)} but got ${JSON.stringify(messages)} for file ${file}`);
+    }
+  };
+
+  return { add, lint, expectLintErr, expectLintFullErr };
+}
 
 async function writeTree(root: string, tree: Tree) {
   await Promise.all(
@@ -117,22 +148,10 @@ export async function withTempProject<T extends Tree>(
         overrideConfig: flat as any,
       } as any);
 
-      const add = async (files: Tree) => writeTree(root, files);
-      const lint = async (file: FileInTree<T>) => {
-        const absPath = path.join(root, file);
-        const results = await eslint.lintFiles([absPath]);
-        return results.flatMap((r) => r.messages.map((m) => m.message));
-      };
-      const expectLintErr = async (file: FileInTree<T>, errors: string[]) => {
-        const messages = await lint(file);
-        const expectedMessages = errors.map(importError);
-        if (JSON.stringify(messages) !== JSON.stringify(expectedMessages)) {
-          throw new Error(`Expected ${JSON.stringify(expectedMessages)} but got ${JSON.stringify(messages)} for file ${file}`);
-        }
-      };
+      const helpers = createHelpers<T>(eslint, root, major);
 
       try {
-        await fn({ major, root, add, lint, expectLintErr });
+        await fn({ major, root, ...helpers });
       } finally {
         if (!keep) fs.rmSync(root, { recursive: true, force: true });
       }
@@ -154,22 +173,10 @@ export async function withTempProject<T extends Tree>(
       },
     });
 
-    const add = async (files: Tree) => writeTree(root, files);
-    const lint = async (file: FileInTree<T>) => {
-      const absPath = path.join(root, file);
-      const results = await eslint.lintFiles([absPath]);
-      return results.flatMap((r) => r.messages.map((m) => m.message));
-    };
-    const expectLintErr = async (file: FileInTree<T>, errors: string[]) => {
-      const messages = await lint(file);
-      const expectedMessages = errors.map(importError);
-      if (JSON.stringify(messages) !== JSON.stringify(expectedMessages)) {
-        throw new Error(`Expected ${JSON.stringify(expectedMessages)} but got ${JSON.stringify(messages)} for file ${file}`);
-      }
-    };
+    const helpers = createHelpers<T>(eslint, root, major);
 
     try {
-      await fn({ major, root, add, lint, expectLintErr });
+      await fn({ major, root, ...helpers });
     } finally {
       // Remove process listeners and cleanup
       process.removeListener("exit", cleanupOnExit);

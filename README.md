@@ -122,7 +122,6 @@ npm i -D eslint typescript-eslint eslint-plugin-export-scope
 
 ```json
 // package.json
-
 {
   "type": "module"
 }
@@ -139,34 +138,37 @@ export default tseslint.config(
 );
 ```
 
+<details>
+  <summary>Custom parser (Optional)</summary>
+
+```js
+  // This plugin already comes with a parser. If you want a local one:
+  {
+    files: ['**/*.{ts,tsx,js,jsx,mts,mjs,cts,cjs}'],
+    languageOptions: { parser: /* local parser */ },
+  },
+```
+
+</details>
+
 ### ESLint plugin (ESLint 8, Legacy Config)
 
 <details>
   <summary>Instructions</summary>
 
 ```sh
-npm i -D eslint @typescript-eslint/parser eslint-plugin-export-scope
-                    # ⬆ ^8.0.0
+npm i -D eslint eslint-plugin-export-scope
 ```
 
 ```js
 // .eslintrc.js
 module.exports = {
-  // ...
   extends: ["plugin:export-scope/recommended"],
   parserOptions: { project: true, tsconfigRootDir: __dirname },
-  overrides: [
-    {
-      files: ["**/.scope.*", "**/.scope.default.*"],
-      extends: ["plugin:@typescript-eslint/disable-type-checked"],
-    },
-    {
-      files: [".eslintrc.{js,cjs}"],
-      env: { node: true },
-      parserOptions: { sourceType: "script" },
-    },
-  ],
 };
+
+// This plugin already comes with a parser. If you want a local one:
+  parser: /* local parser */,
 ```
 
 </details>
@@ -193,10 +195,10 @@ module.exports = {
 ## Upgrading
 
 <details>
-  <summary>v2 => v3</summary>
+  <summary>v2 => v3 (Optional)</summary>
 
-- If you're using ESLint 8 with `.eslintrc`, follow the new [installation instructions](#eslint-plugin-eslint-8-legacy-config)
-- Feel free to remove `"**/.scope.js", "**/.scope.ts"` from `tsconfig.js`; this is no longer required
+- Including `"**/.scope.*"` in `tsconfig.js` is no longer required
+- Eslint config could be simplified by following the updated [instructions](#installation)
 </details>
 
 <details>
@@ -212,7 +214,7 @@ module.exports = {
 
 - Type `@` above exports for automatic jsDoc generation.
 - Use autocompletion provided within jsDocs and `.scope.ts` files.
-- Root `.scope.ts` file (next to package.json) sets the default for the whole project. Having `export default '*'` there will make all exports global by default if you prefer a less strict approach.
+- Root `.scope.default.ts` could be used to set the default for the whole project. Having `export default '*'` there would make all exports global by default in case you prefer a less strict approach.
 
 ## Issues
 

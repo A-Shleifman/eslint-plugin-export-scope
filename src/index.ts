@@ -58,7 +58,7 @@ plugin.configs.flatConfigRecommended = [
   { files: ["**/*.{cjs,cts}"], languageOptions: { sourceType: "commonjs" } },
 
   {
-    files: ["**/*.scope.{ts,js}", "**/*.scope.default.{ts,js}"],
+    files: ["**/.scope.{ts,js}", "**/.scope.default.{ts,js}"],
     processor: "export-scope/export-scope",
   },
 ];

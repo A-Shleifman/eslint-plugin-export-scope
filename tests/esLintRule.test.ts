@@ -138,20 +138,39 @@ describe("exceptions in .scope.default.ts are respected regardless of the presen
       },
     );
   });
+});
 
-  test("cross-package exception (monorepo scenario)", async () => {
-    await withTempProject(
-      {
-        "src/package-a/.scope.default.ts": `export const exceptions = ['../package-b/consumer.ts'];`,
-        "src/package-a/restricted.ts": `export const restricted = "";`,
+test("cross-package exception (monorepo scenario)", async () => {
+  await withTempProject(
+    {
+      "src/package-a/.scope.default.ts": `export const exceptions = ['../package-b/consumer.ts'];`,
+      "src/package-a/restricted.ts": `export const restricted = "";`,
 
-        "src/package-b/consumer.ts": `import { restricted } from "../package-a/restricted";`,
-        "src/package-c/control.ts": `import { restricted } from "../package-a/restricted";`,
-      },
-      async ({ expectLintErr }) => {
-        await expectLintErr("src/package-b/consumer.ts", []);
-        await expectLintErr("src/package-c/control.ts", ["restricted"]);
-      },
-    );
-  });
+      "src/package-b/consumer.ts": `import { restricted } from "../package-a/restricted";`,
+      "src/package-c/control.ts": `import { restricted } from "../package-a/restricted";`,
+    },
+    async ({ expectLintErr }) => {
+      await expectLintErr("src/package-b/consumer.ts", []);
+      await expectLintErr("src/package-c/control.ts", ["restricted"]);
+    },
+  );
+});
+
+test("lints paths .scope files", async () => {
+  await withTempProject(
+    {
+      ".scope.ts": `
+        export const exceptions = ['invalidPath1.ts', 'invalidPath2.ts'];
+        
+        export default 'invalid path';
+      `,
+    },
+    async ({ expectLintFullErr, root }) => {
+      await expectLintFullErr(".scope.ts", [
+        `Invalid scope path: "${root}/invalidPath1.ts"`,
+        `Invalid scope path: "${root}/invalidPath2.ts"`,
+        "Only parent dirs are allowed for @scope and @scopeDefault",
+      ]);
+    },
+  );
 });

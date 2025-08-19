@@ -4,7 +4,6 @@ import { parse } from "@typescript-eslint/typescript-estree";
 import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
 import { SCOPE_FILE_NAMES } from "../constants";
 import {
-  validateScopeDeclarations,
   validateExportDefault,
   validateExceptionsArray,
   type ValidationError
@@ -58,11 +57,6 @@ const validateScopeFileContent = (text: string, filename: string): Linter.LintMe
         }
       }
     }
-    
-    const comments = ast.comments || [];
-    validateScopeDeclarations(comments as TSESTree.Comment[], exportDir, (error) => {
-      messages.push(createLintMessage(error));
-    });
     
   } catch (error) {
     messages.push({

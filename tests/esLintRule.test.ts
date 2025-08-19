@@ -174,3 +174,23 @@ test("lints paths .scope files", async () => {
     },
   );
 });
+
+test("lints JSDoc paths", async () => {
+  await withTempProject(
+    {
+      "src/public.ts": `
+        /**
+         * @scope src/invalidDir
+         * @scopeDefault invalidPath.ts
+         */
+        export const public = '';
+      `,
+    },
+    async ({ expectLintFullErr, root }) => {
+      await expectLintFullErr("src/public.ts", [
+        "Only parent dirs are allowed for @scope and @scopeDefault",
+        "Only parent dirs are allowed for @scope and @scopeDefault",
+      ]);
+    },
+  );
+});

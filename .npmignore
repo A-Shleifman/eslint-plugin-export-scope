@@ -5,6 +5,10 @@ node_modules
 readme-src
 tsconfig.json
 .vscode
+eslint.config.js
 eslint.config.mjs
 .prettierrc.json
 *.map
+REQUIREMENTS.md
+tests/
+vitest.config.ts

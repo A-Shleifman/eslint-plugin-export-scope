@@ -84,6 +84,31 @@ export const rule = createRule({
       }
     };
 
-    return createImportValidator(validationContext);
+    const importValidator = createImportValidator(validationContext);
+    
+    return {
+      ...importValidator,
+      Program: (node: TSESTree.Program) => {
+        // First run the original Program visitor for import validation
+        if (importValidator.Program) {
+          importValidator.Program(node);
+        }
+        
+        // Then run JSDoc validation
+        const comments = context.sourceCode.getAllComments();
+        const exportDir = dirname(context.filename);
+        validateScopeDeclarations(comments as TSESTree.Comment[], exportDir, (error: ValidationError) => {
+          context.report({
+            node,
+            messageId: error.message.includes("Only parent dirs") ? "onlyParents" : "invalidPath",
+            data: { identifier: error.message.replace(/^Invalid scope path: "(.+)"$/, "$1") },
+            loc: {
+              start: { line: error.line, column: error.column },
+              end: { line: error.endLine, column: error.endColumn }
+            }
+          });
+        });
+      }
+    };
   },
 });

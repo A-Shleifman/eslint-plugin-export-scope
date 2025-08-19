@@ -75,7 +75,7 @@ export const rule = createRule({
     const validationContext = {
       filename: context.filename,
       program: services.program,
-      report: (node: TSESTree.Node, exportName?: string, relExportPath?: string) => {
+      report: (node: TSESTree.Node, exportName?: string) => {
         context.report({
           node,
           messageId: "exportScope",

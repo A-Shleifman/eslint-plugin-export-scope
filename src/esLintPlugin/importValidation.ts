@@ -15,6 +15,7 @@ export const createImportValidator = (context: ImportValidationContext) => {
   const resolvePath = (relativePath: string) =>
     resolveModuleName(relativePath, context.filename, compilerOptions, tsSys).resolvedModule?.resolvedFileName;
 
+
   const checkNode = (
     node:
       | TSESTree.Identifier

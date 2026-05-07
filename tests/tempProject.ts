@@ -16,6 +16,7 @@ function resolvePluginObject(mod: any) {
 // Hard-fail if aliases are missing, per request.
 import { ESLint as ESLint8 } from "eslint8";
 import { ESLint as ESLint9 } from "eslint";
+import { ESLint as ESLint10 } from "eslint10";
 
 // Use require instead of import since the built file is CommonJS
 const require = createRequire(import.meta.url);
@@ -30,7 +31,7 @@ export type FileInTree<T extends Tree> = keyof T & string;
 
 // Helper type for the context passed to test functions
 export type TempProjectContext<T extends Tree> = {
-  major: 8 | 9;
+  major: 8 | 9 | 10;
   root: string;
   add: (files: Tree) => Promise<void>;
   lint: (file: FileInTree<T>) => Promise<string[]>;
@@ -45,7 +46,7 @@ const importError = (name: string) => {
 };
 
 // Factory function to create shared helper functions
-function createHelpers<T extends Tree>(eslint: ESLint8 | ESLint9, root: string, major: 8 | 9) {
+function createHelpers<T extends Tree>(eslint: ESLint8 | ESLint9 | ESLint10, root: string, major: 8 | 9 | 10) {
   const add = async (files: Tree) => writeTree(root, files);
   
   const lint = async (file: FileInTree<T>) => {
@@ -94,7 +95,7 @@ export async function withTempProject<T extends Tree>(
   { keep = false }: { keep?: boolean } = {},
 ) {
   // helper to run once per ESLint ctor
-  async function runFor(ESLintCtor: typeof ESLint8 | typeof ESLint9, major: 8 | 9) {
+  async function runFor(ESLintCtor: typeof ESLint8 | typeof ESLint9 | typeof ESLint10, major: 8 | 9 | 10) {
     const root = await fsp.mkdtemp(path.join(os.tmpdir(), `export-scope-e${major}-`));
 
     // Ensure cleanup happens even if an exception occurs before try block
@@ -128,8 +129,8 @@ export async function withTempProject<T extends Tree>(
 
     await writeTree(root, { "package.json": `{"type":"module"}`, "tsconfig.json": tsconfig, ...tree });
 
-    // ESLint 9: use flat config recommended from plugin + additional config layer
-    if (major === 9) {
+    // ESLint 9 / 10: use flat config recommended from plugin + additional config layer
+    if (major === 9 || major === 10) {
       // Use recommended config as base, add additional layer for tsconfigRootDir
       const flat = [
         ...pluginObj.configs.flatConfigRecommended,
@@ -144,7 +145,7 @@ export async function withTempProject<T extends Tree>(
 
       const eslint = new ESLintCtor({
         cwd: root,
-        overrideConfigFile: true, // This tells ESLint 9 to not look for config files
+        overrideConfigFile: true, // tells ESLint 9/10 to not look for config files
         overrideConfig: flat as any,
       } as any);
 
@@ -186,7 +187,8 @@ export async function withTempProject<T extends Tree>(
     }
   }
 
-  // Run both ESLint versions using their recommended configs
+  // Run all three ESLint majors using their recommended configs
   await runFor(ESLint8, 8);
   await runFor(ESLint9, 9);
+  await runFor(ESLint10, 10);
 }

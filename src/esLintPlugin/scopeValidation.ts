@@ -1,5 +1,4 @@
 import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
-import { dirname } from "path";
 import { validateScopePath, validateExceptionPath, getFullScopePath } from "../pathUtils";
 import { getScopeDeclarations } from "./esLintUtils";
 import { existsSync } from "fs";
@@ -98,18 +97,18 @@ export const validateExportDefault = (
         if (!validation.isValid) {
           onError({
             message: "Only parent dirs are allowed for @scope and @scopeDefault",
-            line: element.loc!.start.line,
-            column: element.loc!.start.column + 2,
-            endLine: element.loc!.end.line,
-            endColumn: element.loc!.end.column
+            line: element.loc.start.line,
+            column: element.loc.start.column + 2,
+            endLine: element.loc.end.line,
+            endColumn: element.loc.end.column
           });
         } else if (validation.resolvedPath && !existsSync(validation.resolvedPath)) {
           onError({
             message: `Invalid scope path: "${validation.resolvedPath}"`,
-            line: element.loc!.start.line,
-            column: element.loc!.start.column + 2,
-            endLine: element.loc!.end.line,
-            endColumn: element.loc!.end.column
+            line: element.loc.start.line,
+            column: element.loc.start.column + 2,
+            endLine: element.loc.end.line,
+            endColumn: element.loc.end.column
           });
         }
       }
@@ -122,18 +121,18 @@ export const validateExportDefault = (
     if (!validation.isValid) {
       onError({
         message: "Only parent dirs are allowed for @scope and @scopeDefault",
-        line: declaration.loc!.start.line,
-        column: declaration.loc!.start.column + 2,
-        endLine: declaration.loc!.end.line,
-        endColumn: declaration.loc!.end.column
+        line: declaration.loc.start.line,
+        column: declaration.loc.start.column + 2,
+        endLine: declaration.loc.end.line,
+        endColumn: declaration.loc.end.column
       });
     } else if (validation.resolvedPath && !existsSync(validation.resolvedPath)) {
       onError({
         message: `Invalid scope path: "${validation.resolvedPath}"`,
-        line: declaration.loc!.start.line,
-        column: declaration.loc!.start.column + 2,
-        endLine: declaration.loc!.end.line,
-        endColumn: declaration.loc!.end.column
+        line: declaration.loc.start.line,
+        column: declaration.loc.start.column + 2,
+        endLine: declaration.loc.end.line,
+        endColumn: declaration.loc.end.column
       });
     }
   }
@@ -155,19 +154,19 @@ export const validateExceptionsArray = (
         if (fullPath) {
           onError({
             message: `Invalid scope path: "${fullPath}"`,
-            line: element.loc!.start.line,
-            column: element.loc!.start.column + 2,
-            endLine: element.loc!.end.line,
-            endColumn: element.loc!.end.column
+            line: element.loc.start.line,
+            column: element.loc.start.column + 2,
+            endLine: element.loc.end.line,
+            endColumn: element.loc.end.column
           });
         }
       } else if (validation.resolvedPath && !existsSync(validation.resolvedPath)) {
         onError({
           message: `Invalid scope path: "${validation.resolvedPath}"`,
-          line: element.loc!.start.line,
-          column: element.loc!.start.column + 1,
-          endLine: element.loc!.end.line,
-          endColumn: element.loc!.end.column - 1
+          line: element.loc.start.line,
+          column: element.loc.start.column + 1,
+          endLine: element.loc.end.line,
+          endColumn: element.loc.end.column - 1
         });
       }
     }
@@ -191,18 +190,18 @@ export const validateLiteralInScope = (
     if (!validation.isValid) {
       onError({
         message: "Only parent dirs are allowed for @scope and @scopeDefault",
-        line: node.loc!.start.line,
-        column: node.loc!.start.column + 2,
-        endLine: node.loc!.end.line,
-        endColumn: node.loc!.end.column
+        line: node.loc.start.line,
+        column: node.loc.start.column + 2,
+        endLine: node.loc.end.line,
+        endColumn: node.loc.end.column
       });
     } else if (validation.resolvedPath && !existsSync(validation.resolvedPath)) {
       onError({
         message: `Invalid scope path: "${validation.resolvedPath}"`,
-        line: node.loc!.start.line,
-        column: node.loc!.start.column + 2,
-        endLine: node.loc!.end.line,
-        endColumn: node.loc!.end.column
+        line: node.loc.start.line,
+        column: node.loc.start.column + 2,
+        endLine: node.loc.end.line,
+        endColumn: node.loc.end.column
       });
     }
   }
@@ -212,18 +211,18 @@ export const validateLiteralInScope = (
     if (!validation.isValid) {
       onError({
         message: "Only parent dirs are allowed for @scope and @scopeDefault",
-        line: node.loc!.start.line,
-        column: node.loc!.start.column + 2,
-        endLine: node.loc!.end.line,
-        endColumn: node.loc!.end.column
+        line: node.loc.start.line,
+        column: node.loc.start.column + 2,
+        endLine: node.loc.end.line,
+        endColumn: node.loc.end.column
       });
     } else if (validation.resolvedPath && !existsSync(validation.resolvedPath)) {
       onError({
         message: `Invalid scope path: "${validation.resolvedPath}"`,
-        line: node.loc!.start.line,
-        column: node.loc!.start.column + 2,
-        endLine: node.loc!.end.line,
-        endColumn: node.loc!.end.column
+        line: node.loc.start.line,
+        column: node.loc.start.column + 2,
+        endLine: node.loc.end.line,
+        endColumn: node.loc.end.column
       });
     }
   }
@@ -235,19 +234,19 @@ export const validateLiteralInScope = (
       if (fullPath) {
         onError({
           message: `Invalid scope path: "${fullPath}"`,
-          line: node.loc!.start.line,
-          column: node.loc!.start.column + 2,
-          endLine: node.loc!.end.line,
-          endColumn: node.loc!.end.column
+          line: node.loc.start.line,
+          column: node.loc.start.column + 2,
+          endLine: node.loc.end.line,
+          endColumn: node.loc.end.column
         });
       }
     } else if (validation.resolvedPath && !existsSync(validation.resolvedPath)) {
       onError({
         message: `Invalid scope path: "${validation.resolvedPath}"`,
-        line: node.loc!.start.line,
-        column: node.loc!.start.column + 2,
-        endLine: node.loc!.end.line,
-        endColumn: node.loc!.end.column
+        line: node.loc.start.line,
+        column: node.loc.start.column + 2,
+        endLine: node.loc.end.line,
+        endColumn: node.loc.end.column
       });
     }
   }
@@ -257,10 +256,10 @@ export const validateLiteralInScope = (
     if (fullPath && !existsSync(fullPath)) {
       onError({
         message: `Invalid scope path: "${fullPath}"`,
-        line: node.loc!.start.line,
-        column: node.loc!.start.column + 2,
-        endLine: node.loc!.end.line,
-        endColumn: node.loc!.end.column
+        line: node.loc.start.line,
+        column: node.loc.start.column + 2,
+        endLine: node.loc.end.line,
+        endColumn: node.loc.end.column
       });
     }
   }

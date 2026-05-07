@@ -11,22 +11,6 @@ const { name, version } =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("../package.json") as typeof import("../package.json");
 
-function typedTsEsRulesOff(): Record<string, "off"> {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const tses = require("@typescript-eslint/eslint-plugin") as {
-      rules: Record<string, { meta?: { docs?: { requiresTypeChecking?: boolean } } }>;
-    };
-    const out: Record<string, "off"> = {};
-    for (const [n, def] of Object.entries(tses.rules ?? {})) {
-      if (def?.meta?.docs?.requiresTypeChecking) out[`@typescript-eslint/${n}`] = "off";
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
 const parser: FlatConfig.Parser = {
   meta: parserBase.meta,
   parseForESLint: parserBase.parseForESLint,

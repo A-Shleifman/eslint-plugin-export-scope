@@ -114,7 +114,9 @@ export default "";
 
 Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin (validates imports) and a `TS Language Server` plugin (manages autocompletion).
 
-### ESLint plugin (ESLint 9, Flat Config)
+### ESLint plugin (ESLint 9 / 10, Flat Config)
+
+> ESLint 10 requires Node `>=20.19` (or `>=22.13`, or `>=24`). ESLint 8 / 9 still run on Node 18.
 
 ```sh
 npm i -D eslint typescript-eslint eslint-plugin-export-scope

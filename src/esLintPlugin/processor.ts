@@ -1,7 +1,7 @@
 import type { Linter } from "eslint";
 import { basename, dirname } from "path";
 import { parse } from "@typescript-eslint/typescript-estree";
-import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils";
+import { AST_NODE_TYPES } from "@typescript-eslint/utils";
 import { SCOPE_FILE_NAMES } from "../constants";
 import {
   validateExportDefault,

@@ -4,18 +4,25 @@ import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
 
+type PluginExport = { rules: Record<string, unknown>; configs: Record<string, unknown> };
+type RawPluginModule = Partial<PluginExport> & {
+  plugin?: Partial<PluginExport>;
+  default?: Partial<PluginExport> & { plugin?: Partial<PluginExport> };
+};
+
 // Helper to robustly pick the ESLint plugin object from whatever the dist exports.
-function resolvePluginObject(mod: any) {
-  if (mod?.rules) return mod; // direct plugin export
-  if (mod?.plugin?.rules) return mod.plugin; // { plugin } wrapper
-  if (mod?.default?.rules) return mod.default; // CJS default
-  if (mod?.default?.plugin?.rules) return mod.default.plugin; // CJS default with wrapper
+function resolvePluginObject(mod: RawPluginModule): PluginExport {
+  if (mod?.rules) return mod as PluginExport;
+  if (mod?.plugin?.rules) return mod.plugin as PluginExport;
+  if (mod?.default?.rules) return mod.default as PluginExport;
+  if (mod?.default?.plugin?.rules) return mod.default.plugin as PluginExport;
   throw new Error("export-scope plugin object with 'rules' not found in dist export");
 }
 
 // Hard-fail if aliases are missing, per request.
 import { ESLint as ESLint8 } from "eslint8";
 import { ESLint as ESLint9 } from "eslint";
+import { ESLint as ESLint10 } from "eslint10";
 
 // Use require instead of import since the built file is CommonJS
 const require = createRequire(import.meta.url);
@@ -30,7 +37,7 @@ export type FileInTree<T extends Tree> = keyof T & string;
 
 // Helper type for the context passed to test functions
 export type TempProjectContext<T extends Tree> = {
-  major: 8 | 9;
+  major: 8 | 9 | 10;
   root: string;
   add: (files: Tree) => Promise<void>;
   lint: (file: FileInTree<T>) => Promise<string[]>;
@@ -45,7 +52,7 @@ const importError = (name: string) => {
 };
 
 // Factory function to create shared helper functions
-function createHelpers<T extends Tree>(eslint: ESLint8 | ESLint9, root: string, major: 8 | 9) {
+function createHelpers<T extends Tree>(eslint: ESLint8 | ESLint9 | ESLint10, root: string, major: 8 | 9 | 10) {
   const add = async (files: Tree) => writeTree(root, files);
   
   const lint = async (file: FileInTree<T>) => {
@@ -94,7 +101,7 @@ export async function withTempProject<T extends Tree>(
   { keep = false }: { keep?: boolean } = {},
 ) {
   // helper to run once per ESLint ctor
-  async function runFor(ESLintCtor: typeof ESLint8 | typeof ESLint9, major: 8 | 9) {
+  async function runFor(ESLintCtor: typeof ESLint8 | typeof ESLint9 | typeof ESLint10, major: 8 | 9 | 10) {
     const root = await fsp.mkdtemp(path.join(os.tmpdir(), `export-scope-e${major}-`));
 
     // Ensure cleanup happens even if an exception occurs before try block
@@ -102,7 +109,7 @@ export async function withTempProject<T extends Tree>(
       if (!keep) {
         try {
           fs.rmSync(root, { recursive: true, force: true });
-        } catch (error) {
+        } catch {
           // Ignore cleanup errors (directory might already be deleted)
         }
       }
@@ -128,8 +135,8 @@ export async function withTempProject<T extends Tree>(
 
     await writeTree(root, { "package.json": `{"type":"module"}`, "tsconfig.json": tsconfig, ...tree });
 
-    // ESLint 9: use flat config recommended from plugin + additional config layer
-    if (major === 9) {
+    // ESLint 9 / 10: use flat config recommended from plugin + additional config layer
+    if (major === 9 || major === 10) {
       // Use recommended config as base, add additional layer for tsconfigRootDir
       const flat = [
         ...pluginObj.configs.flatConfigRecommended,
@@ -142,18 +149,25 @@ export async function withTempProject<T extends Tree>(
         },
       ];
 
+      // The ESLint 9 and 10 constructor option types are slightly different,
+      // so the call site casts through `any` to bridge the union.
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       const eslint = new ESLintCtor({
         cwd: root,
-        overrideConfigFile: true, // This tells ESLint 9 to not look for config files
+        overrideConfigFile: true, // tells ESLint 9/10 to not look for config files
         overrideConfig: flat as any,
       } as any);
+      /* eslint-enable @typescript-eslint/no-explicit-any */
 
       const helpers = createHelpers<T>(eslint, root, major);
 
       try {
         await fn({ major, root, ...helpers });
       } finally {
-        if (!keep) fs.rmSync(root, { recursive: true, force: true });
+        process.removeListener("exit", cleanupOnExit);
+        process.removeListener("SIGINT", cleanupOnExit);
+        process.removeListener("SIGTERM", cleanupOnExit);
+        cleanup();
       }
       return;
     }
@@ -178,7 +192,6 @@ export async function withTempProject<T extends Tree>(
     try {
       await fn({ major, root, ...helpers });
     } finally {
-      // Remove process listeners and cleanup
       process.removeListener("exit", cleanupOnExit);
       process.removeListener("SIGINT", cleanupOnExit);
       process.removeListener("SIGTERM", cleanupOnExit);
@@ -186,7 +199,8 @@ export async function withTempProject<T extends Tree>(
     }
   }
 
-  // Run both ESLint versions using their recommended configs
+  // Run all three ESLint majors using their recommended configs
   await runFor(ESLint8, 8);
   await runFor(ESLint9, 9);
+  await runFor(ESLint10, 10);
 }

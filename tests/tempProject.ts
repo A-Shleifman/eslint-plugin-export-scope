@@ -4,12 +4,18 @@ import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
 
+type PluginExport = { rules: Record<string, unknown>; configs: Record<string, unknown> };
+type RawPluginModule = Partial<PluginExport> & {
+  plugin?: Partial<PluginExport>;
+  default?: Partial<PluginExport> & { plugin?: Partial<PluginExport> };
+};
+
 // Helper to robustly pick the ESLint plugin object from whatever the dist exports.
-function resolvePluginObject(mod: any) {
-  if (mod?.rules) return mod; // direct plugin export
-  if (mod?.plugin?.rules) return mod.plugin; // { plugin } wrapper
-  if (mod?.default?.rules) return mod.default; // CJS default
-  if (mod?.default?.plugin?.rules) return mod.default.plugin; // CJS default with wrapper
+function resolvePluginObject(mod: RawPluginModule): PluginExport {
+  if (mod?.rules) return mod as PluginExport;
+  if (mod?.plugin?.rules) return mod.plugin as PluginExport;
+  if (mod?.default?.rules) return mod.default as PluginExport;
+  if (mod?.default?.plugin?.rules) return mod.default.plugin as PluginExport;
   throw new Error("export-scope plugin object with 'rules' not found in dist export");
 }
 
@@ -103,7 +109,7 @@ export async function withTempProject<T extends Tree>(
       if (!keep) {
         try {
           fs.rmSync(root, { recursive: true, force: true });
-        } catch (error) {
+        } catch {
           // Ignore cleanup errors (directory might already be deleted)
         }
       }
@@ -143,18 +149,25 @@ export async function withTempProject<T extends Tree>(
         },
       ];
 
+      // The ESLint 9 and 10 constructor option types are slightly different,
+      // so the call site casts through `any` to bridge the union.
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       const eslint = new ESLintCtor({
         cwd: root,
         overrideConfigFile: true, // tells ESLint 9/10 to not look for config files
         overrideConfig: flat as any,
       } as any);
+      /* eslint-enable @typescript-eslint/no-explicit-any */
 
       const helpers = createHelpers<T>(eslint, root, major);
 
       try {
         await fn({ major, root, ...helpers });
       } finally {
-        if (!keep) fs.rmSync(root, { recursive: true, force: true });
+        process.removeListener("exit", cleanupOnExit);
+        process.removeListener("SIGINT", cleanupOnExit);
+        process.removeListener("SIGTERM", cleanupOnExit);
+        cleanup();
       }
       return;
     }
@@ -179,7 +192,6 @@ export async function withTempProject<T extends Tree>(
     try {
       await fn({ major, root, ...helpers });
     } finally {
-      // Remove process listeners and cleanup
       process.removeListener("exit", cleanupOnExit);
       process.removeListener("SIGINT", cleanupOnExit);
       process.removeListener("SIGTERM", cleanupOnExit);

@@ -116,6 +116,8 @@ Install [ESLint](https://eslint.org/) and the `export-scope` package. This packa
 
 ### ESLint plugin (ESLint 9 / 10, Flat Config)
 
+> ESLint 10 requires Node `>=20.19` (or `>=22.13`, or `>=24`). ESLint 8 / 9 still run on Node 18.
+
 ```sh
 npm i -D eslint typescript-eslint eslint-plugin-export-scope
 ```

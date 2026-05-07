@@ -15,6 +15,10 @@ export default tseslint.config(
     },
   },
   {
+    files: ["tests/**/*.ts", "*.config.{ts,mts,cts}"],
+    extends: [tseslint.configs.recommended],
+  },
+  {
     languageOptions: {
       globals: { ...globals.node },
     },

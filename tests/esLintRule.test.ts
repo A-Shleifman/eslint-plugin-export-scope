@@ -186,7 +186,7 @@ test("lints JSDoc paths", async () => {
         export const public = '';
       `,
     },
-    async ({ expectLintFullErr, root }) => {
+    async ({ expectLintFullErr }) => {
       await expectLintFullErr("src/public.ts", [
         "Only parent dirs are allowed for @scope and @scopeDefault",
         "Only parent dirs are allowed for @scope and @scopeDefault",

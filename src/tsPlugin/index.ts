@@ -9,7 +9,6 @@ const includes = ["**/.scope.*", "**/.scope.default.*"];
 export function tsLanguageServicePlugin(module: { typescript: typeof ts }): ts.server.PluginModule {
   let root = "";
   let files: string[] = [];
-  let watcher: ts.FileWatcher | undefined;
 
   const scan = (sys: ts.System) => {
     files = sys.readDirectory(root, exts, excludes, includes);
@@ -21,7 +20,7 @@ export function tsLanguageServicePlugin(module: { typescript: typeof ts }): ts.s
     // ------ track and register .scope files ------
     root = info.project.getCurrentDirectory();
     scan(info.serverHost);
-    watcher = info.serverHost.watchDirectory(root, () => scan(info.serverHost), true);
+    info.serverHost.watchDirectory(root, () => scan(info.serverHost), true);
 
     const ls = info.languageService;
     const proxy = { ...ls };

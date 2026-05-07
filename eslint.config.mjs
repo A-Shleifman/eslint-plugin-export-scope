@@ -4,16 +4,19 @@ import globals from "globals";
 
 export default tseslint.config(
   eslint.configs.recommended,
-  tseslint.configs.recommendedTypeChecked,
   {
+    files: ["src/**/*.{ts,tsx}"],
+    extends: [tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
-      globals: {
-        ...globals.node,
-      },
+    },
+  },
+  {
+    languageOptions: {
+      globals: { ...globals.node },
     },
   },
   { ignores: ["**/node_modules", "dist", "test-project", "test-project-eslint-v8"] },

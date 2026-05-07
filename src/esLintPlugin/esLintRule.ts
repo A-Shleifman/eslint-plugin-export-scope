@@ -53,9 +53,9 @@ export const rule = createRule({
         Literal: (node: TSESTree.Literal) => {
           validateLiteralInScope(node, exportDir, reportError);
         },
-        Program: (node: TSESTree.Program) => {
+        Program: () => {
           const comments = context.sourceCode.getAllComments();
-          validateScopeDeclarations(comments as TSESTree.Comment[], exportDir, reportError);
+          validateScopeDeclarations(comments, exportDir, reportError);
         }
       };
     }
@@ -97,7 +97,7 @@ export const rule = createRule({
         // Then run JSDoc validation
         const comments = context.sourceCode.getAllComments();
         const exportDir = dirname(context.filename);
-        validateScopeDeclarations(comments as TSESTree.Comment[], exportDir, (error: ValidationError) => {
+        validateScopeDeclarations(comments, exportDir, (error: ValidationError) => {
           context.report({
             node,
             messageId: error.message.includes("Only parent dirs") ? "onlyParents" : "invalidPath",

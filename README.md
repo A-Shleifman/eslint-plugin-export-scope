@@ -114,12 +114,22 @@ export default "";
 
 Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin (validates imports) and a `TS Language Server` plugin (manages autocompletion).
 
+### Supported versions
+
+| Dependency | Versions                                             |
+| ---------- | ---------------------------------------------------- |
+| ESLint     | `8.57+`, `9`, `10`                                   |
+| TypeScript | `4.9` – `6.0`                                        |
+| Node       | `^18.18`, `^20.9`, `>=21.1` (as `typescript-eslint`) |
+
+> ESLint 10 itself requires Node `^20.19`, `^22.13` or `>=24`.
+>
+> TypeScript 7 (the native Go port) is not supported yet: it doesn't ship the JS compiler API that `typescript-eslint` and TS Language Server plugins are built on.
+
 ### ESLint plugin (ESLint 9 / 10, Flat Config)
 
-> ESLint 10 requires Node `>=20.19` (or `>=22.13`, or `>=24`). ESLint 8 / 9 still run on Node 18.
-
 ```sh
-npm i -D eslint typescript-eslint eslint-plugin-export-scope
+npm i -D eslint typescript eslint-plugin-export-scope
 ```
 
 ```json
@@ -131,10 +141,10 @@ npm i -D eslint typescript-eslint eslint-plugin-export-scope
 
 ```js
 // eslint.config.js
-import tseslint from "typescript-eslint";
+import { defineConfig } from "eslint/config";
 import exportScope from "eslint-plugin-export-scope";
 
-export default tseslint.config(
+export default defineConfig(
   // other configs,
   exportScope.configs.flatConfigRecommended,
 );
@@ -159,7 +169,7 @@ export default tseslint.config(
   <summary>Instructions</summary>
 
 ```sh
-npm i -D eslint eslint-plugin-export-scope
+npm i -D eslint@8 typescript eslint-plugin-export-scope
 ```
 
 ```js

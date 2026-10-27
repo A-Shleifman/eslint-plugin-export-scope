@@ -1,4 +1,4 @@
-import type { Linter } from "eslint";
+import type { Linter, Processor } from "@typescript-eslint/utils/ts-eslint";
 import { basename, dirname } from "path";
 import { parse } from "@typescript-eslint/typescript-estree";
 import { AST_NODE_TYPES } from "@typescript-eslint/utils";
@@ -11,14 +11,17 @@ import {
 
 const RULE_ID = "export-scope/no-imports-outside-export-scope";
 
+// typescript-eslint still types the legacy `source` field that ESLint no longer sets
+type LintMessage = Omit<Linter.LintMessage, "source">;
+
 // Cache for storing in-memory file content during processing
 const fileContentCache = new Map<string, string>();
 
-const validateScopeFileContent = (text: string, filename: string): Linter.LintMessage[] => {
-  const messages: Linter.LintMessage[] = [];
+const validateScopeFileContent = (text: string, filename: string): LintMessage[] => {
+  const messages: LintMessage[] = [];
   const exportDir = dirname(filename);
   
-  const createLintMessage = (error: ValidationError): Linter.LintMessage => ({
+  const createLintMessage = (error: ValidationError): LintMessage => ({
     ruleId: RULE_ID,
     message: error.message,
     line: error.line,
@@ -75,11 +78,11 @@ const validateScopeFileContent = (text: string, filename: string): Linter.LintMe
 
 
 // Processor that bypasses ESLint rules for scope files
-export const exportScopeProcessor: Linter.Processor = {
+export const exportScopeProcessor: Processor.LooseProcessorModule = {
   meta: { name: "export-scope/processor", version: "1" },
 
   // Return [] for scope files (no ESLint rules run), [text] for others
-  preprocess(text: string, filename: string) {
+  preprocess(text: string, filename: string): string[] {
     if (SCOPE_FILE_NAMES.includes(basename(filename))) {
       // Cache the in-memory content for validation in postprocess
       // This ensures we validate live/unsaved editor content, not disk content
@@ -90,7 +93,7 @@ export const exportScopeProcessor: Linter.Processor = {
   },
 
   // For scope files: validate independently; for others: pass through ESLint messages
-  postprocess(blockMessageLists, filename: string) {
+  postprocess(blockMessageLists: LintMessage[][], filename: string): LintMessage[] {
     if (SCOPE_FILE_NAMES.includes(basename(filename))) {
       // Scope file: get cached content and validate it
       const cachedText = fileContentCache.get(filename);

@@ -11,4 +11,4 @@ eslint.config.mjs
 *.map
 REQUIREMENTS.md
 tests/
-vitest.config.ts
+vitest.config.mts

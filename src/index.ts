@@ -51,5 +51,13 @@ plugin.configs.flatConfigRecommended = [
 const pluginForManualConfigs = { plugin };
 const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, plugin, pluginForManualConfigs);
 
-export default combinedEslintTsPlugin as typeof plugin & typeof pluginForManualConfigs;
-module.exports = combinedEslintTsPlugin as typeof plugin & typeof pluginForManualConfigs;
+// Public types are structural (like typescript-eslint's own configs and plugin), so they are accepted
+// by both ESLint's `defineConfig()` and `tseslint.config()` regardless of their type versions
+type CompatibleConfig = { name?: string; rules?: object };
+type CompatiblePlugin = Pick<typeof plugin, "meta">;
+
+// `export =` (not `export default`) so the typings match the CommonJS `module.exports` under NodeNext
+export = combinedEslintTsPlugin as CompatiblePlugin & {
+  configs: { flatConfigRecommended: CompatibleConfig[] };
+  plugin: CompatiblePlugin;
+};

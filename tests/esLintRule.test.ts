@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { withTempProject } from "./tempProject";
+import { moduleResolution, withTempProject } from "./tempProject";
 
 test("folder scope default", async () => {
   await withTempProject(
@@ -152,6 +152,30 @@ test("cross-package exception (monorepo scenario)", async () => {
     async ({ expectLintErr }) => {
       await expectLintErr("src/package-b/consumer.ts", []);
       await expectLintErr("src/package-c/control.ts", ["restricted"]);
+    },
+  );
+});
+
+test("tsconfig paths aliases (TS 6 replacement for baseUrl)", async () => {
+  await withTempProject(
+    {
+      "tsconfig.json": `{
+        "compilerOptions": {
+          "module": "ESNext",
+          "moduleResolution": "${moduleResolution}",
+          "allowJs": true,
+          "paths": { "@/*": ["./src/*"] }
+        },
+        "include": ["src/**/*"]
+      }`,
+      "src/common/.scope.ts": `export default ".";`,
+      "src/common/private.ts": `export const private = "";`,
+      "src/common/sub/consumer.ts": `import { private } from "@/common/private";`,
+      "src/outside/control.ts": `import { private } from "@/common/private";`,
+    },
+    async ({ expectLintErr }) => {
+      await expectLintErr("src/common/sub/consumer.ts", []);
+      await expectLintErr("src/outside/control.ts", ["private"]);
     },
   );
 });

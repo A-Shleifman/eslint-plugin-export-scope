@@ -51,13 +51,20 @@ plugin.configs.flatConfigRecommended = [
 const pluginForManualConfigs = { plugin };
 const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, plugin, pluginForManualConfigs);
 
-// Public types are structural (like typescript-eslint's own configs and plugin), so they are accepted
-// by both ESLint's `defineConfig()` and `tseslint.config()` regardless of their type versions
+// `configs` and `plugin` are typed structurally (like typescript-eslint's own configs and plugin),
+// so they are accepted by both ESLint's `defineConfig()` and `tseslint.config()`
 type CompatibleConfig = { name?: string; rules?: object };
 type CompatiblePlugin = Pick<typeof plugin, "meta">;
 
-// `export =` (not `export default`) so the typings match the CommonJS `module.exports` under NodeNext
-export = combinedEslintTsPlugin as CompatiblePlugin & {
+interface ExportScopePlugin extends Omit<typeof plugin, "configs"> {
   configs: { flatConfigRecommended: CompatibleConfig[] };
   plugin: CompatiblePlugin;
-};
+  // self-reference, so `import exportScope from` also resolves without `esModuleInterop`
+  default: ExportScopePlugin;
+}
+
+const exportScopePlugin = combinedEslintTsPlugin as typeof combinedEslintTsPlugin & Pick<ExportScopePlugin, "default">;
+exportScopePlugin.default = exportScopePlugin;
+
+// `export =` (not `export default`) so the typings match the CommonJS `module.exports` under NodeNext
+export = exportScopePlugin as ExportScopePlugin;

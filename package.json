@@ -19,7 +19,7 @@
   "author": "Alex Shleifman",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/A-Shleifman/eslint-plugin-export-scope.git"
+    "url": "git+https://github.com/9Atlas/eslint-plugin-export-scope.git"
   },
   "exports": {
     ".": {

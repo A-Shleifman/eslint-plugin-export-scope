@@ -6,7 +6,7 @@ import { validateScopeDeclarations, validateLiteralInScope, type ValidationError
 
 export const ruleName = "no-imports-outside-export-scope";
 
-const createRule = ESLintUtils.RuleCreator(() => "https://github.com/A-Shleifman/eslint-plugin-export-scope");
+const createRule = ESLintUtils.RuleCreator(() => "https://github.com/9Atlas/eslint-plugin-export-scope");
 
 
 const errorMessages = {

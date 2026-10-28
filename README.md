@@ -114,12 +114,22 @@ export default "";
 
 Install [ESLint](https://eslint.org/) and the `export-scope` package. This package includes both an `ESLint` plugin (validates imports) and a `TS Language Server` plugin (manages autocompletion).
 
+### Supported versions
+
+| Dependency | Versions                      |
+| ---------- | ----------------------------- |
+| ESLint     | `8.57+`, `9`, `10`            |
+| TypeScript | `4.9` to `6.0`                |
+| Node       | `^18.18`, `^20.9` or `>=21.1` |
+
+> ESLint 10 itself requires Node `^20.19`, `^22.13` or `>=24`.
+>
+> TypeScript 7 (the native Go port) is not supported yet: it doesn't ship the JS compiler API that `typescript-eslint` and TS Language Server plugins are built on.
+
 ### ESLint plugin (ESLint 9 / 10, Flat Config)
 
-> ESLint 10 requires Node `>=20.19` (or `>=22.13`, or `>=24`). ESLint 8 / 9 still run on Node 18.
-
 ```sh
-npm i -D eslint typescript-eslint eslint-plugin-export-scope
+npm i -D eslint typescript eslint-plugin-export-scope
 ```
 
 ```json
@@ -131,14 +141,16 @@ npm i -D eslint typescript-eslint eslint-plugin-export-scope
 
 ```js
 // eslint.config.js
-import tseslint from "typescript-eslint";
+import { defineConfig } from "eslint/config";
 import exportScope from "eslint-plugin-export-scope";
 
-export default tseslint.config(
+export default defineConfig(
   // other configs,
   exportScope.configs.flatConfigRecommended,
 );
 ```
+
+> `defineConfig()` is available from ESLint 9.22. On older ESLint 9 versions, export a plain array: `[...exportScope.configs.flatConfigRecommended]`.
 
 <details>
   <summary>Custom parser (Optional)</summary>
@@ -159,7 +171,7 @@ export default tseslint.config(
   <summary>Instructions</summary>
 
 ```sh
-npm i -D eslint eslint-plugin-export-scope
+npm i -D eslint@8 typescript eslint-plugin-export-scope
 ```
 
 ```js
@@ -195,6 +207,14 @@ module.exports = {
 `tsconfig.json` with `compilerOptions.allowJs` set to `true` is required
 
 ## Upgrading
+
+<details>
+  <summary>v3.1 => v3.2 (Optional)</summary>
+
+- TypeScript 6.0 is now supported
+- `typescript-eslint` deprecated `tseslint.config()`. Switch to `defineConfig()` from `eslint/config` as shown in the updated [instructions](#installation). Existing `tseslint.config()` configs keep working
+- Typed configs (`eslint.config.ts` or `// @ts-check`) now also type-check with `defineConfig()` and with `"moduleResolution": "NodeNext"`
+</details>
 
 <details>
   <summary>v2 => v3 (Optional)</summary>

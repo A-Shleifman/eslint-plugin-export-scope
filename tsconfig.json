@@ -9,6 +9,7 @@
     "sourceMap": true,
     "strict": true,
     "lib": ["ES2023"],
+    "types": ["node"],
     "resolveJsonModule": true,
     "noUncheckedIndexedAccess": true,
     "strictNullChecks": true,

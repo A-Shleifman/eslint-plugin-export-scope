@@ -1,8 +1,10 @@
+import { defineConfig } from "eslint/config";
 import eslint from "@eslint/js";
+import eslintPlugin from "eslint-plugin-eslint-plugin";
 import tseslint from "typescript-eslint";
 import globals from "globals";
 
-export default tseslint.config(
+export default defineConfig(
   eslint.configs.recommended,
   {
     files: ["src/**/*.{ts,tsx}"],
@@ -13,6 +15,10 @@ export default tseslint.config(
         tsconfigRootDir: import.meta.dirname,
       },
     },
+  },
+  {
+    files: ["src/esLintPlugin/**/*.ts"],
+    extends: [eslintPlugin.configs.recommended],
   },
   {
     files: ["tests/**/*.ts", "*.config.{ts,mts,cts}"],

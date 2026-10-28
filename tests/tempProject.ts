@@ -21,14 +21,18 @@ function resolvePluginObject(mod: RawPluginModule): PluginExport {
 
 // Hard-fail if aliases are missing, per request.
 import { ESLint as ESLint8 } from "eslint8";
-import { ESLint as ESLint9 } from "eslint";
-import { ESLint as ESLint10 } from "eslint10";
+import { ESLint as ESLint9 } from "eslint9";
+import { ESLint as ESLint10 } from "eslint";
 
 // Use require instead of import since the built file is CommonJS
 const require = createRequire(import.meta.url);
 const pluginModule = require("../dist/index.js");
 const pluginObj = resolvePluginObject(pluginModule);
 const tsParserPath = require.resolve("@typescript-eslint/parser");
+
+// "Bundler" resolution only exists from TS 5.0, while the supported floor is TS 4.9
+const tsMajor = Number((require("typescript") as typeof import("typescript")).versionMajorMinor.split(".")[0]);
+export const moduleResolution = tsMajor >= 5 ? "Bundler" : "Node";
 
 type Tree = Record<string, string>;
 
@@ -92,7 +96,7 @@ async function writeTree(root: string, tree: Tree) {
 }
 
 /**
- * Run the supplied test body once with ESLint 8 and once with ESLint 9.
+ * Run the supplied test body once with each of ESLint 8, 9 and 10.
  * Crashes if either alias (eslint8 or eslint9) is missing.
  */
 export async function withTempProject<T extends Tree>(
@@ -125,8 +129,7 @@ export async function withTempProject<T extends Tree>(
       "compilerOptions": {
         "target": "ES2020",
         "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "baseUrl": "./src",
+        "moduleResolution": "${moduleResolution}",
         "allowJs": true,
         "strict": false
       },

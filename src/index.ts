@@ -1,4 +1,4 @@
-import type { FlatConfig } from "@typescript-eslint/utils/ts-eslint";
+import type { FlatConfig, Processor } from "@typescript-eslint/utils/ts-eslint";
 import { rule, ruleName } from "./esLintPlugin/esLintRule";
 import { tsLanguageServicePlugin } from "./tsPlugin";
 import recommendedLegacy from "./configs/recommended-legacy";
@@ -11,17 +11,17 @@ const { name, version } =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("../package.json") as typeof import("../package.json");
 
-const parser: FlatConfig.Parser = {
+const parser = {
   meta: parserBase.meta,
   parseForESLint: parserBase.parseForESLint,
-};
+} satisfies FlatConfig.Parser;
 
 const plugin = {
   meta: { name, version },
   rules: { [ruleName]: rule },
   processors: { "export-scope": exportScopeProcessor },
   configs: {
-    flatConfigRecommended: [] as FlatConfig.Config[],
+    flatConfigRecommended: [] as CompatibleConfig[],
   },
 } satisfies FlatConfig.Plugin;
 
@@ -51,10 +51,33 @@ plugin.configs.flatConfigRecommended = [
 const pluginForManualConfigs = { plugin };
 const combinedEslintTsPlugin = Object.assign(tsLanguageServicePlugin, plugin, pluginForManualConfigs);
 
-// `configs` and `plugin` are typed structurally (like typescript-eslint's own configs and plugin),
-// so they are accepted by both ESLint's `defineConfig()` and `tseslint.config()`
-type CompatibleConfig = { name?: string; rules?: object };
-type CompatiblePlugin = Pick<typeof plugin, "meta">;
+// Public types keep every field of the configs and the plugin, but are written structurally
+// (like typescript-eslint's own), so both ESLint's `defineConfig()` and `tseslint.config()` accept them
+interface CompatibleRule extends Omit<typeof rule, "create"> {
+  // `any` (as in typescript-eslint's loose rule type): its rule context and listener types don't fit ESLint's
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  create(context: any): any;
+}
+
+interface CompatiblePlugin {
+  meta: { name: string; version: string };
+  rules: { [ruleName]: CompatibleRule };
+  processors: { "export-scope": Processor.LooseProcessorModule };
+  configs: { flatConfigRecommended: CompatibleConfig[] };
+}
+
+interface CompatibleConfig {
+  name?: string;
+  files?: string[];
+  languageOptions?: {
+    parser?: { meta: { name: string; version?: string }; parseForESLint(text: string): { ast: unknown } };
+    parserOptions?: { projectService?: boolean };
+    sourceType?: "module" | "commonjs";
+  };
+  plugins?: Record<string, CompatiblePlugin>;
+  processor?: string;
+  rules?: Record<string, "error">;
+}
 
 interface ExportScopePlugin extends Omit<typeof plugin, "configs"> {
   configs: { flatConfigRecommended: CompatibleConfig[] };
